@@ -1,0 +1,37 @@
+substitutions:
+  _SERVICE_NAME: launch-copilot-agent
+  _REGION: us-central1
+  _AR_REPOSITORY: launch-copilot
+  _IMAGE_TAG: latest
+  _SESSION_STORE_BACKEND: firestore
+  _VERTEX_LOCATION: us-central1
+  _VERTEX_MODEL: gemini-2.5-flash
+  _VERTEX_LIVE_MODEL: gemini-live-2.5-flash-preview
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=apps/agent/Dockerfile
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE_NAME}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --set-env-vars=SESSION_STORE_BACKEND=${_SESSION_STORE_BACKEND},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_REGION=${_REGION},VERTEX_LOCATION=${_VERTEX_LOCATION},VERTEX_MODEL=${_VERTEX_MODEL},VERTEX_LIVE_MODEL=${_VERTEX_LIVE_MODEL}
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}

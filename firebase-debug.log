@@ -1,0 +1,727 @@
+[debug] [2026-03-08T08:28:20.622Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:28:20.623Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase projects:list
+[debug] [2026-03-08T08:28:20.623Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:28:20.623Z] Platform:      linux
+[debug] [2026-03-08T08:28:20.623Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:28:20.624Z] Time:          Sun Mar 08 2026 04:28:20 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:28:20.624Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:28:20.757Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:28:20.758Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:28:20.760Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:20.761Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:20.762Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-03-08T08:28:21.092Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-03-08T08:28:34.200Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:28:34.201Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase projects:addfirebase gcloud-hackathon-edoscin8fh6pt --non-interactive
+[debug] [2026-03-08T08:28:34.201Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:28:34.202Z] Platform:      linux
+[debug] [2026-03-08T08:28:34.202Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:28:34.202Z] Time:          Sun Mar 08 2026 04:28:34 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:28:34.202Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:28:34.308Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:28:34.309Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:28:34.311Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:34.311Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:34.312Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt:addFirebase [none]
+[debug] [2026-03-08T08:28:35.044Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt:addFirebase 200
+[debug] [2026-03-08T08:28:35.045Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt:addFirebase {"name":"operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz"}
+[debug] [2026-03-08T08:28:35.045Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:35.045Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:35.045Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz [none]
+[debug] [2026-03-08T08:28:36.042Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz 200
+[debug] [2026-03-08T08:28:36.042Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz {"name":"operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz"}
+[debug] [2026-03-08T08:28:36.543Z] [Add Firebase Poller] Retrying task index 0
+[debug] [2026-03-08T08:28:36.544Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:36.544Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:36.544Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz [none]
+[debug] [2026-03-08T08:28:36.800Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz 200
+[debug] [2026-03-08T08:28:36.800Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz {"name":"operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz"}
+[debug] [2026-03-08T08:28:37.803Z] [Add Firebase Poller] Retrying task index 0
+[debug] [2026-03-08T08:28:37.803Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:37.804Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:37.804Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz [none]
+[debug] [2026-03-08T08:28:37.997Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz 200
+[debug] [2026-03-08T08:28:37.997Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz {"name":"operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz"}
+[debug] [2026-03-08T08:28:39.999Z] [Add Firebase Poller] Retrying task index 0
+[debug] [2026-03-08T08:28:39.999Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:40.000Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:40.000Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz [none]
+[debug] [2026-03-08T08:28:40.230Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz 200
+[debug] [2026-03-08T08:28:40.230Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz {"name":"operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz"}
+[debug] [2026-03-08T08:28:44.060Z] [Add Firebase Poller] Retrying task index 0
+[debug] [2026-03-08T08:28:44.061Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:44.061Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:44.061Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz [none]
+[debug] [2026-03-08T08:28:43.981Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:28:43.982Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase projects:list
+[debug] [2026-03-08T08:28:43.982Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:28:43.982Z] Platform:      linux
+[debug] [2026-03-08T08:28:43.982Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:28:43.983Z] Time:          Sun Mar 08 2026 04:28:43 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:28:43.983Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:28:44.090Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:28:44.090Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:28:44.092Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:44.092Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:44.093Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-03-08T08:28:44.275Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/NDFlMjUwMGMtNGY4MS00YTljLThlNjktNTc5MjFiYzQxY2Mz 200
+[debug] [2026-03-08T08:28:44.468Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-03-08T08:28:52.728Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:28:52.729Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:list --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:28:52.730Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:28:52.730Z] Platform:      linux
+[debug] [2026-03-08T08:28:52.730Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:28:52.730Z] Time:          Sun Mar 08 2026 04:28:52 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:28:52.730Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:28:52.846Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:28:52.847Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:28:52.849Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:52.849Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:28:52.850Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt:searchApps pageSize=100
+[debug] [2026-03-08T08:28:53.056Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt:searchApps 200
+[debug] [2026-03-08T08:29:31.010Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:29:31.012Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase firestore:databases:list --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:29:31.012Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:29:31.012Z] Platform:      linux
+[debug] [2026-03-08T08:29:31.012Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:29:31.012Z] Time:          Sun Mar 08 2026 04:29:31 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:29:31.012Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:29:31.561Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:29:31.562Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:29:31.562Z] [iam] checking project gcloud-hackathon-edoscin8fh6pt for permissions ["datastore.databases.list","firebase.projects.get"]
+[debug] [2026-03-08T08:29:31.563Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:29:31.563Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:29:31.564Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions [none]
+[debug] [2026-03-08T08:29:31.564Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:29:31.564Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.databases.list","firebase.projects.get"]}
+[debug] [2026-03-08T08:29:31.788Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions 200
+[debug] [2026-03-08T08:29:31.789Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.databases.list","firebase.projects.get"]}
+[debug] [2026-03-08T08:29:31.789Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:29:31.789Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:29:31.789Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases [none]
+[debug] [2026-03-08T08:29:31.911Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases 403
+[debug] [2026-03-08T08:29:31.911Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases {"error":{"code":403,"message":"Cloud Firestore API has not been used in project gcloud-hackathon-edoscin8fh6pt before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"activationUrl":"https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt","containerInfo":"gcloud-hackathon-edoscin8fh6pt","service":"firestore.googleapis.com","consumer":"projects/gcloud-hackathon-edoscin8fh6pt","serviceTitle":"Cloud Firestore API"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Cloud Firestore API has not been used in project gcloud-hackathon-edoscin8fh6pt before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt"}]}]}}
+[error] 
+[error] Error: Request to https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases had HTTP Error: 403, Cloud Firestore API has not been used in project gcloud-hackathon-edoscin8fh6pt before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+[debug] [2026-03-08T08:29:31.912Z] Error Context: {
+  "body": {
+    "error": {
+      "code": 403,
+      "message": "Cloud Firestore API has not been used in project gcloud-hackathon-edoscin8fh6pt before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+      "status": "PERMISSION_DENIED",
+      "details": [
+        {
+          "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+          "reason": "SERVICE_DISABLED",
+          "domain": "googleapis.com",
+          "metadata": {
+            "activationUrl": "https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt",
+            "containerInfo": "gcloud-hackathon-edoscin8fh6pt",
+            "service": "firestore.googleapis.com",
+            "consumer": "projects/gcloud-hackathon-edoscin8fh6pt",
+            "serviceTitle": "Cloud Firestore API"
+          }
+        },
+        {
+          "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+          "locale": "en-US",
+          "message": "Cloud Firestore API has not been used in project gcloud-hackathon-edoscin8fh6pt before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."
+        },
+        {
+          "@type": "type.googleapis.com/google.rpc.Help",
+          "links": [
+            {
+              "description": "Google developers console API activation",
+              "url": "https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=gcloud-hackathon-edoscin8fh6pt"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "response": {
+    "statusCode": 403
+  }
+}
+[debug] [2026-03-08T08:30:06.291Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:30:06.293Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase firestore:databases:list --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:06.293Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:30:06.293Z] Platform:      linux
+[debug] [2026-03-08T08:30:06.293Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:30:06.293Z] Time:          Sun Mar 08 2026 04:30:06 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:30:06.293Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:30:06.777Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:30:06.778Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:30:06.778Z] [iam] checking project gcloud-hackathon-edoscin8fh6pt for permissions ["datastore.databases.list","firebase.projects.get"]
+[debug] [2026-03-08T08:30:06.779Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:06.779Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:06.780Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions [none]
+[debug] [2026-03-08T08:30:06.780Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:06.780Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.databases.list","firebase.projects.get"]}
+[debug] [2026-03-08T08:30:06.986Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions 200
+[debug] [2026-03-08T08:30:06.986Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.databases.list","firebase.projects.get"]}
+[debug] [2026-03-08T08:30:06.987Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:06.987Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:06.987Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases [none]
+[debug] [2026-03-08T08:30:07.428Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases 200
+[debug] [2026-03-08T08:30:16.762Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:30:16.764Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apphosting:backends:list --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:16.764Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:30:16.764Z] Platform:      linux
+[debug] [2026-03-08T08:30:16.764Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:30:16.764Z] Time:          Sun Mar 08 2026 04:30:16 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:30:16.765Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:30:16.884Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:30:16.885Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:30:16.885Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:16.886Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:16.886Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-03-08T08:30:16.887Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firebaseapphosting.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:17.234Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-03-08T08:30:17.235Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-03-08T08:30:17.237Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:17.237Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:17.238Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/-/backends 
+[debug] [2026-03-08T08:30:17.736Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/-/backends 200
+[debug] [2026-03-08T08:30:27.001Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:30:27.002Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apphosting:backends:create --project gcloud-hackathon-edoscin8fh6pt --backend launch-copilot-web --primary-region us-central1 --root-dir apps/web --non-interactive
+[debug] [2026-03-08T08:30:27.002Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:30:27.002Z] Platform:      linux
+[debug] [2026-03-08T08:30:27.002Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:30:27.002Z] Time:          Sun Mar 08 2026 04:30:27 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:30:27.002Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:30:27.155Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:30:27.156Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:30:27.157Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.157Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.157Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.157Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.158Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.158Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.158Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.158Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.159Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.159Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.159Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.159Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.160Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com [none]
+[debug] [2026-03-08T08:30:27.160Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:27.181Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudbuild.googleapis.com [none]
+[debug] [2026-03-08T08:30:27.182Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudbuild.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:27.183Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/secretmanager.googleapis.com [none]
+[debug] [2026-03-08T08:30:27.183Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/secretmanager.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:27.183Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/run.googleapis.com [none]
+[debug] [2026-03-08T08:30:27.184Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/run.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:27.185Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/artifactregistry.googleapis.com [none]
+[debug] [2026-03-08T08:30:27.185Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/artifactregistry.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:27.185Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/iam.googleapis.com [none]
+[debug] [2026-03-08T08:30:27.186Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/iam.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:26.867Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:30:26.868Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase firestore:locations
+[debug] [2026-03-08T08:30:26.869Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:30:26.869Z] Platform:      linux
+[debug] [2026-03-08T08:30:26.869Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:30:26.869Z] Time:          Sun Mar 08 2026 04:30:26 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:30:26.869Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:30:27.454Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.454Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.455Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/undefined/locations [none]
+[debug] [2026-03-08T08:30:27.513Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/iam.googleapis.com 200
+[debug] [2026-03-08T08:30:27.513Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/iam.googleapis.com [omitted]
+[debug] [2026-03-08T08:30:27.516Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudbuild.googleapis.com 200
+[debug] [2026-03-08T08:30:27.516Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudbuild.googleapis.com [omitted]
+[debug] [2026-03-08T08:30:27.520Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com 200
+[debug] [2026-03-08T08:30:27.520Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com [omitted]
+[debug] [2026-03-08T08:30:27.520Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.520Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:27.520Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com:enable [none]
+[debug] [2026-03-08T08:30:27.520Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com:enable  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:27.522Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/run.googleapis.com 200
+[debug] [2026-03-08T08:30:27.522Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/run.googleapis.com [omitted]
+[debug] [2026-03-08T08:30:27.524Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/secretmanager.googleapis.com 200
+[debug] [2026-03-08T08:30:27.524Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/secretmanager.googleapis.com [omitted]
+[debug] [2026-03-08T08:30:27.527Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/artifactregistry.googleapis.com 200
+[debug] [2026-03-08T08:30:27.527Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/artifactregistry.googleapis.com [omitted]
+[debug] [2026-03-08T08:30:27.642Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/undefined/locations 403
+[debug] [2026-03-08T08:30:27.642Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/undefined/locations {"error":{"code":403,"message":"Permission denied: Consumer 'projects/undefined' has been suspended.","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"CONSUMER_SUSPENDED","domain":"googleapis.com","metadata":{"containerInfo":"projects/undefined","consumer":"projects/316838101533","service":"firestore.googleapis.com"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Permission denied: Consumer 'projects/undefined' has been suspended."}]}}
+[error] 
+[error] Error: Request to https://firestore.googleapis.com/v1/projects/undefined/locations had HTTP Error: 403, Permission denied: Consumer 'projects/undefined' has been suspended.
+[debug] [2026-03-08T08:30:27.643Z] Error Context: {
+  "body": {
+    "error": {
+      "code": 403,
+      "message": "Permission denied: Consumer 'projects/undefined' has been suspended.",
+      "status": "PERMISSION_DENIED",
+      "details": [
+        {
+          "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+          "reason": "CONSUMER_SUSPENDED",
+          "domain": "googleapis.com",
+          "metadata": {
+            "containerInfo": "projects/undefined",
+            "consumer": "projects/316838101533",
+            "service": "firestore.googleapis.com"
+          }
+        },
+        {
+          "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+          "locale": "en-US",
+          "message": "Permission denied: Consumer 'projects/undefined' has been suspended."
+        }
+      ]
+    }
+  },
+  "response": {
+    "statusCode": 403
+  }
+}
+[debug] [2026-03-08T08:30:28.179Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com:enable 200
+[debug] [2026-03-08T08:30:28.179Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/developerconnect.googleapis.com:enable [omitted]
+[debug] [2026-03-08T08:30:38.189Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:38.189Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:38.189Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-03-08T08:30:38.190Z] >>> [apiv2][(partial)header] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:38.190Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-03-08T08:30:38.370Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions 404
+[debug] [2026-03-08T08:30:38.370Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions {"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}}
+[debug] [2026-03-08T08:30:38.371Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:38.371Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:38.371Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts [none]
+[debug] [2026-03-08T08:30:38.371Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts {"accountId":"firebase-app-hosting-compute","serviceAccount":{"displayName":"Firebase App Hosting compute service account","description":"Default service account used to run builds and deploys for Firebase App Hosting"}}
+[debug] [2026-03-08T08:30:38.901Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts 200
+[debug] [2026-03-08T08:30:38.901Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts [omitted]
+[debug] [2026-03-08T08:30:38.901Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:38.901Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:38.901Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:getIamPolicy [none]
+[debug] [2026-03-08T08:30:39.157Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:getIamPolicy 200
+[debug] [2026-03-08T08:30:39.157Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:getIamPolicy {"version":1,"etag":"BwZMfxkzdSY=","bindings":[{"role":"roles/artifactregistry.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-artifactregistry.iam.gserviceaccount.com"]},{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:353476176382@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-353476176382@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:353476176382-compute@developer.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:kevindotel21@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-353476176382@serverless-robot-prod.iam.gserviceaccount.com"]}]}
+[debug] [2026-03-08T08:30:39.157Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:39.157Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:39.157Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy [none]
+[debug] [2026-03-08T08:30:39.158Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy {"policy":{"version":1,"etag":"BwZMfxkzdSY=","bindings":[{"role":"roles/artifactregistry.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-artifactregistry.iam.gserviceaccount.com"]},{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:353476176382@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-353476176382@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:353476176382-compute@developer.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:kevindotel21@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-353476176382@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/storage.objectViewer","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]}]},"updateMask":"bindings"}
+[debug] [2026-03-08T08:30:39.853Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy 200
+[debug] [2026-03-08T08:30:39.853Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy {"version":1,"etag":"BwZMfxnlcTM=","bindings":[{"role":"roles/artifactregistry.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-artifactregistry.iam.gserviceaccount.com"]},{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:353476176382@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-353476176382@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:353476176382-compute@developer.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:kevindotel21@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-353476176382@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/storage.objectViewer","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]}]}
+[debug] [2026-03-08T08:30:39.853Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:39.853Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:39.854Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps pageSize=100
+[debug] [2026-03-08T08:30:39.955Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps 200
+[debug] [2026-03-08T08:30:39.955Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps {}
+[debug] [2026-03-08T08:30:39.956Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:39.956Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:39.956Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps pageSize=100
+[debug] [2026-03-08T08:30:40.181Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps 200
+[debug] [2026-03-08T08:30:40.181Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps {}
+[debug] [2026-03-08T08:30:40.182Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:40.182Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:40.182Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps [none]
+[debug] [2026-03-08T08:30:40.182Z] >>> [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps {"displayName":"launch-copilot-web"}
+[debug] [2026-03-08T08:30:40.664Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps 200
+[debug] [2026-03-08T08:30:40.664Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/gcloud-hackathon-edoscin8fh6pt/webApps {"name":"operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1"}
+[debug] [2026-03-08T08:30:40.665Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:40.665Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:40.665Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 [none]
+[debug] [2026-03-08T08:30:40.929Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 200
+[debug] [2026-03-08T08:30:40.929Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 {"name":"operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1"}
+[debug] [2026-03-08T08:30:41.431Z] [Create Web app Poller] Retrying task index 0
+[debug] [2026-03-08T08:30:41.431Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:41.431Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:41.431Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 [none]
+[debug] [2026-03-08T08:30:41.586Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 200
+[debug] [2026-03-08T08:30:41.586Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 {"name":"operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1"}
+[debug] [2026-03-08T08:30:42.587Z] [Create Web app Poller] Retrying task index 0
+[debug] [2026-03-08T08:30:42.588Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:42.588Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:42.588Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 [none]
+[debug] [2026-03-08T08:30:42.806Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 200
+[debug] [2026-03-08T08:30:42.806Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 {"name":"operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1"}
+[debug] [2026-03-08T08:30:44.806Z] [Create Web app Poller] Retrying task index 0
+[debug] [2026-03-08T08:30:44.806Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:44.806Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:44.807Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 [none]
+[debug] [2026-03-08T08:30:44.998Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 200
+[debug] [2026-03-08T08:30:44.998Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 {"name":"operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1"}
+[debug] [2026-03-08T08:30:48.999Z] [Create Web app Poller] Retrying task index 0
+[debug] [2026-03-08T08:30:48.999Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:48.999Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:49.000Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 [none]
+[debug] [2026-03-08T08:30:49.266Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 200
+[debug] [2026-03-08T08:30:49.266Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1 {"name":"operations/workflows/YTA0OThjMGMtNzUzZi00OGUwLTgwY2EtN2FhZDJhNzcxNzM1","done":true,"response":{"@type":"type.googleapis.com/google.firebase.service.v1beta1.WebApp","name":"projects/gcloud-hackathon-edoscin8fh6pt/webApps/1:353476176382:web:6d14b6b949e41f78c138af","appId":"1:353476176382:web:6d14b6b949e41f78c138af","displayName":"launch-copilot-web","projectId":"gcloud-hackathon-edoscin8fh6pt","webId":"NzM5Y2EzZTUtOGFlOS00ZWMyLWE5MTctMmM4Mjk4ZDVjNGFk","apiKeyId":"404c063a-a566-46f6-abcb-7a4045b71947","state":"ACTIVE","expireTime":"1970-01-01T00:00:00Z","etag":"1_165cc904-f5b3-4140-9e10-95b615485a59"}}
+[info] ✔  Created a new Firebase web app named "launch-copilot-web" 
+[debug] [2026-03-08T08:30:49.268Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:49.268Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:49.268Z] >>> [apiv2][query] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends backendId=launch-copilot-web
+[debug] [2026-03-08T08:30:49.268Z] >>> [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends {"servingLocality":"GLOBAL_ACCESS","labels":{"deployment-tool":"cli-firebase"},"serviceAccount":"firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com","appId":"1:353476176382:web:6d14b6b949e41f78c138af"}
+[debug] [2026-03-08T08:30:49.711Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:30:49.712Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase firestore:locations --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:49.712Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:30:49.712Z] Platform:      linux
+[debug] [2026-03-08T08:30:49.712Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:30:49.712Z] Time:          Sun Mar 08 2026 04:30:49 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:30:49.712Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:30:50.167Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:30:50.168Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:30:50.168Z] [iam] checking project gcloud-hackathon-edoscin8fh6pt for permissions ["datastore.locations.list","firebase.projects.get"]
+[debug] [2026-03-08T08:30:50.168Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:50.169Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:50.169Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions [none]
+[debug] [2026-03-08T08:30:50.169Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:50.169Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.locations.list","firebase.projects.get"]}
+[debug] [2026-03-08T08:30:50.378Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions 200
+[debug] [2026-03-08T08:30:50.378Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.locations.list","firebase.projects.get"]}
+[debug] [2026-03-08T08:30:50.379Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:50.379Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:50.379Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/locations [none]
+[debug] [2026-03-08T08:30:50.551Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/locations 200
+[debug] [2026-03-08T08:30:50.810Z] <<< [apiv2][status] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends 200
+[debug] [2026-03-08T08:30:50.810Z] <<< [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958649225-64c7f1a7d102b-a0bfaa8f-763459d1","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:30:50.503235949Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:30:50.810Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:50.810Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:50.810Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958649225-64c7f1a7d102b-a0bfaa8f-763459d1 [none]
+[debug] [2026-03-08T08:30:51.010Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958649225-64c7f1a7d102b-a0bfaa8f-763459d1 200
+[debug] [2026-03-08T08:30:51.010Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958649225-64c7f1a7d102b-a0bfaa8f-763459d1 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958649225-64c7f1a7d102b-a0bfaa8f-763459d1","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:30:50.503235949Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:30:51.513Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-launch-copilot-web] Retrying task index 0
+[debug] [2026-03-08T08:30:51.514Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:51.514Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:51.514Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958649225-64c7f1a7d102b-a0bfaa8f-763459d1 [none]
+[debug] [2026-03-08T08:30:51.725Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958649225-64c7f1a7d102b-a0bfaa8f-763459d1 200
+[debug] [2026-03-08T08:30:57.268Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:30:57.269Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase firestore:databases:create (default) --location us-central1 --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:57.269Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:30:57.270Z] Platform:      linux
+[debug] [2026-03-08T08:30:57.270Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:30:57.270Z] Time:          Sun Mar 08 2026 04:30:57 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:30:57.270Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:30:57.776Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:30:57.777Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:30:57.777Z] [iam] checking project gcloud-hackathon-edoscin8fh6pt for permissions ["datastore.databases.create","firebase.projects.get"]
+[debug] [2026-03-08T08:30:57.778Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:57.778Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:57.779Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions [none]
+[debug] [2026-03-08T08:30:57.779Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:57.779Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.databases.create","firebase.projects.get"]}
+[debug] [2026-03-08T08:30:58.290Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions 200
+[debug] [2026-03-08T08:30:58.290Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.databases.create","firebase.projects.get"]}
+[debug] [2026-03-08T08:30:58.290Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:58.291Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:58.291Z] >>> [apiv2][query] POST https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases databaseId=%28default%29
+[debug] [2026-03-08T08:30:58.291Z] >>> [apiv2][body] POST https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases {"locationId":"us-central1","type":"FIRESTORE_NATIVE","databaseEdition":"STANDARD","deleteProtectionState":"DELETE_PROTECTION_DISABLED","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","firestoreDataAccessMode":"DATA_ACCESS_MODE_UNSPECIFIED","mongodbCompatibleDataAccessMode":"DATA_ACCESS_MODE_UNSPECIFIED"}
+[debug] [2026-03-08T08:30:58.571Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:30:58.572Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apphosting:backends:list --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:30:58.572Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:30:58.572Z] Platform:      linux
+[debug] [2026-03-08T08:30:58.572Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:30:58.572Z] Time:          Sun Mar 08 2026 04:30:58 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:30:58.572Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:30:58.697Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:30:58.698Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:30:58.699Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:58.699Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:30:58.700Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/-/backends 
+[debug] [2026-03-08T08:30:59.505Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/-/backends 200
+[debug] [2026-03-08T08:31:01.039Z] <<< [apiv2][status] POST https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases 200
+[debug] [2026-03-08T08:31:01.040Z] <<< [apiv2][body] POST https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases {"name":"projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/operations/4o60-4Ju85BYQSlbm46j9BAqMWxhcnRuZWMtc3ULIgUQAquEl8gQBs2058QIDAovGg","metadata":{"@type":"type.googleapis.com/google.firestore.admin.v1.CreateDatabaseMetadata"},"response":{"@type":"type.googleapis.com/google.firestore.admin.v1.Database","name":"projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)","uid":"f4a38e9b-5b29-4158-90f3-6e82fbb48ee2","createTime":"2026-03-08T08:31:00.627117Z","updateTime":"2026-03-08T08:31:00.627117Z","locationId":"us-central1","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-08T08:31:00.627117Z","appEngineIntegrationMode":"DISABLED","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IJnIrNnxj5MDMK2VrNnxj5MD"}}
+[debug] [2026-03-08T08:31:01.041Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:31:01.041Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:31:01.041Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/operations/4o60-4Ju85BYQSlbm46j9BAqMWxhcnRuZWMtc3ULIgUQAquEl8gQBs2058QIDAovGg [none]
+[debug] [2026-03-08T08:31:01.638Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/operations/4o60-4Ju85BYQSlbm46j9BAqMWxhcnRuZWMtc3ULIgUQAquEl8gQBs2058QIDAovGg 200
+[debug] [2026-03-08T08:34:48.957Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:34:48.959Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase deploy --only firestore --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:34:48.959Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:34:48.959Z] Platform:      linux
+[debug] [2026-03-08T08:34:48.959Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:34:48.959Z] Time:          Sun Mar 08 2026 04:34:48 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:34:48.959Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:34:49.584Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:34:49.584Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:34:49.585Z] [iam] checking project gcloud-hackathon-edoscin8fh6pt for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-03-08T08:34:49.585Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.586Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.586Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions [none]
+[debug] [2026-03-08T08:34:49.586Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:34:49.587Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-03-08T08:34:49.064Z] ----------------------------------------------------------------------
+[debug] [2026-03-08T08:34:49.065Z] Command:       /usr/local/bin/firebase /home/kevin_dotel/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase deploy --only apphosting:launch-copilot-web --project gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:34:49.066Z] CLI Version:   15.8.0
+[debug] [2026-03-08T08:34:49.066Z] Platform:      linux
+[debug] [2026-03-08T08:34:49.066Z] Node Version:  v20.18.2
+[debug] [2026-03-08T08:34:49.066Z] Time:          Sun Mar 08 2026 04:34:49 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-03-08T08:34:49.066Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-08T08:34:49.678Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-08T08:34:49.679Z] > authorizing via signed-in user (kevindotel21@gmail.com)
+[debug] [2026-03-08T08:34:49.679Z] [iam] checking project gcloud-hackathon-edoscin8fh6pt for permissions ["firebase.projects.get"]
+[debug] [2026-03-08T08:34:49.680Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.680Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.681Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions [none]
+[debug] [2026-03-08T08:34:49.681Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:34:49.681Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-03-08T08:34:49.830Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions 200
+[debug] [2026-03-08T08:34:49.831Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'gcloud-hackathon-edoscin8fh6pt'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-08T08:34:49.832Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.833Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.833Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firestore.googleapis.com [none]
+[debug] [2026-03-08T08:34:49.833Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firestore.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:34:49.888Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions 200
+[debug] [2026-03-08T08:34:49.889Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:testIamPermissions {"permissions":["firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'gcloud-hackathon-edoscin8fh6pt'...
+[info] 
+[info] i  deploying apphosting 
+[debug] [2026-03-08T08:34:49.890Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.890Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:49.890Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-03-08T08:34:49.891Z] >>> [apiv2][(partial)header] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:34:49.891Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-03-08T08:34:50.088Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-03-08T08:34:50.088Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-03-08T08:34:50.089Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.089Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.089Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts [none]
+[debug] [2026-03-08T08:34:50.089Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts {"accountId":"firebase-app-hosting-compute","serviceAccount":{"displayName":"Firebase App Hosting compute service account","description":"Default service account used to run builds and deploys for Firebase App Hosting"}}
+[debug] [2026-03-08T08:34:50.258Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firestore.googleapis.com 200
+[debug] [2026-03-08T08:34:50.258Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/firestore.googleapis.com [omitted]
+[info] ✔  firestore: required API firestore.googleapis.com is enabled 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-08T08:34:50.261Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.261Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.261Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default) [none]
+[debug] [2026-03-08T08:34:50.430Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts 409
+[debug] [2026-03-08T08:34:50.430Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts [omitted]
+[debug] [2026-03-08T08:34:50.431Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.431Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.431Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:getIamPolicy [none]
+[debug] [2026-03-08T08:34:50.533Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:getIamPolicy 200
+[debug] [2026-03-08T08:34:50.534Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:getIamPolicy {"version":1,"etag":"BwZMfxsot+k=","bindings":[{"role":"roles/artifactregistry.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-artifactregistry.iam.gserviceaccount.com"]},{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:353476176382@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-353476176382@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:353476176382-compute@developer.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"]},{"role":"roles/firebaserules.system","members":["serviceAccount:service-353476176382@firebase-rules.iam.gserviceaccount.com"]},{"role":"roles/firestore.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firestore.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:kevindotel21@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-353476176382@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/storage.objectViewer","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]}]}
+[debug] [2026-03-08T08:34:50.534Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.534Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.534Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy [none]
+[debug] [2026-03-08T08:34:50.534Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy {"policy":{"version":1,"etag":"BwZMfxsot+k=","bindings":[{"role":"roles/artifactregistry.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-artifactregistry.iam.gserviceaccount.com"]},{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:353476176382@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-353476176382@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:353476176382-compute@developer.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"]},{"role":"roles/firebaserules.system","members":["serviceAccount:service-353476176382@firebase-rules.iam.gserviceaccount.com"]},{"role":"roles/firestore.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firestore.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:kevindotel21@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-353476176382@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/storage.objectViewer","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]}]},"updateMask":"bindings"}
+[debug] [2026-03-08T08:34:50.580Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default) 200
+[debug] [2026-03-08T08:34:50.580Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default) {"name":"projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)","uid":"f4a38e9b-5b29-4158-90f3-6e82fbb48ee2","createTime":"2026-03-08T08:31:00.627117Z","updateTime":"2026-03-08T08:31:00.627117Z","locationId":"us-central1","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-08T08:31:00.627117Z","appEngineIntegrationMode":"DISABLED","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IMyh7Mbyj5MDMKa1kMbyj5MD"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-03-08T08:34:50.581Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.581Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.581Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:test [none]
+[debug] [2026-03-08T08:34:50.581Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:test [omitted]
+[debug] [2026-03-08T08:34:50.764Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:test 200
+[debug] [2026-03-08T08:34:50.764Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:test {}
+[info] ✔  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2026-03-08T08:34:50.765Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.765Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.766Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases pageSize=10&pageToken=
+[debug] [2026-03-08T08:34:50.899Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases 200
+[debug] [2026-03-08T08:34:50.899Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases {}
+[info] i  firestore: uploading rules firestore.rules... 
+[debug] [2026-03-08T08:34:50.899Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.899Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:50.899Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/rulesets [none]
+[debug] [2026-03-08T08:34:50.899Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/rulesets [omitted]
+[debug] [2026-03-08T08:34:51.176Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/rulesets 200
+[debug] [2026-03-08T08:34:51.177Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/rulesets {"name":"projects/gcloud-hackathon-edoscin8fh6pt/rulesets/669e938a-79cd-4fac-a671-fe627c42aef5","source":{"files":[{"content":"rules_version = '2';\n\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if false;\n    }\n  }\n}\n","name":"firestore.rules"}]},"createTime":"2026-03-08T08:34:50.857876Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-03-08T08:34:51.177Z] [rules] created ruleset projects/gcloud-hackathon-edoscin8fh6pt/rulesets/669e938a-79cd-4fac-a671-fe627c42aef5
+[info] i  firestore: deploying indexes... 
+[debug] [2026-03-08T08:34:51.177Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.177Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.178Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/collectionGroups/-/indexes [none]
+[debug] [2026-03-08T08:34:51.315Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/collectionGroups/-/indexes 200
+[debug] [2026-03-08T08:34:51.315Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/collectionGroups/-/indexes {}
+[debug] [2026-03-08T08:34:51.316Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.316Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.316Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* [none]
+[debug] [2026-03-08T08:34:51.329Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy 200
+[debug] [2026-03-08T08:34:51.329Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt:setIamPolicy {"version":1,"etag":"BwZMfyjmRHs=","bindings":[{"role":"roles/artifactregistry.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-artifactregistry.iam.gserviceaccount.com"]},{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:353476176382@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-353476176382@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:353476176382-compute@developer.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"]},{"role":"roles/firebaserules.system","members":["serviceAccount:service-353476176382@firebase-rules.iam.gserviceaccount.com"]},{"role":"roles/firestore.serviceAgent","members":["serviceAccount:service-353476176382@gcp-sa-firestore.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:kevindotel21@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-353476176382@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/storage.objectViewer","members":["serviceAccount:firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com"]}]}
+[debug] [2026-03-08T08:34:51.330Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.330Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.330Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/-/backends 
+[debug] [2026-03-08T08:34:51.410Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* 200
+[debug] [2026-03-08T08:34:51.410Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* {"fields":[{"name":"projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)/collectionGroups/__default__/fields/*","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","arrayConfig":"CONTAINS"}],"state":"READY"}]}}]}
+[debug] [2026-03-08T08:34:51.410Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.411Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.411Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default) [none]
+[debug] [2026-03-08T08:34:51.469Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default) 200
+[debug] [2026-03-08T08:34:51.469Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/databases/(default) {"name":"projects/gcloud-hackathon-edoscin8fh6pt/databases/(default)","uid":"f4a38e9b-5b29-4158-90f3-6e82fbb48ee2","createTime":"2026-03-08T08:31:00.627117Z","updateTime":"2026-03-08T08:31:00.627117Z","locationId":"us-central1","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-08T08:31:00.627117Z","appEngineIntegrationMode":"DISABLED","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IKnCosfyj5MDMKa1kMbyj5MD"}
+[info] ✔  firestore: deployed indexes in firestore.indexes.json successfully for (default) database 
+[debug] [2026-03-08T08:34:51.470Z] [rules] releasing cloud.firestore/(default) with ruleset projects/gcloud-hackathon-edoscin8fh6pt/rulesets/669e938a-79cd-4fac-a671-fe627c42aef5
+[debug] [2026-03-08T08:34:51.470Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.470Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.470Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases/cloud.firestore/(default) [none]
+[debug] [2026-03-08T08:34:51.470Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases/cloud.firestore/(default) {"release":{"name":"projects/gcloud-hackathon-edoscin8fh6pt/releases/cloud.firestore/(default)","rulesetName":"projects/gcloud-hackathon-edoscin8fh6pt/rulesets/669e938a-79cd-4fac-a671-fe627c42aef5"}}
+[debug] [2026-03-08T08:34:51.573Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases/cloud.firestore/(default) 404
+[debug] [2026-03-08T08:34:51.574Z] <<< [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases/cloud.firestore/(default) {"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}}
+[debug] [2026-03-08T08:34:51.574Z] [rules] ruleset update failed, attempting to create instead
+[debug] [2026-03-08T08:34:51.574Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.575Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.575Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases [none]
+[debug] [2026-03-08T08:34:51.575Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases {"name":"projects/gcloud-hackathon-edoscin8fh6pt/releases/cloud.firestore/(default)","rulesetName":"projects/gcloud-hackathon-edoscin8fh6pt/rulesets/669e938a-79cd-4fac-a671-fe627c42aef5"}
+[debug] [2026-03-08T08:34:51.808Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/-/backends 200
+[debug] [2026-03-08T08:34:51.808Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/-/backends {"backends":[{"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web","createTime":"2026-03-08T08:30:50.498515405Z","updateTime":"2026-03-08T08:30:50.845143Z","labels":{"deployment-tool":"cli-firebase"},"uri":"launch-copilot-web--gcloud-hackathon-edoscin8fh6pt.us-central1.hosted.app","uid":"b2819cee-34f9-4ddd-a02d-37262fa1791c","etag":"b0wdzaCiz5-lVyghmPvOlvufnlNbrWwCAdcyqGn6adg","reconciling":false,"servingLocality":"GLOBAL_ACCESS","serviceAccount":"firebase-app-hosting-compute@gcloud-hackathon-edoscin8fh6pt.iam.gserviceaccount.com","appId":"1:353476176382:web:6d14b6b949e41f78c138af"}]}
+[info] i  apphosting: Found backend(s) launch-copilot-web 
+[debug] [2026-03-08T08:34:51.809Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.809Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:51.809Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudresourcemanager.googleapis.com [none]
+[debug] [2026-03-08T08:34:51.810Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudresourcemanager.googleapis.com  x-goog-user-project=gcloud-hackathon-edoscin8fh6pt
+[debug] [2026-03-08T08:34:51.886Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/releases 200
+[debug] [2026-03-08T08:34:52.352Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudresourcemanager.googleapis.com 200
+[debug] [2026-03-08T08:34:52.352Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt/services/cloudresourcemanager.googleapis.com [omitted]
+[debug] [2026-03-08T08:34:52.354Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:52.354Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:52.355Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt [none]
+[debug] [2026-03-08T08:34:52.445Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt 200
+[debug] [2026-03-08T08:34:52.445Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/gcloud-hackathon-edoscin8fh6pt {"projectNumber":"353476176382","projectId":"gcloud-hackathon-edoscin8fh6pt","lifecycleState":"ACTIVE","name":"gcloud-hackathon-edoscin8fh6pt","labels":{"environment":"development","firebase":"enabled","firebase-core":"disabled"},"createTime":"2026-03-08T02:26:09.465846Z"}
+[debug] [2026-03-08T08:34:52.445Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:52.446Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:52.446Z] >>> [apiv2][query] GET https://storage.googleapis.com/storage/v1/b?project=gcloud-hackathon-edoscin8fh6pt 
+[debug] [2026-03-08T08:34:52.598Z] <<< [apiv2][status] GET https://storage.googleapis.com/storage/v1/b?project=gcloud-hackathon-edoscin8fh6pt 200
+[debug] [2026-03-08T08:34:52.598Z] <<< [apiv2][body] GET https://storage.googleapis.com/storage/v1/b?project=gcloud-hackathon-edoscin8fh6pt {"kind":"storage#buckets","items":[{"kind":"storage#bucket","selfLink":"https://www.googleapis.com/storage/v1/b/gcloud-hackathon-edoscin8fh6pt_cloudbuild","id":"gcloud-hackathon-edoscin8fh6pt_cloudbuild","name":"gcloud-hackathon-edoscin8fh6pt_cloudbuild","projectNumber":"353476176382","generation":"1772958672906584018","metageneration":"1","location":"US","storageClass":"STANDARD","etag":"CAE=","timeCreated":"2026-03-08T08:31:13.214Z","updated":"2026-03-08T08:31:13.214Z","softDeletePolicy":{"retentionDurationSeconds":"604800","effectiveTime":"2026-03-08T08:31:13.214Z"},"iamConfiguration":{"bucketPolicyOnly":{"enabled":false},"uniformBucketLevelAccess":{"enabled":false},"publicAccessPrevention":"inherited"},"locationType":"multi-region","rpo":"DEFAULT"}]}
+[info] i  apphosting: Creating Cloud Storage bucket in us-central1 to store App Hosting source code uploads at firebaseapphosting-sources-353476176382-us-central1... 
+[debug] [2026-03-08T08:34:52.599Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:52.599Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:52.599Z] >>> [apiv2][query] POST https://storage.googleapis.com/storage/v1/b project=gcloud-hackathon-edoscin8fh6pt&predefinedAcl=projectPrivate&predefinedDefaultObjectAcl=projectPrivate
+[debug] [2026-03-08T08:34:52.600Z] >>> [apiv2][body] POST https://storage.googleapis.com/storage/v1/b {"name":"firebaseapphosting-sources-353476176382-us-central1","location":"us-central1","lifecycle":{"rule":[{"action":{"type":"Delete"},"condition":{"age":30}}]},"labels":{"apphosting-source-us-central1":"true"}}
+[debug] [2026-03-08T08:34:53.154Z] <<< [apiv2][status] POST https://storage.googleapis.com/storage/v1/b 200
+[debug] [2026-03-08T08:34:53.154Z] <<< [apiv2][body] POST https://storage.googleapis.com/storage/v1/b {"kind":"storage#bucket","selfLink":"https://www.googleapis.com/storage/v1/b/firebaseapphosting-sources-353476176382-us-central1","id":"firebaseapphosting-sources-353476176382-us-central1","name":"firebaseapphosting-sources-353476176382-us-central1","projectNumber":"353476176382","generation":"1772958892623817892","metageneration":"1","location":"US-CENTRAL1","storageClass":"STANDARD","etag":"CAE=","timeCreated":"2026-03-08T08:34:52.776Z","updated":"2026-03-08T08:34:52.776Z","acl":[{"kind":"storage#bucketAccessControl","id":"firebaseapphosting-sources-353476176382-us-central1/project-owners-353476176382","selfLink":"https://www.googleapis.com/storage/v1/b/firebaseapphosting-sources-353476176382-us-central1/acl/project-owners-353476176382","bucket":"firebaseapphosting-sources-353476176382-us-central1","entity":"project-owners-353476176382","role":"OWNER","etag":"CAE=","projectTeam":{"projectNumber":"353476176382","team":"owners"}},{"kind":"storage#bucketAccessControl","id":"firebaseapphosting-sources-353476176382-us-central1/project-editors-353476176382","selfLink":"https://www.googleapis.com/storage/v1/b/firebaseapphosting-sources-353476176382-us-central1/acl/project-editors-353476176382","bucket":"firebaseapphosting-sources-353476176382-us-central1","entity":"project-editors-353476176382","role":"OWNER","etag":"CAE=","projectTeam":{"projectNumber":"353476176382","team":"editors"}},{"kind":"storage#bucketAccessControl","id":"firebaseapphosting-sources-353476176382-us-central1/project-viewers-353476176382","selfLink":"https://www.googleapis.com/storage/v1/b/firebaseapphosting-sources-353476176382-us-central1/acl/project-viewers-353476176382","bucket":"firebaseapphosting-sources-353476176382-us-central1","entity":"project-viewers-353476176382","role":"READER","etag":"CAE=","projectTeam":{"projectNumber":"353476176382","team":"viewers"}}],"defaultObjectAcl":[{"kind":"storage#objectAccessControl","entity":"project-owners-353476176382","role":"OWNER","etag":"CAE=","projectTeam":{"projectNumber":"353476176382","team":"owners"}},{"kind":"storage#objectAccessControl","entity":"project-editors-353476176382","role":"OWNER","etag":"CAE=","projectTeam":{"projectNumber":"353476176382","team":"editors"}},{"kind":"storage#objectAccessControl","entity":"project-viewers-353476176382","role":"READER","etag":"CAE=","projectTeam":{"projectNumber":"353476176382","team":"viewers"}}],"owner":{"entity":"project-owners-353476176382"},"lifecycle":{"rule":[{"action":{"type":"Delete"},"condition":{"age":30}}]},"labels":{"apphosting-source-us-central1":"true"},"softDeletePolicy":{"retentionDurationSeconds":"604800","effectiveTime":"2026-03-08T08:34:52.776Z"},"iamConfiguration":{"bucketPolicyOnly":{"enabled":false},"uniformBucketLevelAccess":{"enabled":false},"publicAccessPrevention":"inherited"},"locationType":"region","satisfiesPZI":true}
+[info] i  apphosting: Zipped source for backend launch-copilot-web 
+[info] i  apphosting: Uploading source for backend launch-copilot-web... 
+[debug] [2026-03-08T08:34:53.213Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.213Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.213Z] >>> [apiv2][query] PUT https://storage.googleapis.com/firebaseapphosting-sources-353476176382-us-central1/launch-copilot-web--11004-fbsv92hUvPuV-.zip [none]
+[debug] [2026-03-08T08:34:53.214Z] >>> [apiv2][body] PUT https://storage.googleapis.com/firebaseapphosting-sources-353476176382-us-central1/launch-copilot-web--11004-fbsv92hUvPuV-.zip [stream]
+[debug] [2026-03-08T08:34:53.448Z] <<< [apiv2][status] PUT https://storage.googleapis.com/firebaseapphosting-sources-353476176382-us-central1/launch-copilot-web--11004-fbsv92hUvPuV-.zip 200
+[debug] [2026-03-08T08:34:53.448Z] <<< [apiv2][body] PUT https://storage.googleapis.com/firebaseapphosting-sources-353476176382-us-central1/launch-copilot-web--11004-fbsv92hUvPuV-.zip undefined
+[info] i  apphosting: Uploaded at gs://firebaseapphosting-sources-353476176382-us-central1/launch-copilot-web--11004-fbsv92hUvPuV-.zip 
+[debug] [2026-03-08T08:34:53.449Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.449Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.449Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.449Z] Checked if tokens are valid: true, expires at: 1772962066463
+[info] i  apphosting: You may also track the rollout(s) at:
+	https://console.firebase.google.com/project/gcloud-hackathon-edoscin8fh6pt/apphosting 
+[debug] [2026-03-08T08:34:53.451Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts 
+[debug] [2026-03-08T08:34:53.452Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds 
+[debug] [2026-03-08T08:34:53.670Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts 200
+[debug] [2026-03-08T08:34:53.671Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts {}
+[debug] [2026-03-08T08:34:53.709Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds 200
+[debug] [2026-03-08T08:34:53.710Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds {}
+[debug] [2026-03-08T08:34:53.710Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.710Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.710Z] >>> [apiv2][query] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds buildId=build-2026-03-08-001
+[debug] [2026-03-08T08:34:53.710Z] >>> [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds {"source":{"archive":{"userStorageUri":"gs://firebaseapphosting-sources-353476176382-us-central1/launch-copilot-web--11004-fbsv92hUvPuV-.zip","rootDirectory":"apps/web"}},"labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-03-08T08:34:53.973Z] <<< [apiv2][status] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds 200
+[debug] [2026-03-08T08:34:53.973Z] <<< [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:34:53.973Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.974Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:53.974Z] >>> [apiv2][query] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts rolloutId=build-2026-03-08-001&validateOnly=true
+[debug] [2026-03-08T08:34:53.974Z] >>> [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts {"build":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-03-08T08:34:54.197Z] <<< [apiv2][status] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts 200
+[debug] [2026-03-08T08:34:54.197Z] <<< [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts {"name":"","metadata":{},"done":true}
+[debug] [2026-03-08T08:34:54.198Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:54.198Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:54.198Z] >>> [apiv2][query] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts rolloutId=build-2026-03-08-001&validateOnly=false
+[debug] [2026-03-08T08:34:54.198Z] >>> [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts {"build":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-03-08T08:34:54.416Z] <<< [apiv2][status] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts 200
+[debug] [2026-03-08T08:34:54.416Z] <<< [apiv2][body] POST https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958894048-64c7f2914c691-951b8de5-aea897bc","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:54.064320263Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:34:54.416Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:54.416Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:54.417Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:54.417Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:54.417Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958894048-64c7f2914c691-951b8de5-aea897bc [none]
+[debug] [2026-03-08T08:34:54.417Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:34:54.618Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958894048-64c7f2914c691-951b8de5-aea897bc 200
+[debug] [2026-03-08T08:34:54.618Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958894048-64c7f2914c691-951b8de5-aea897bc {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958894048-64c7f2914c691-951b8de5-aea897bc","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:54.064320263Z","endTime":"2026-03-08T08:34:54.097892089Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":true,"response":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.Rollout","name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/rollouts/build-2026-03-08-001","createTime":"2026-03-08T08:34:54.058114504Z","updateTime":"2026-03-08T08:34:54.095144Z","state":"QUEUED","build":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","labels":{"deployment-tool":"cli-firebase"},"uid":"ba3f297c-66b9-4bf9-a215-bff92b5896fd","etag":"kwaHis7DZtyMPtUlkFR6URGXLV2OYfDf3WLhETYftn4","reconciling":false}}
+[debug] [2026-03-08T08:34:54.632Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:34:54.632Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:34:55.133Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:34:55.133Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:55.133Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:55.133Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:34:55.324Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:34:55.324Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:34:56.325Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:34:56.325Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:56.325Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:56.325Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:34:56.515Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:34:56.515Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:34:58.516Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:34:58.516Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:58.517Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:34:58.517Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:34:58.699Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:34:58.699Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:35:02.700Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:35:02.701Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:02.701Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:02.701Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:35:02.930Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:35:02.930Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:35:10.763Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:35:10.764Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:10.764Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:10.764Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:35:11.263Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:35:11.263Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:35:21.264Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:35:21.264Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:21.265Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:21.265Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:35:21.509Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:35:21.509Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:35:31.510Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:35:31.510Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:31.510Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:31.510Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:35:31.666Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:35:31.666Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:35:41.502Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:35:41.504Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:41.504Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:41.504Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:35:41.723Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:35:41.724Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:35:51.725Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:35:51.725Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:51.725Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:35:51.727Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:35:51.953Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:35:51.953Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:36:01.952Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:36:01.953Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:01.953Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:01.953Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:36:02.264Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:36:02.264Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:36:12.105Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:36:12.106Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:12.106Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:12.106Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:36:12.338Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:36:12.339Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:36:22.340Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:36:22.340Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:22.340Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:22.340Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:36:22.539Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200
+[debug] [2026-03-08T08:36:22.539Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 {"name":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556","metadata":{"@type":"type.googleapis.com/google.firebase.apphosting.v1beta.OperationMetadata","createTime":"2026-03-08T08:34:53.625164304Z","target":"projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/backends/launch-copilot-web/builds/build-2026-03-08-001","verb":"create","requestedCancellation":false,"apiVersion":"v1beta"},"done":false}
+[debug] [2026-03-08T08:36:32.540Z] [create-gcloud-hackathon-edoscin8fh6pt-us-central1-backend-launch-copilot-web-build-build-2026-03-08-001] Retrying task index 0
+[debug] [2026-03-08T08:36:32.541Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:32.541Z] Checked if tokens are valid: true, expires at: 1772962066463
+[debug] [2026-03-08T08:36:32.541Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 [none]
+[debug] [2026-03-08T08:36:32.664Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/gcloud-hackathon-edoscin8fh6pt/locations/us-central1/operations/operation-1772958893585-64c7f290db4a4-2e29a973-69ff0556 200

@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json --noEmit false",
     "start": "node --import tsx src/index.ts",
+    "start:prod": "node dist/index.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@copilot/graph": "workspace:*",
     "@copilot/shared": "workspace:*",
     "@deepgram/sdk": "^3.9.0",
+    "@google-cloud/firestore": "^8.0.0",
     "@google-cloud/speech": "^7.3.0",
     "@hono/node-server": "^1.19.11",
     "dotenv": "^17.3.1",
