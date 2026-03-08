@@ -7,6 +7,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { applyPatch } from "@copilot/graph";
 import { attachSttServer } from "./stt-server.js";
+import { textToSpeechGeminiLive } from "./tts-server.js";
 import {
   TranscriptChunk,
   type GraphPatchEvent,
@@ -107,6 +108,22 @@ app.post("/sessions/:id/transcript-chunks", async (c) => {
   );
 
   return c.json({ ok: true, patch });
+});
+
+app.post("/tts", async (c) => {
+  const { text } = await c.req.json<{ text: string }>();
+  if (!text) {
+    return c.json({ error: "Missing text field" }, 400);
+  }
+
+  console.log(`[TTS] Request: "${text.substring(0, 80)}..."`);
+  const audioBase64 = await textToSpeechGeminiLive(text);
+
+  if (!audioBase64) {
+    return c.json({ error: "TTS failed" }, 500);
+  }
+
+  return c.json({ audio: audioBase64, sampleRate: 24000, channels: 1, bitDepth: 16 });
 });
 
 app.get("/sessions/:id/events", async (c) => {

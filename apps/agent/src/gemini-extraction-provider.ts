@@ -16,7 +16,8 @@ Return valid JSON with this schema:
   "addDecisions": [{ "id": "string", "text": "string", "timestamp": number }],
   "addActions": [{ "id": "string", "text": "string", "owner": "string", "timestamp": number }],
   "addIssues": [{ "id": "string", "text": "string", "severity": "blocker|warning|info", "timestamp": number }],
-  "highlightNodeIds": ["string"]
+  "highlightNodeIds": ["string"],
+  "interruptMessage": "string or null"
 }
 
 Rules:
@@ -25,7 +26,17 @@ Rules:
 - Skip filler, small talk, generic nouns, and weak structure.
 - Prioritize blockers, dependencies, owners, milestones, explicit decisions, and concrete actions.
 - Use lowercase-with-hyphens IDs.
-- Use the earliest chunk timestamp for extracted items.`;
+- Use the earliest chunk timestamp for extracted items.
+
+INTERRUPT RULES (for interruptMessage):
+- You are an AI meeting assistant named Cricket.
+- Set interruptMessage ONLY when BOTH conditions are true:
+  1. Someone says "Cricket" (the wake word is detected — confirmed by the system).
+  2. They ask a question or request information (e.g. "Cricket, any blockers?", "Cricket, who owns the API?", "Hey Cricket, what are we missing?").
+- When both conditions are met, respond concisely (1-2 sentences) using the full meeting context — transcript history, tracked issues/blockers, ownership gaps, and the knowledge graph.
+- Keep interruptMessage conversational and direct, as if speaking aloud in the meeting.
+- If cricketDetected is false in the prompt, ALWAYS set interruptMessage to null — no exceptions.
+- You may respond multiple times in a session.`;
 
 const FILLER_WORDS = new Set([
   "a",
@@ -257,24 +268,45 @@ export class GeminiExtractionProvider implements ExtractionProvider {
 
     const combinedText = chunks.map((chunk) => `${chunk.speaker}: ${chunk.text}`).join("\n");
     const earliestTimestamp = chunks[0].timestamp;
+
+    // Deterministic Cricket detection — only tell Gemini to respond
+    // if "cricket" appears in the new transcript text
+    const cricketDetected = /\bcricket\b/i.test(combinedText);
+
+    if (cricketDetected) {
+      this.logger.log(`[GeminiExtraction] 🦗 Cricket wake word detected in: "${combinedText.substring(0, 80)}"`);
+    }
+
+    // Accumulated issues for Cricket's context
+    const existingIssues = state.issues.length > 0
+      ? state.issues.map((i) => `[${i.severity}] ${i.text}`).join("\n")
+      : "(none)";
+
     const context = buildLiveExtractionContext(state, chunks, {
       transcriptLines: this.liveConfig.contextTranscriptLines,
       nodeLimit: this.liveConfig.contextNodeLimit,
       edgeLimit: this.liveConfig.contextEdgeLimit,
     });
+
     const prompt = `## Live transcript batch (${chunks.length} chunk(s))
 ${combinedText}
 Earliest timestamp: ${earliestTimestamp}
 
 ${context}
 
-Extract any relevant graph information from the live transcript batch above.`;
+## Existing tracked issues/blockers (for Cricket context)
+${existingIssues}
+
+## cricketDetected: ${cricketDetected}
+
+Extract any relevant graph information from the live transcript batch above.${cricketDetected ? "\nCricket was called — generate an interruptMessage responding to the user's question using meeting context." : "\nDo NOT set interruptMessage."}`;
 
     this.logEvent("batch-flush", {
       reason,
       waitMs,
       chunks: chunks.length,
       meaningfulWordCount,
+      cricketDetected,
     });
 
     try {
@@ -299,6 +331,10 @@ Extract any relevant graph information from the live transcript batch above.`;
       const normalizeMs = this.timers.now() - normalizeStartedAt;
       const totalMs = this.timers.now() - batchStartedAt;
 
+      if (patch.interruptMessage) {
+        this.logger.log(`[GeminiExtraction] 🦗 Cricket says: "${patch.interruptMessage}"`);
+      }
+
       this.logEvent("batch-complete", {
         reason,
         waitMs,
@@ -311,6 +347,7 @@ Extract any relevant graph information from the live transcript batch above.`;
         addDecisions: patch.addDecisions?.length ?? 0,
         addActions: patch.addActions?.length ?? 0,
         addIssues: patch.addIssues?.length ?? 0,
+        interruptMessage: patch.interruptMessage ?? null,
       });
 
       for (let index = 0; index < resolvers.length; index += 1) {

@@ -23,6 +23,7 @@ import {
 } from "@copilot/shared";
 import { DeepgramSTTAdapter } from "@/lib/deepgramSTTAdapter";
 import { useLiveTranscript } from "@/lib/useLiveTranscript";
+import { useCricketTTS } from "@/lib/useCricketTTS";
 
 type ConnectionState = "connecting" | "connected" | "disconnected";
 type Mode = "replay" | "live";
@@ -196,6 +197,11 @@ export default function Home() {
   const { chunks: liveChunks, isRecording, error: liveError, start, stop } =
     useLiveTranscript(sessionId, adapter, handleSessionSwapped);
 
+  // Cricket TTS — plays interruptMessage audio from SSE events
+  const cricketTTS = useCricketTTS();
+  const cricketSpeakRef = useRef(cricketTTS.speak);
+  cricketSpeakRef.current = cricketTTS.speak;
+
   useEffect(() => {
     let cancelled = false;
 
@@ -281,6 +287,11 @@ export default function Home() {
 
       const patch = JSON.parse(event.data) as GraphPatchEvent;
       setSessionState((current) => (current ? mergeSessionState(current, patch) : current));
+
+      // 🦗 Cricket TTS: if the patch contains an interruptMessage, speak it
+      if (patch.interruptMessage) {
+        cricketSpeakRef.current(patch.interruptMessage);
+      }
     };
 
     source.onerror = () => {
@@ -496,6 +507,19 @@ export default function Home() {
           />
         </div>
       </aside>
+
+      {/* ── Cricket speaking indicator ── */}
+      {cricketTTS.isSpeaking && cricketTTS.currentMessage && (
+        <div className="animate-overlay-appear absolute bottom-6 left-1/2 z-20 -translate-x-1/2">
+          <div className="overlay-panel flex items-center gap-2 rounded-xl px-4 py-2.5 shadow-lg">
+            <span className="text-lg">🦗</span>
+            <span className="text-sm font-medium text-[var(--text-primary)]">
+              Cricket: {cricketTTS.currentMessage}
+            </span>
+            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
