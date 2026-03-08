@@ -10,8 +10,14 @@ export {
   GraphPatchEvent,
   SessionState,
 } from "./schemas.js";
+export {
+  demoTranscriptChunks,
+  demoExtractions,
+  demoExtractionByChunkId,
+} from "./demo-script.js";
 
 export type {
   NodeType as NodeTypeValue,
   EdgeType as EdgeTypeValue,
 } from "./schemas.js";
+export type { DemoExtraction } from "./demo-script.js";

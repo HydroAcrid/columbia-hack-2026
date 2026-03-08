@@ -1,62 +1,13 @@
 import type {
-  TranscriptChunk,
   GraphNode,
   GraphEdge,
   DecisionItem,
   ActionItem,
   IssueItem,
 } from "@copilot/shared";
+import { demoTranscriptChunks } from "@copilot/shared";
 
-export const mockTranscript: TranscriptChunk[] = [
-  {
-    id: "t1",
-    speaker: "Priya (PM)",
-    text: "Alright, let's lock down the launch timeline. We're targeting March 28 for the public release of Project Aurora.",
-    timestamp: 0,
-  },
-  {
-    id: "t2",
-    speaker: "Kevin (Eng)",
-    text: "The API gateway is ready, but the billing integration still depends on the payments team finishing their v2 migration.",
-    timestamp: 8,
-  },
-  {
-    id: "t3",
-    speaker: "Sara (Design)",
-    text: "The onboarding flow redesign is done on my end. I handed it off to frontend last week.",
-    timestamp: 18,
-  },
-  {
-    id: "t4",
-    speaker: "Kevin (Eng)",
-    text: "We picked that up. The new onboarding screens are in staging, but we haven't gotten QA sign-off yet.",
-    timestamp: 26,
-  },
-  {
-    id: "t5",
-    speaker: "Priya (PM)",
-    text: "Who owns the QA pass for onboarding? I don't see it assigned anywhere.",
-    timestamp: 34,
-  },
-  {
-    id: "t6",
-    speaker: "Marcus (Ops)",
-    text: "I can flag that with the QA lead, but honestly the staging environment has been flaky. We should fix the deploy pipeline first.",
-    timestamp: 40,
-  },
-  {
-    id: "t7",
-    speaker: "Priya (PM)",
-    text: "Okay, decision: we fix staging reliability before we run the final QA pass. Kevin, can your team own that?",
-    timestamp: 50,
-  },
-  {
-    id: "t8",
-    speaker: "Kevin (Eng)",
-    text: "Yes, we'll prioritise the staging fix. But if payments v2 slips, billing integration blocks the whole launch.",
-    timestamp: 58,
-  },
-];
+export const mockTranscript = demoTranscriptChunks;
 
 export const mockNodes: GraphNode[] = [
   { id: "priya", label: "Priya", type: "person" },
