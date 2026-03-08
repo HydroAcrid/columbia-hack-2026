@@ -1,7 +1,9 @@
+import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { applyPatch } from "@copilot/graph";
+import { startSttServer } from "./stt-server.js";
 import {
   TranscriptChunk,
   demoExtractionByChunkId,
@@ -127,6 +129,7 @@ const port = Number(process.env.PORT ?? 4000);
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`Agent service listening on http://localhost:${port}`);
+  startSttServer();
 });
 
 function createSession(id: string): SessionRecord {

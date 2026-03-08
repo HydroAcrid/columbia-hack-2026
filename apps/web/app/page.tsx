@@ -21,7 +21,7 @@ import {
   type SessionState,
   type TranscriptChunk,
 } from "@copilot/shared";
-import { GeminiLiveAdapter } from "@/lib/geminiLiveAdapter";
+import { DeepgramSTTAdapter } from "@/lib/deepgramSTTAdapter";
 import { useLiveTranscript } from "@/lib/useLiveTranscript";
 
 const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? "http://localhost:4000";
@@ -161,20 +161,14 @@ export default function Home() {
   const lastEventIdRef = useRef<string | null>(null);
 
   // Live adapter — only when connected to a live session
-  const adapterRef = useRef<GeminiLiveAdapter | null>(null);
+  const adapterRef = useRef<DeepgramSTTAdapter | null>(null);
   const adapter = useMemo(() => {
     if (!sessionId || mode !== "live") return null;
-    const a = new GeminiLiveAdapter(sessionId, speaker);
+    const a = new DeepgramSTTAdapter(sessionId);
     adapterRef.current = a;
     return a;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, mode]);
-
-  useEffect(() => {
-    if (adapterRef.current) {
-      adapterRef.current.speaker = speaker;
-    }
-  }, [speaker]);
 
   const { chunks: liveChunks, isRecording, error, start, stop } =
     useLiveTranscript(sessionId, adapter);
