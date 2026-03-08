@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TranscriptPanel } from "@/components/TranscriptPanel";
 import { GraphPanel } from "@/components/GraphPanel";
 import { InsightsPanel } from "@/components/InsightsPanel";
@@ -154,7 +154,6 @@ export default function Home() {
   const [isReplaying, setIsReplaying] = useState(false);
   
   const [mode, setMode] = useState<Mode>("replay");
-  const [speaker, setSpeaker] = useState("Speaker 1");
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const replayRunRef = useRef(0);
@@ -170,8 +169,16 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, mode]);
 
-  const { chunks: liveChunks, isRecording, error, start, stop } =
-    useLiveTranscript(sessionId, adapter);
+  // When the hook silently creates a new backend session (after a 404),
+  // it tells us the new ID so we can update React state + localStorage.
+  const handleSessionSwapped = useCallback((newId: string) => {
+    console.log("[page] Session swapped to:", newId);
+    setSessionId(newId);
+    writeStorage(SESSION_STORAGE_KEY, newId);
+  }, []);
+
+  const { chunks: liveChunks, isRecording, error: liveError, start, stop } =
+    useLiveTranscript(sessionId, adapter, handleSessionSwapped);
 
   useEffect(() => {
     let cancelled = false;
@@ -447,10 +454,8 @@ export default function Home() {
             mode={mode}
             isRecording={isRecording}
             isSupported={true}
-            speaker={speaker}
-            error={error}
+            error={liveError}
             onModeChange={handleModeChange}
-            onSpeakerChange={setSpeaker}
             onMicToggle={handleMicToggle}
           />
           <TranscriptPanel chunks={transcriptToDisplay} />

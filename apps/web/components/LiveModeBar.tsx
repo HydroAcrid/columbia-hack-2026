@@ -6,10 +6,8 @@ interface LiveModeBarProps {
   mode: Mode;
   isRecording: boolean;
   isSupported: boolean;
-  speaker: string;
   error: string | null;
   onModeChange: (mode: Mode) => void;
-  onSpeakerChange: (name: string) => void;
   onMicToggle: () => void;
 }
 
@@ -17,10 +15,8 @@ export function LiveModeBar({
   mode,
   isRecording,
   isSupported,
-  speaker,
   error,
   onModeChange,
-  onSpeakerChange,
   onMicToggle,
 }: LiveModeBarProps) {
   return (
@@ -52,13 +48,6 @@ export function LiveModeBar({
       {/* Row 2: live controls (only in live mode) */}
       {mode === "live" && (
         <div className="flex items-center gap-2 flex-wrap">
-          <input
-            type="text"
-            value={speaker}
-            onChange={(e) => onSpeakerChange(e.target.value)}
-            placeholder="Speaker name"
-            className="h-7 min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-2 text-xs text-zinc-700 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-          />
 
           {isSupported ? (
             <button
@@ -69,7 +58,7 @@ export function LiveModeBar({
                   : "bg-emerald-500 text-white hover:bg-emerald-600"
               }`}
             >
-              {isRecording ? "⏹ Stop" : "🎙 Start mic"}
+              {isRecording ? "⏹ Stop" : "🎙 Start recording"}
             </button>
           ) : (
             <span className="text-xs text-amber-600 dark:text-amber-400">
