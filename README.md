@@ -105,11 +105,13 @@ Important: trigger creation required the 2nd-gen repository trigger path and an 
 
 ## Local development
 
+This repo uses `pnpm` via Corepack. On a clean machine, run `corepack enable` once first.
+
 ```bash
-pnpm install
-pnpm build
-pnpm --filter @copilot/agent dev
-pnpm --filter @copilot/web dev
+corepack pnpm install
+corepack pnpm build
+corepack pnpm --filter @copilot/agent dev
+corepack pnpm --filter @copilot/web dev
 ```
 
 If you need the deployed agent in local web dev:

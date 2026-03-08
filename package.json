@@ -1,6 +1,7 @@
 {
   "name": "launch-copilot",
   "private": true,
+  "packageManager": "pnpm@10.31.0",
   "scripts": {
     "dev": "pnpm --filter @copilot/web dev",
     "dev:agent": "pnpm --filter @copilot/agent dev",
