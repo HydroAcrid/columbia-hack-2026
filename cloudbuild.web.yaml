@@ -12,11 +12,11 @@ steps:
       - -ceu
       - |
         AGENT_URL="$(gcloud run services describe "${_AGENT_SERVICE_NAME}" --region="${_REGION}" --format='value(status.url)')"
-        if [[ -z "${AGENT_URL}" ]]; then
+        if [[ -z "$${AGENT_URL}" ]]; then
           echo "Unable to resolve Cloud Run URL for ${_AGENT_SERVICE_NAME} in ${PROJECT_ID}/${_REGION}" >&2
           exit 1
         fi
-        printf '%s' "${AGENT_URL}" > /workspace/.agent_url
+        printf '%s' "$${AGENT_URL}" > /workspace/.agent_url
 
   - name: gcr.io/cloud-builders/docker
     entrypoint: bash
@@ -26,7 +26,7 @@ steps:
         AGENT_URL="$(cat /workspace/.agent_url)"
         docker build \
           --file=apps/web/Dockerfile \
-          --build-arg=NEXT_PUBLIC_AGENT_URL="${AGENT_URL}" \
+          --build-arg=NEXT_PUBLIC_AGENT_URL="$${AGENT_URL}" \
           --tag="${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}" \
           .
 
