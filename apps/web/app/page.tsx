@@ -405,7 +405,7 @@ export default function Home() {
               </svg>
             </div>
             <span className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
-              Launch Copilot
+              Cricket
             </span>
             <span className="hidden text-[12px] text-[var(--text-tertiary)] sm:inline">
               /

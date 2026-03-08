@@ -1,4 +1,4 @@
-# Live Launch Meeting Copilot
+# Cricket
 
 Hackathon project for a launch-planning meeting copilot with:
 
