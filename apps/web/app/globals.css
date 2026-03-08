@@ -1,28 +1,118 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────
+   Design tokens
+   ────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces */
+  --surface: #fafaf9;
+  --surface-panel: #ffffff;
+
+  /* Borders */
+  --border: #e8e5e3;
+  --border-light: #f0eeec;
+
+  /* Text */
+  --text-primary: #1c1917;
+  --text-secondary: #78716c;
+  --text-tertiary: #a8a29e;
+
+  /* Accents */
+  --accent-blue: #3b82f6;
+  --accent-green: #16a34a;
+  --accent-amber: #d97706;
+  --accent-red: #dc2626;
+  --accent-violet: #7c3aed;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* Fonts */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-panel: var(--surface-panel);
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ──────────────────────────────────────────
+   Base
+   ────────────────────────────────────────── */
 
 html,
 body {
   height: 100%;
   margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--surface);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ──────────────────────────────────────────
+   React Flow overrides
+   ────────────────────────────────────────── */
+
+.react-flow__background {
+  background: var(--surface) !important;
+}
+
+.react-flow__controls {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: var(--surface-panel) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 4px !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--surface) !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button svg {
+  fill: var(--text-secondary) !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.react-flow__edge-textbg {
+  fill: transparent !important;
+}
+
+.react-flow__edge-text {
+  fill: var(--text-tertiary) !important;
+  font-size: 10px !important;
+}
+
+.react-flow__handle {
+  width: 6px !important;
+  height: 6px !important;
+  background: var(--border) !important;
+  border: none !important;
 }

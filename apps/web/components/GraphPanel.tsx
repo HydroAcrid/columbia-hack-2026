@@ -16,49 +16,70 @@ import {
 import "@xyflow/react/dist/style.css";
 import type { GraphNode, GraphEdge } from "@copilot/shared";
 
-// ---------- colour mapping ----------
-
-const NODE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  person:    { bg: "#eff6ff", border: "#3b82f6", text: "#1e40af" },
-  team:      { bg: "#f0fdf4", border: "#22c55e", text: "#166534" },
-  system:    { bg: "#fdf4ff", border: "#a855f7", text: "#6b21a8" },
-  milestone: { bg: "#fff7ed", border: "#f97316", text: "#9a3412" },
+const NODE_STYLES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+  person: {
+    bg: "#f8fafc",
+    border: "#bfdbfe",
+    text: "#1e3a5f",
+    badge: "#93c5fd",
+  },
+  team: {
+    bg: "#f8fdf9",
+    border: "#bbf7d0",
+    text: "#14532d",
+    badge: "#86efac",
+  },
+  system: {
+    bg: "#faf8ff",
+    border: "#ddd6fe",
+    text: "#4c1d95",
+    badge: "#c4b5fd",
+  },
+  milestone: {
+    bg: "#fffbf5",
+    border: "#fed7aa",
+    text: "#7c2d12",
+    badge: "#fdba74",
+  },
 };
 
-// ---------- custom node ----------
+const TYPE_LABELS: Record<string, string> = {
+  person: "Person",
+  team: "Team",
+  system: "System",
+  milestone: "Milestone",
+};
 
 function EntityNode({ data }: { data: { label: string; nodeType: string } }) {
-  const colors = NODE_COLORS[data.nodeType] ?? NODE_COLORS.system;
+  const style = NODE_STYLES[data.nodeType] ?? NODE_STYLES.system;
   return (
     <div
-      className="rounded-lg border-2 px-4 py-2 shadow-sm text-sm font-medium min-w-[80px] text-center"
+      className="rounded-xl border px-5 py-3 text-center transition-shadow hover:shadow-md"
       style={{
-        background: colors.bg,
-        borderColor: colors.border,
-        color: colors.text,
+        background: style.bg,
+        borderColor: style.border,
+        color: style.text,
+        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+        minWidth: 100,
       }}
     >
-      <Handle type="target" position={Position.Top} className="!bg-zinc-400" />
-      <span className="mr-1.5 text-xs opacity-60">{typeIcon(data.nodeType)}</span>
-      {data.label}
-      <Handle type="source" position={Position.Bottom} className="!bg-zinc-400" />
+      <Handle type="target" position={Position.Top} />
+      <div className="text-[13px] font-semibold leading-tight">{data.label}</div>
+      <div
+        className="mx-auto mt-1.5 w-fit rounded-full px-2 py-px text-[9px] font-semibold uppercase tracking-wider"
+        style={{
+          background: style.badge + "33",
+          color: style.text,
+        }}
+      >
+        {TYPE_LABELS[data.nodeType] ?? data.nodeType}
+      </div>
+      <Handle type="source" position={Position.Bottom} />
     </div>
   );
 }
 
-function typeIcon(t: string) {
-  switch (t) {
-    case "person":    return "👤";
-    case "team":      return "👥";
-    case "system":    return "⚙️";
-    case "milestone": return "🏁";
-    default:          return "●";
-  }
-}
-
 const nodeTypes: NodeTypes = { entity: EntityNode };
-
-// ---------- layout helpers ----------
 
 function toFlowNodes(nodes: GraphNode[]): Node[] {
   const byType: Record<string, GraphNode[]> = {};
@@ -72,45 +93,44 @@ function toFlowNodes(nodes: GraphNode[]): Node[] {
 
   for (const type of typeOrder) {
     const group = byType[type] ?? [];
-    let x = 0;
-    for (const n of group) {
+    const totalWidth = group.length * 200;
+    const offsetX = -totalWidth / 2;
+    for (let i = 0; i < group.length; i++) {
       result.push({
-        id: n.id,
+        id: group[i].id,
         type: "entity",
-        position: { x: x * 220, y },
-        data: { label: n.label, nodeType: n.type },
+        position: { x: offsetX + i * 200, y },
+        data: { label: group[i].label, nodeType: group[i].type },
       });
-      x++;
     }
-    if (group.length > 0) y += 120;
+    if (group.length > 0) y += 160;
   }
 
   return result;
 }
 
-const EDGE_STYLES: Record<string, { stroke: string; strokeDasharray?: string }> = {
-  owns:       { stroke: "#22c55e" },
-  depends_on: { stroke: "#3b82f6", strokeDasharray: "6 3" },
-  blocks:     { stroke: "#ef4444" },
-  relates_to: { stroke: "#a1a1aa", strokeDasharray: "4 4" },
+const EDGE_COLORS: Record<string, string> = {
+  owns: "#a3d9b1",
+  depends_on: "#93b5e1",
+  blocks: "#e5a0a0",
+  relates_to: "#c8c4c0",
 };
 
 function toFlowEdges(edges: GraphEdge[]): Edge[] {
   return edges.map((e) => {
-    const style = EDGE_STYLES[e.type] ?? EDGE_STYLES.relates_to;
+    const stroke = EDGE_COLORS[e.type] ?? EDGE_COLORS.relates_to;
+    const showLabel = e.type === "blocks" || e.type === "depends_on";
     return {
       id: e.id,
       source: e.source,
       target: e.target,
-      label: e.label ?? e.type,
-      type: "default",
-      style,
-      labelStyle: { fontSize: 11, fill: "#71717a" },
+      label: showLabel ? (e.label ?? e.type) : undefined,
+      type: "smoothstep",
+      style: { stroke, strokeWidth: 1.5 },
+      labelStyle: { fontSize: 10, fill: "#a8a29e" },
     };
   });
 }
-
-// ---------- component ----------
 
 interface GraphPanelProps {
   nodes: GraphNode[];
@@ -128,9 +148,11 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <h2 className="shrink-0 border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-        Knowledge Graph
-      </h2>
+      <div className="shrink-0 border-b border-[var(--border)] px-5 py-3.5">
+        <h2 className="text-[13px] font-semibold text-[var(--text-secondary)]">
+          Knowledge Graph
+        </h2>
+      </div>
       <div className="flex-1">
         <ReactFlow
           nodes={flowNodes}
@@ -140,9 +162,10 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
           onInit={onInit}
           nodeTypes={nodeTypes}
           fitView
+          fitViewOptions={{ padding: 0.3 }}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={20} size={1} />
+          <Background gap={40} size={0.4} color="#d6d3d1" />
           <Controls showInteractive={false} />
         </ReactFlow>
       </div>

@@ -11,25 +11,32 @@ interface InsightsPanelProps {
 export function InsightsPanel({ decisions, actions, issues }: InsightsPanelProps) {
   return (
     <div className="flex h-full flex-col">
-      <h2 className="shrink-0 border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-        Insights
-      </h2>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="shrink-0 border-b border-[var(--border)] px-5 py-3.5">
+        <h2 className="text-[13px] font-semibold text-[var(--text-secondary)]">
+          Insights
+        </h2>
+      </div>
+      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-8">
         {/* Decisions */}
         <section>
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-            <span>◆</span> Decisions
-            <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-[13px] font-semibold text-[var(--text-secondary)]">
+              Decisions
+            </h3>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-blue-600">
               {decisions.length}
             </span>
-          </h3>
-          <ul className="mt-2 space-y-2">
+          </div>
+          <ul className="space-y-2.5">
             {decisions.map((d) => (
               <li
                 key={d.id}
-                className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200"
+                className="rounded-lg border border-[var(--border)] bg-[var(--surface-panel)] p-3.5 transition-shadow hover:shadow-md"
+                style={{ borderLeftWidth: 3, borderLeftColor: "#60a5fa" }}
               >
-                {d.text}
+                <p className="text-[13px] leading-relaxed text-[var(--text-primary)]">
+                  {d.text}
+                </p>
               </li>
             ))}
           </ul>
@@ -37,22 +44,27 @@ export function InsightsPanel({ decisions, actions, issues }: InsightsPanelProps
 
         {/* Action items */}
         <section>
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-            <span>✓</span> Action Items
-            <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-[13px] font-semibold text-[var(--text-secondary)]">
+              Action Items
+            </h3>
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-emerald-600">
               {actions.length}
             </span>
-          </h3>
-          <ul className="mt-2 space-y-2">
+          </div>
+          <ul className="space-y-2.5">
             {actions.map((a) => (
               <li
                 key={a.id}
-                className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm dark:border-emerald-800 dark:bg-emerald-950"
+                className="rounded-lg border border-[var(--border)] bg-[var(--surface-panel)] p-3.5 transition-shadow hover:shadow-md"
+                style={{ borderLeftWidth: 3, borderLeftColor: "#34d399" }}
               >
-                <p className="text-emerald-900 dark:text-emerald-200">{a.text}</p>
+                <p className="text-[13px] leading-relaxed text-[var(--text-primary)]">
+                  {a.text}
+                </p>
                 {a.owner && (
-                  <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
-                    Owner: {a.owner}
+                  <p className="mt-1.5 text-[11px] text-[var(--text-tertiary)]">
+                    {a.owner}
                   </p>
                 )}
               </li>
@@ -62,23 +74,30 @@ export function InsightsPanel({ decisions, actions, issues }: InsightsPanelProps
 
         {/* Issues / Blockers */}
         <section>
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
-            <span>⚠</span> Issues
-            <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-900 dark:text-red-300">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-[13px] font-semibold text-[var(--text-secondary)]">
+              Issues
+            </h3>
+            <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-red-600">
               {issues.length}
             </span>
-          </h3>
-          <ul className="mt-2 space-y-2">
+          </div>
+          <ul className="space-y-2.5">
             {issues.map((issue) => (
               <li
                 key={issue.id}
-                className="rounded-md border px-3 py-2 text-sm"
-                style={severityStyle(issue.severity)}
+                className="rounded-lg border border-[var(--border)] bg-[var(--surface-panel)] p-3.5 transition-shadow hover:shadow-md"
+                style={{
+                  borderLeftWidth: 3,
+                  borderLeftColor: issue.severity === "blocker" ? "#f87171" : "#fbbf24",
+                }}
               >
-                <p>{issue.text}</p>
-                <p className="mt-1 text-xs font-medium uppercase opacity-70">
-                  {issue.severity}
-                </p>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[13px] leading-relaxed text-[var(--text-primary)]">
+                    {issue.text}
+                  </p>
+                  <SeverityBadge severity={issue.severity} />
+                </div>
               </li>
             ))}
           </ul>
@@ -88,25 +107,20 @@ export function InsightsPanel({ decisions, actions, issues }: InsightsPanelProps
   );
 }
 
-function severityStyle(severity: string): React.CSSProperties {
-  switch (severity) {
-    case "blocker":
-      return {
-        borderColor: "#fca5a5",
-        backgroundColor: "#fef2f2",
-        color: "#991b1b",
-      };
-    case "warning":
-      return {
-        borderColor: "#fcd34d",
-        backgroundColor: "#fffbeb",
-        color: "#92400e",
-      };
-    default:
-      return {
-        borderColor: "#d1d5db",
-        backgroundColor: "#f9fafb",
-        color: "#374151",
-      };
-  }
+function SeverityBadge({ severity }: { severity: string }) {
+  const config: Record<string, { bg: string; text: string }> = {
+    blocker: { bg: "#fef2f2", text: "#dc2626" },
+    warning: { bg: "#fffbeb", text: "#d97706" },
+    info: { bg: "#f0f9ff", text: "#0284c7" },
+  };
+  const c = config[severity] ?? config.info;
+
+  return (
+    <span
+      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+      style={{ background: c.bg, color: c.text }}
+    >
+      {severity}
+    </span>
+  );
 }
