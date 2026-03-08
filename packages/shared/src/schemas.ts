@@ -18,6 +18,14 @@ export const TranscriptChunk = z.object({
 });
 export type TranscriptChunk = z.infer<typeof TranscriptChunk>;
 
+export const SpeakerProfile = z.object({
+  speakerId: z.string(),
+  name: z.string(),
+  confidence: z.enum(["low", "medium", "high"]).default("low"),
+  evidenceCount: z.number().int().nonnegative().default(0),
+});
+export type SpeakerProfile = z.infer<typeof SpeakerProfile>;
+
 // ---------- Graph primitives ----------
 
 export const GraphNode = z.object({
@@ -70,6 +78,7 @@ export const GraphPatchEvent = z.object({
   addDecisions: z.array(DecisionItem).optional(),
   addActions: z.array(ActionItem).optional(),
   addIssues: z.array(IssueItem).optional(),
+  upsertSpeakerProfiles: z.array(SpeakerProfile).optional(),
   highlightNodeIds: z.array(z.string()).optional(),
   interruptMessage: z.string().optional(),
 });
@@ -85,5 +94,6 @@ export const SessionState = z.object({
   decisions: z.array(DecisionItem),
   actions: z.array(ActionItem),
   issues: z.array(IssueItem),
+  speakerProfiles: z.array(SpeakerProfile).default([]),
 });
 export type SessionState = z.infer<typeof SessionState>;

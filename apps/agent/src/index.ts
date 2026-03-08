@@ -14,6 +14,7 @@ import {
 } from "@copilot/shared";
 import { readAgentConfig } from "./config.js";
 import { createExtractionProvider } from "./extraction-provider.js";
+import { inferSpeakerProfileUpdates } from "./speaker-identity.js";
 import {
   createSessionStore,
   type SessionEvent,
@@ -63,7 +64,14 @@ app.post("/sessions/:id/transcript-chunks", async (c) => {
   }
 
   session.state.transcript.push(chunk);
-  const patch = await provider.extract(chunk, session.state);
+  const speakerProfileUpdates = inferSpeakerProfileUpdates(session.state);
+  const extractionPatch = await provider.extract(chunk, session.state);
+  const patch: GraphPatchEvent = speakerProfileUpdates.length
+    ? {
+      ...extractionPatch,
+      upsertSpeakerProfiles: speakerProfileUpdates,
+    }
+    : extractionPatch;
   mergePatchIntoSession(session, patch);
   const event = createSessionEvent(session, patch);
   await store.saveSession(session);
@@ -171,6 +179,7 @@ function mergePatchIntoSession(session: StoredSession, patch: GraphPatchEvent) {
   mergeItems(session.state.decisions, patch.addDecisions);
   mergeItems(session.state.actions, patch.addActions);
   mergeItems(session.state.issues, patch.addIssues);
+  mergeSpeakerProfiles(session.state, patch.upsertSpeakerProfiles);
 }
 
 function mergeItems<T extends { id: string }>(target: T[], items: T[] | undefined) {
@@ -183,6 +192,27 @@ function mergeItems<T extends { id: string }>(target: T[], items: T[] | undefine
       target.push(item);
     }
   }
+}
+
+function mergeSpeakerProfiles(
+  state: SessionState,
+  profiles: SessionState["speakerProfiles"] | undefined,
+) {
+  if (!profiles?.length) {
+    return;
+  }
+
+  const merged = new Map(
+    state.speakerProfiles.map((profile) => [profile.speakerId, profile]),
+  );
+
+  for (const profile of profiles) {
+    merged.set(profile.speakerId, profile);
+  }
+
+  state.speakerProfiles = [...merged.values()].sort((left, right) =>
+    left.speakerId.localeCompare(right.speakerId),
+  );
 }
 
 function createSessionEvent(session: StoredSession, patch: GraphPatchEvent): SessionEvent {

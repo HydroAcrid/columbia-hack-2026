@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { TranscriptChunk } from "@copilot/shared";
+import type { SpeakerProfile, TranscriptChunk } from "@copilot/shared";
 
 interface TranscriptPanelProps {
   chunks: TranscriptChunk[];
+  speakerProfiles?: SpeakerProfile[];
 }
 
 /* ──────────────────────────────────────────
@@ -20,8 +21,7 @@ const AVATAR_PALETTE = [
   { bg: "#e0e7ff", text: "#4f46e5" },
 ];
 
-function getInitials(speaker: string): string {
-  const name = speaker.replace(/\s*\(.*\)\s*$/, "").trim();
+function getInitials(name: string): string {
   const parts = name.split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
@@ -54,8 +54,9 @@ function formatTime(seconds: number): string {
    TranscriptPanel
    ────────────────────────────────────────── */
 
-export function TranscriptPanel({ chunks }: TranscriptPanelProps) {
+export function TranscriptPanel({ chunks, speakerProfiles }: TranscriptPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const profileMap = new Map((speakerProfiles ?? []).map((profile) => [profile.speakerId, profile]));
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -100,10 +101,13 @@ export function TranscriptPanel({ chunks }: TranscriptPanelProps) {
         ) : (
           <div className="space-y-0.5">
             {chunks.map((chunk, index) => {
+              const profile = profileMap.get(chunk.speaker);
               const palette = hashSpeaker(chunk.speaker);
-              const initials = getInitials(chunk.speaker);
-              const name = getName(chunk.speaker);
-              const role = getRole(chunk.speaker);
+              const rawName = getName(chunk.speaker);
+              const inferredName = profile ? `${profile.name}${profile.confidence === "low" ? "?" : ""}` : null;
+              const name = inferredName ?? rawName;
+              const initials = getInitials(name);
+              const role = profile ? chunk.speaker : getRole(chunk.speaker);
 
               return (
                 <div

@@ -39,6 +39,7 @@ function createEmptySessionState(id: string): SessionState {
     decisions: [],
     actions: [],
     issues: [],
+    speakerProfiles: [],
   };
 }
 
@@ -73,7 +74,24 @@ function mergeSessionState(state: SessionState, patch: GraphPatchEvent): Session
     decisions: appendUnique<DecisionItem>(state.decisions, patch.addDecisions),
     actions: appendUnique<ActionItem>(state.actions, patch.addActions),
     issues: appendUnique<IssueItem>(state.issues, patch.addIssues),
+    speakerProfiles: mergeSpeakerProfiles(state.speakerProfiles, patch.upsertSpeakerProfiles),
   };
+}
+
+function mergeSpeakerProfiles(
+  profiles: SessionState["speakerProfiles"],
+  nextProfiles: GraphPatchEvent["upsertSpeakerProfiles"],
+) {
+  if (!nextProfiles?.length) {
+    return profiles;
+  }
+
+  const merged = new Map(profiles.map((profile) => [profile.speakerId, profile]));
+  for (const profile of nextProfiles) {
+    merged.set(profile.speakerId, profile);
+  }
+
+  return [...merged.values()].sort((left, right) => left.speakerId.localeCompare(right.speakerId));
 }
 
 function appendTranscriptChunk(state: SessionState, chunk: TranscriptChunk): SessionState {
@@ -456,7 +474,7 @@ export default function Home() {
             onModeChange={handleModeChange}
             onMicToggle={handleMicToggle}
           />
-          <TranscriptPanel chunks={transcriptToDisplay} />
+          <TranscriptPanel chunks={transcriptToDisplay} speakerProfiles={state.speakerProfiles} />
         </div>
       </aside>
 

@@ -19,5 +19,6 @@ export {
 export type {
   NodeType as NodeTypeValue,
   EdgeType as EdgeTypeValue,
+  SpeakerProfile,
 } from "./schemas.js";
 export type { DemoExtraction } from "./demo-script.js";

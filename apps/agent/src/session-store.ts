@@ -51,6 +51,7 @@ export function createEmptyStoredSession(id: string): StoredSession {
       decisions: [],
       actions: [],
       issues: [],
+      speakerProfiles: [],
     },
     nextEventId: 1,
   };
