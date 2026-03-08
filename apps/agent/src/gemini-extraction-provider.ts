@@ -1,26 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { GraphPatchEvent, SessionState, TranscriptChunk } from "@copilot/shared";
+import type { LiveExtractionConfig } from "./config.js";
 import type { ExtractionProvider } from "./extraction-provider.js";
 import {
-  buildGraphExtractionContext,
+  buildLiveExtractionContext,
   normalizeGraphPatch,
 } from "./graph-engine.js";
 
-/**
- * GeminiExtractionProvider
- *
- * Batches transcript chunks over a time window, then sends a single
- * combined extraction request to Gemini. This prevents 429 rate limits
- * from Deepgram's rapid-fire small fragments.
- *
- * Uses Gemini's JSON mode to get structured output.
- */
+const SYSTEM_PROMPT = `You analyze live meeting transcript batches and extract only the most useful structured updates.
 
-const SYSTEM_PROMPT = `You are an AI assistant that analyzes live meeting transcript chunks.
-Given one or more chunks of meeting dialogue along with existing context,
-extract structured information for a knowledge graph.
-
-You MUST respond with valid JSON matching this exact schema:
+Return valid JSON with this schema:
 {
   "addNodes": [{ "id": "string", "label": "string", "type": "person|team|system|milestone" }],
   "addEdges": [{ "id": "string", "source": "string", "target": "string", "type": "owns|depends_on|blocks|relates_to", "label": "string" }],
@@ -30,36 +19,121 @@ You MUST respond with valid JSON matching this exact schema:
   "highlightNodeIds": ["string"]
 }
 
-IMPORTANT RULES:
-- Only extract information that is EXPLICITLY stated or strongly implied.
-- If the text is filler, small talk, or off-topic, return empty arrays for everything.
-- Reuse canonical entity IDs and labels from the provided entity inventory whenever relevant.
-- If a spoken variant or ASR misspelling maps to a canonical entity, use the canonical label and canonical ID.
-- Do NOT create near-duplicate nodes for the same concept with slightly different spelling or pronunciation.
-- Keep labels concise (2-5 words).
-- Use lowercase-with-hyphens for all IDs (e.g. "priya", "api-gateway", "e-priya-launch").
-- For edge IDs, use the format "e-<source>-<target>".
-- For decision/action/issue IDs, use the format "d-<short-key>", "a-<short-key>", "i-<short-key>".
-- The timestamp should use the earliest chunk's timestamp.
-- highlightNodeIds should list IDs of nodes most relevant to these chunks.
+Rules:
 - Prefer no output over noisy output.
-- Do NOT create nodes for generic nouns like backend, database, system, flow, or team unless they are explicitly scoped.
-- Avoid weak "relates_to" edges unless they add concrete structure.
-- Keep the graph clean and selective: blockers, dependencies, ownership, milestones, and concrete actions matter most.`;
+- Reuse provided canonical IDs and labels whenever possible.
+- Skip filler, small talk, generic nouns, and weak structure.
+- Prioritize blockers, dependencies, owners, milestones, explicit decisions, and concrete actions.
+- Use lowercase-with-hyphens IDs.
+- Use the earliest chunk timestamp for extracted items.`;
 
-// How long to wait for more chunks before sending a batch to Gemini
-const BATCH_WINDOW_MS = 3000;
+const FILLER_WORDS = new Set([
+  "a",
+  "ah",
+  "alright",
+  "cool",
+  "gotcha",
+  "hmm",
+  "hm",
+  "i",
+  "if",
+  "just",
+  "like",
+  "mm",
+  "mhm",
+  "oh",
+  "ok",
+  "okay",
+  "right",
+  "so",
+  "sure",
+  "the",
+  "uh",
+  "uhh",
+  "um",
+  "umm",
+  "well",
+  "yeah",
+  "yep",
+]);
+
+interface GenerateContentResult {
+  response: {
+    text(): string;
+  };
+}
+
+interface GenerativeModelClient {
+  generateContent(prompt: string): Promise<GenerateContentResult>;
+}
+
+interface TimerApi {
+  setTimeout: typeof globalThis.setTimeout;
+  clearTimeout: typeof globalThis.clearTimeout;
+  now: () => number;
+}
+
+interface LoggerApi {
+  log: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+}
+
+export interface GeminiExtractionProviderOptions {
+  modelClient?: GenerativeModelClient;
+  timers?: Partial<TimerApi>;
+  logger?: Partial<LoggerApi>;
+}
+
+const DEFAULT_TIMERS: TimerApi = {
+  setTimeout: globalThis.setTimeout.bind(globalThis),
+  clearTimeout: globalThis.clearTimeout.bind(globalThis),
+  now: () => Date.now(),
+};
+
+const DEFAULT_LOGGER: LoggerApi = {
+  log: (...args) => console.log(...args),
+  warn: (...args) => console.warn(...args),
+  error: (...args) => console.error(...args),
+};
+
+type FlushReason = "idle" | "max";
 
 export class GeminiExtractionProvider implements ExtractionProvider {
-  private model;
-
-  // Batching state
+  private model: GenerativeModelClient;
+  private readonly liveConfig: LiveExtractionConfig;
+  private readonly timers: TimerApi;
+  private readonly logger: LoggerApi;
   private pendingChunks: TranscriptChunk[] = [];
-  private batchTimer: ReturnType<typeof setTimeout> | null = null;
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
+  private maxTimer: ReturnType<typeof setTimeout> | null = null;
   private batchResolvers: Array<(patch: GraphPatchEvent) => void> = [];
   private latestState: SessionState | null = null;
+  private batchStartedAt = 0;
 
-  constructor(apiKey: string, model: string) {
+  constructor(
+    apiKey: string,
+    model: string,
+    liveConfig: LiveExtractionConfig,
+    options: GeminiExtractionProviderOptions = {},
+  ) {
+    this.liveConfig = liveConfig;
+    this.timers = {
+      setTimeout: options.timers?.setTimeout ?? DEFAULT_TIMERS.setTimeout,
+      clearTimeout: options.timers?.clearTimeout ?? DEFAULT_TIMERS.clearTimeout,
+      now: options.timers?.now ?? DEFAULT_TIMERS.now,
+    };
+    this.logger = {
+      log: options.logger?.log ?? DEFAULT_LOGGER.log,
+      warn: options.logger?.warn ?? DEFAULT_LOGGER.warn,
+      error: options.logger?.error ?? DEFAULT_LOGGER.error,
+    };
+
+    if (options.modelClient) {
+      this.model = options.modelClient;
+      return;
+    }
+
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({
       model,
@@ -72,83 +146,200 @@ export class GeminiExtractionProvider implements ExtractionProvider {
   }
 
   async extract(chunk: TranscriptChunk, state: SessionState): Promise<GraphPatchEvent> {
-    // Add this chunk to the pending batch
+    const isNewBatch = this.pendingChunks.length === 0;
     this.pendingChunks.push(chunk);
     this.latestState = state;
 
+    if (isNewBatch) {
+      this.batchStartedAt = this.timers.now();
+      this.startMaxTimer();
+      this.logEvent("batch-start", {
+        chunkId: chunk.id,
+        speaker: chunk.speaker,
+      });
+    } else {
+      this.logEvent("batch-merge", {
+        chunkId: chunk.id,
+        pendingChunks: this.pendingChunks.length,
+      });
+    }
+
+    this.resetIdleTimer();
+
     return new Promise<GraphPatchEvent>((resolve) => {
       this.batchResolvers.push(resolve);
-
-      // Reset the timer — we wait BATCH_WINDOW_MS from the LAST chunk
-      if (this.batchTimer) {
-        clearTimeout(this.batchTimer);
-      }
-
-      this.batchTimer = setTimeout(() => {
-        this.flushBatch();
-      }, BATCH_WINDOW_MS);
     });
   }
 
-  private async flushBatch() {
-    // Grab the current batch
-    const chunks = this.pendingChunks;
-    const resolvers = this.batchResolvers;
-    const state = this.latestState;
+  private startMaxTimer() {
+    if (this.maxTimer) {
+      this.timers.clearTimeout(this.maxTimer);
+    }
 
-    // Clear immediately so new chunks start a new batch
-    this.pendingChunks = [];
-    this.batchResolvers = [];
-    this.batchTimer = null;
+    this.maxTimer = this.timers.setTimeout(() => {
+      void this.handleFlushTrigger("max");
+    }, this.liveConfig.batchMaxMs);
+  }
 
-    if (chunks.length === 0 || !state) {
-      for (const r of resolvers) r({});
+  private resetIdleTimer(delay = this.liveConfig.batchIdleMs) {
+    if (this.idleTimer) {
+      this.timers.clearTimeout(this.idleTimer);
+    }
+
+    this.idleTimer = this.timers.setTimeout(() => {
+      void this.handleFlushTrigger("idle");
+    }, delay);
+  }
+
+  private async handleFlushTrigger(reason: FlushReason) {
+    if (!this.pendingChunks.length) {
       return;
     }
 
-    // Combine the text from all batched chunks
-    const combinedText = chunks.map((c) => `${c.speaker}: ${c.text}`).join("\n");
+    const waitMs = this.timers.now() - this.batchStartedAt;
+    const meaningfulWordCount = countMeaningfulWords(this.pendingChunks);
+    const meaningful = meaningfulWordCount >= this.liveConfig.minMeaningfulWords;
+
+    if (reason === "idle" && !meaningful && waitMs < this.liveConfig.batchMaxMs) {
+      const remainingMs = Math.max(1, this.liveConfig.batchMaxMs - waitMs);
+      this.logEvent("batch-hold", {
+        reason,
+        waitMs,
+        pendingChunks: this.pendingChunks.length,
+        meaningfulWordCount,
+      });
+      this.resetIdleTimer(Math.min(this.liveConfig.batchIdleMs, remainingMs));
+      return;
+    }
+
+    await this.flushBatch(reason, waitMs, meaningfulWordCount);
+  }
+
+  private async flushBatch(reason: FlushReason, waitMs: number, meaningfulWordCount: number) {
+    const chunks = this.pendingChunks;
+    const resolvers = this.batchResolvers;
+    const state = this.latestState;
+    const batchStartedAt = this.batchStartedAt;
+
+    this.pendingChunks = [];
+    this.batchResolvers = [];
+    this.latestState = null;
+    this.batchStartedAt = 0;
+
+    if (this.idleTimer) {
+      this.timers.clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+    if (this.maxTimer) {
+      this.timers.clearTimeout(this.maxTimer);
+      this.maxTimer = null;
+    }
+
+    if (chunks.length === 0 || !state) {
+      for (const resolve of resolvers) {
+        resolve({});
+      }
+      return;
+    }
+
+    if (meaningfulWordCount < this.liveConfig.minMeaningfulWords) {
+      this.logEvent("batch-skip-filler", {
+        reason,
+        waitMs,
+        meaningfulWordCount,
+        chunks: chunks.length,
+      });
+      for (const resolve of resolvers) {
+        resolve({});
+      }
+      return;
+    }
+
+    const combinedText = chunks.map((chunk) => `${chunk.speaker}: ${chunk.text}`).join("\n");
     const earliestTimestamp = chunks[0].timestamp;
-
-    const context = buildGraphExtractionContext(state, chunks);
-
-    const prompt = `## New transcript text (${chunks.length} chunk(s))
+    const context = buildLiveExtractionContext(state, chunks, {
+      transcriptLines: this.liveConfig.contextTranscriptLines,
+      nodeLimit: this.liveConfig.contextNodeLimit,
+      edgeLimit: this.liveConfig.contextEdgeLimit,
+    });
+    const prompt = `## Live transcript batch (${chunks.length} chunk(s))
 ${combinedText}
 Earliest timestamp: ${earliestTimestamp}
 
 ${context}
 
-Extract any relevant graph information from the new transcript text above.`;
+Extract any relevant graph information from the live transcript batch above.`;
+
+    this.logEvent("batch-flush", {
+      reason,
+      waitMs,
+      chunks: chunks.length,
+      meaningfulWordCount,
+    });
 
     try {
-      console.log(`[GeminiExtraction] Extracting batch of ${chunks.length} chunks: "${combinedText.substring(0, 80)}..."`);
+      const modelStartedAt = this.timers.now();
       const result = await this.model.generateContent(prompt);
-      const text = result.response.text();
-      const patch = normalizeGraphPatch(JSON.parse(text) as GraphPatchEvent, state);
+      const modelMs = this.timers.now() - modelStartedAt;
+      const rawText = result.response.text();
 
-      const hasContent =
-        (patch.addNodes?.length ?? 0) +
-        (patch.addEdges?.length ?? 0) +
-        (patch.addDecisions?.length ?? 0) +
-        (patch.addActions?.length ?? 0) +
-        (patch.addIssues?.length ?? 0);
-
-      if (hasContent > 0) {
-        console.log(
-          `[GeminiExtraction] ✅ Extracted: ${patch.addNodes?.length ?? 0} nodes, ${patch.addEdges?.length ?? 0} edges, ${patch.addDecisions?.length ?? 0} decisions, ${patch.addActions?.length ?? 0} actions, ${patch.addIssues?.length ?? 0} issues`,
-        );
-      } else {
-        console.log(`[GeminiExtraction] (no extractable content in batch)`);
+      let parsedPatch: GraphPatchEvent;
+      try {
+        parsedPatch = JSON.parse(rawText) as GraphPatchEvent;
+      } catch (error) {
+        this.logger.error("[GeminiExtraction] Invalid JSON response", error);
+        for (const resolve of resolvers) {
+          resolve({});
+        }
+        return;
       }
 
-      // The first resolver gets the real patch, rest get empty
-      // (the backend already applies the patch to session state from the first call)
-      for (let i = 0; i < resolvers.length; i++) {
-        resolvers[i](i === 0 ? patch : {});
+      const normalizeStartedAt = this.timers.now();
+      const patch = normalizeGraphPatch(parsedPatch, state);
+      const normalizeMs = this.timers.now() - normalizeStartedAt;
+      const totalMs = this.timers.now() - batchStartedAt;
+
+      this.logEvent("batch-complete", {
+        reason,
+        waitMs,
+        modelMs,
+        normalizeMs,
+        totalMs,
+        chunks: chunks.length,
+        addNodes: patch.addNodes?.length ?? 0,
+        addEdges: patch.addEdges?.length ?? 0,
+        addDecisions: patch.addDecisions?.length ?? 0,
+        addActions: patch.addActions?.length ?? 0,
+        addIssues: patch.addIssues?.length ?? 0,
+      });
+
+      for (let index = 0; index < resolvers.length; index += 1) {
+        resolvers[index](index === 0 ? patch : {});
       }
-    } catch (err) {
-      console.error("[GeminiExtraction] Failed:", err);
-      for (const r of resolvers) r({});
+    } catch (error) {
+      this.logEvent("batch-failed", {
+        reason,
+        waitMs,
+        meaningfulWordCount,
+        totalMs: this.timers.now() - batchStartedAt,
+      });
+      this.logger.error("[GeminiExtraction] Failed", error);
+      for (const resolve of resolvers) {
+        resolve({});
+      }
     }
   }
+
+  private logEvent(event: string, fields: Record<string, unknown>) {
+    this.logger.log(`[GeminiExtraction] ${event} ${JSON.stringify(fields)}`);
+  }
+}
+
+function countMeaningfulWords(chunks: TranscriptChunk[]) {
+  return chunks.reduce((count, chunk) => count + tokenizeMeaningfulWords(chunk.text).length, 0);
+}
+
+function tokenizeMeaningfulWords(text: string) {
+  const tokens = text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
+  return tokens.filter((token) => token.length > 1 && !FILLER_WORDS.has(token));
 }

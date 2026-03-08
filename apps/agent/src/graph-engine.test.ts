@@ -8,6 +8,7 @@ import type {
   SessionState,
 } from "@copilot/shared";
 import {
+  buildLiveExtractionContext,
   mergeActionItems,
   mergeDecisionItems,
   mergeIssueItems,
@@ -175,4 +176,71 @@ test("protects graph budgets by prioritizing blocker structure in dense sessions
       label: "blocking sign-in",
     },
   ]);
+});
+
+test("builds a slim live extraction context with limited transcript, nodes, edges, and speakers", () => {
+  const state = createState({
+    transcript: [
+      { id: "old-1", speaker: "Speaker 2", text: "Legacy Service was mentioned earlier", timestamp: 1 },
+      { id: "old-2", speaker: "Speaker 0", text: "Kevin owns launch prep", timestamp: 2 },
+      { id: "old-3", speaker: "Speaker 1", text: "Cloud Run is blocking launch", timestamp: 3 },
+    ],
+    nodes: [
+      { id: "kevin", label: "Kevin", type: "person" },
+      { id: "launch", label: "Launch", type: "milestone" },
+      { id: "cloud-run", label: "Cloud Run", type: "system" },
+      { id: "supabase", label: "Supabase", type: "system" },
+      { id: "legacy-service", label: "Legacy Service", type: "system" },
+    ],
+    edges: [
+      {
+        id: "e-cloud-run-launch",
+        source: "cloud-run",
+        target: "launch",
+        type: "blocks",
+        label: "blocks",
+      },
+      {
+        id: "e-legacy-supabase",
+        source: "legacy-service",
+        target: "supabase",
+        type: "relates_to",
+        label: "mentioned with",
+      },
+    ],
+    speakerProfiles: [
+      { speakerId: "Speaker 0", name: "Kevin", confidence: "high", evidenceCount: 3 },
+      { speakerId: "Speaker 9", name: "Marcus", confidence: "medium", evidenceCount: 2 },
+    ],
+  });
+
+  const context = buildLiveExtractionContext(
+    state,
+    [
+      {
+        id: "new-1",
+        speaker: "Speaker 0",
+        text: "Kevin says Cloud Run is still blocking launch with Supabase auth.",
+        timestamp: 4,
+      },
+    ],
+    {
+      transcriptLines: 2,
+      nodeLimit: 3,
+      edgeLimit: 1,
+    },
+  );
+
+  assert.match(context, /- Speaker 0 => Kevin \(high\)/);
+  assert.doesNotMatch(context, /Speaker 9 => Marcus/);
+  assert.match(context, /- kevin \| Kevin \| person/);
+  assert.match(context, /- launch \| Launch \| milestone/);
+  assert.match(context, /- cloud-run \| Cloud Run \| system/);
+  assert.doesNotMatch(context, /Legacy Service/);
+  assert.match(context, /- cloud-run -\[blocks\]-> launch/);
+  assert.doesNotMatch(context, /e-legacy-supabase/);
+  assert.match(context, /Kevin owns launch prep/);
+  assert.match(context, /Cloud Run is blocking launch/);
+  assert.doesNotMatch(context, /Legacy Service was mentioned earlier/);
+  assert.match(context, /"superbase" => "Supabase"/);
 });

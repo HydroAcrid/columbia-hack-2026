@@ -5,7 +5,7 @@ import {
   TranscriptChunk,
 } from "@copilot/shared";
 
-import type { VertexConfig } from "./config.js";
+import type { AgentConfig } from "./config.js";
 import { GeminiExtractionProvider } from "./gemini-extraction-provider.js";
 
 export interface ExtractionProvider {
@@ -27,8 +27,8 @@ export class DemoExtractionProvider implements ExtractionProvider {
 class HybridExtractionProvider implements ExtractionProvider {
   private gemini: GeminiExtractionProvider;
 
-  constructor(apiKey: string, model: string) {
-    this.gemini = new GeminiExtractionProvider(apiKey, model);
+  constructor(apiKey: string, model: string, config: AgentConfig["liveExtraction"]) {
+    this.gemini = new GeminiExtractionProvider(apiKey, model, config);
   }
 
   async extract(chunk: TranscriptChunk, state: SessionState): Promise<GraphPatchEvent> {
@@ -45,17 +45,21 @@ class HybridExtractionProvider implements ExtractionProvider {
 
 export interface ExtractionProviderMetadata {
   mode: "demo" | "hybrid";
-  vertex: VertexConfig;
+  vertex: AgentConfig["vertex"];
 }
 
-export function createExtractionProvider(vertex: VertexConfig) {
+export function createExtractionProvider(config: AgentConfig) {
+  const { vertex, liveExtraction } = config;
   const geminiApiKey = process.env.GEMINI_API_KEY;
-  const geminiModel = process.env.GEMINI_MODEL ?? vertex.model ?? "gemini-2.5-pro";
+  const geminiModel = process.env.GEMINI_MODEL ?? vertex.model ?? "gemini-2.5-flash";
 
   if (geminiApiKey) {
-    console.log(`[Extraction] Using Hybrid provider (demo lookup + Gemini for live) with ${geminiModel}`);
+    console.log(
+      `[Extraction] Using Hybrid provider (demo lookup + Gemini for live) with ${geminiModel} ` +
+      `(idle ${liveExtraction.batchIdleMs}ms, max ${liveExtraction.batchMaxMs}ms)`,
+    );
     return {
-      provider: new HybridExtractionProvider(geminiApiKey, geminiModel),
+      provider: new HybridExtractionProvider(geminiApiKey, geminiModel, liveExtraction),
       metadata: {
         mode: "hybrid",
         vertex,

@@ -42,6 +42,19 @@ const EDGE_PRIORITY: Record<GraphEdge["type"], number> = {
   relates_to: 1,
 };
 
+const LIVE_ALIAS_CANONICALS = new Set([
+  "Cloud Run",
+  "Google Cloud",
+  "Postgres",
+  "Supabase",
+]);
+
+export interface LiveExtractionContextOptions {
+  transcriptLines: number;
+  nodeLimit: number;
+  edgeLimit: number;
+}
+
 export function buildGraphExtractionContext(state: SessionState, chunks: TranscriptChunk[]) {
   const chunkIds = new Set(chunks.map((chunk) => chunk.id));
   const priorTranscript = state.transcript
@@ -92,6 +105,64 @@ export function buildGraphExtractionContext(state: SessionState, chunks: Transcr
     "",
     "## Recent conversation context before these chunks",
     priorTranscript.length ? priorTranscript.join("\n") : "(start of conversation)",
+  ].join("\n");
+}
+
+export function buildLiveExtractionContext(
+  state: SessionState,
+  chunks: TranscriptChunk[],
+  options: LiveExtractionContextOptions,
+) {
+  const chunkIds = new Set(chunks.map((chunk) => chunk.id));
+  const priorChunks = state.transcript
+    .filter((chunk) => !chunkIds.has(chunk.id))
+    .slice(-options.transcriptLines);
+  const priorTranscript = priorChunks.map((chunk) => `${chunk.speaker}: ${chunk.text}`);
+  const batchText = normalizeGraphLabel(chunks.map((chunk) => chunk.text).join(" "));
+  const priorText = normalizeGraphLabel(priorChunks.map((chunk) => chunk.text).join(" "));
+  const selectedNodes = selectLiveContextNodes(
+    state.nodes,
+    state.edges,
+    batchText,
+    priorText,
+    options.nodeLimit,
+  );
+  const selectedNodeIds = new Set(selectedNodes.map((node) => node.id));
+  const selectedEdges = selectLiveContextEdges(state.edges, selectedNodeIds, options.edgeLimit);
+  const speakerIds = new Set(chunks.map((chunk) => chunk.speaker));
+  const speakerInventory = state.speakerProfiles
+    .filter((profile) => speakerIds.has(profile.speakerId))
+    .map((profile) => `- ${profile.speakerId} => ${profile.name} (${profile.confidence})`)
+    .sort();
+  const aliasInventory = getCanonicalAliasEntries()
+    .filter((entry) => LIVE_ALIAS_CANONICALS.has(entry.canonical))
+    .map((entry) => `- "${entry.spoken}" => "${entry.canonical}"`);
+
+  return [
+    "## Reuse these canonical entities when relevant",
+    selectedNodes.length
+      ? selectedNodes.map((node) => `- ${node.id} | ${node.label} | ${node.type}`).join("\n")
+      : "(none yet)",
+    "",
+    "## Relevant existing edges",
+    selectedEdges.length
+      ? selectedEdges.map((edge) => `- ${edge.source} -[${edge.type}]-> ${edge.target}`).join("\n")
+      : "(none yet)",
+    "",
+    "## Demo-critical spoken corrections",
+    aliasInventory.length ? aliasInventory.join("\n") : "(none)",
+    "",
+    "## Speakers in this batch",
+    speakerInventory.length ? speakerInventory.join("\n") : "(none yet)",
+    "",
+    "## Recent conversation context",
+    priorTranscript.length ? priorTranscript.join("\n") : "(start of conversation)",
+    "",
+    `## Clean graph rules
+- Current graph size: ${state.nodes.length} nodes / ${state.edges.length} edges
+- Reuse canonical IDs and labels
+- Skip generic nouns and weak structure
+- Prefer blockers, dependencies, owners, milestones, decisions, actions, and issues`,
   ].join("\n");
 }
 
@@ -426,6 +497,82 @@ function normalizeOwner(owner: string | undefined, state: SessionState, newNodes
   }
 
   return owner.trim();
+}
+
+function selectLiveContextNodes(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  batchText: string,
+  priorText: string,
+  limit: number,
+) {
+  return nodes
+    .slice()
+    .map((node) => ({
+      node,
+      score: scoreLiveContextNode(node, edges, batchText, priorText),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      return left.node.label.localeCompare(right.node.label);
+    })
+    .slice(0, limit)
+    .map((entry) => entry.node);
+}
+
+function scoreLiveContextNode(
+  node: GraphNode,
+  edges: GraphEdge[],
+  batchText: string,
+  priorText: string,
+) {
+  const normalizedLabel = normalizeGraphLabel(node.label);
+  const connectedEdges = edges.filter((edge) => edge.source === node.id || edge.target === node.id);
+  const connectionScore = connectedEdges.reduce((total, edge) => total + EDGE_PRIORITY[edge.type], 0);
+  let score = 0;
+
+  if (normalizedLabel && batchText.includes(normalizedLabel)) {
+    score += 8;
+  }
+  if (normalizedLabel && priorText.includes(normalizedLabel)) {
+    score += 4;
+  }
+
+  if (node.type === "milestone") {
+    score += 4;
+  } else if (node.type === "person") {
+    score += 3;
+  } else if (node.type === "system") {
+    score += 2;
+  }
+
+  return score + connectionScore;
+}
+
+function selectLiveContextEdges(edges: GraphEdge[], selectedNodeIds: Set<string>, limit: number) {
+  return edges
+    .slice()
+    .map((edge) => ({
+      edge,
+      score: EDGE_PRIORITY[edge.type] +
+        (selectedNodeIds.has(edge.source) ? 2 : 0) +
+        (selectedNodeIds.has(edge.target) ? 2 : 0),
+    }))
+    .filter((entry) => entry.edge.type !== "relates_to")
+    .filter((entry) => entry.score > EDGE_PRIORITY.relates_to)
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      return left.edge.id.localeCompare(right.edge.id);
+    })
+    .slice(0, limit)
+    .map((entry) => entry.edge);
 }
 
 function resolveNodeReference(

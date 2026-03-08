@@ -43,6 +43,12 @@ The Cloud Build config deploys a public Cloud Run service and wires:
 - `VERTEX_LOCATION`
 - `VERTEX_MODEL`
 - `VERTEX_LIVE_MODEL`
+- `LIVE_BATCH_IDLE_MS`
+- `LIVE_BATCH_MAX_MS`
+- `LIVE_MIN_MEANINGFUL_WORDS`
+- `LIVE_CONTEXT_TRANSCRIPT_LINES`
+- `LIVE_CONTEXT_NODE_LIMIT`
+- `LIVE_CONTEXT_EDGE_LIMIT`
 - `GEMINI_API_KEY` from Secret Manager secret `gemini-api-key`
 - `DEEPGRAM_API_KEY` from Secret Manager secret `deepgram-api-key`
 
@@ -86,8 +92,14 @@ The agent now reads model configuration from env and Secret Manager:
 
 - `GEMINI_API_KEY`
 - `VERTEX_MODEL`
-  Default extraction model in this repo: `gemini-2.5-pro`
+  Default live extraction model in this repo: `gemini-2.5-flash`
 - `VERTEX_LIVE_MODEL`
+- `LIVE_BATCH_IDLE_MS`
+- `LIVE_BATCH_MAX_MS`
+- `LIVE_MIN_MEANINGFUL_WORDS`
+- `LIVE_CONTEXT_TRANSCRIPT_LINES`
+- `LIVE_CONTEXT_NODE_LIMIT`
+- `LIVE_CONTEXT_EDGE_LIMIT`
 - `GOOGLE_APPLICATION_CREDENTIALS` if you are not using ambient credentials
 
 Get the current Cloud Run URLs in the new project with:

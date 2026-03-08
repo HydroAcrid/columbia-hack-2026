@@ -31,7 +31,7 @@ loadEnvFiles();
 const app = new Hono();
 const encoder = new TextEncoder();
 const config = readAgentConfig();
-const { provider, metadata: extractionMetadata } = createExtractionProvider(config.vertex);
+const { provider, metadata: extractionMetadata } = createExtractionProvider(config);
 const store = createSessionStore(config);
 const subscribers = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
 
@@ -68,20 +68,43 @@ app.post("/sessions/:id/transcript-chunks", async (c) => {
     return c.json({ ok: true, duplicate: true });
   }
 
+  const ingestStartedAt = Date.now();
   session.state.transcript.push(chunk);
-  const speakerProfileUpdates = inferSpeakerProfileUpdates(session.state);
-  const extractionPatch = await provider.extract(chunk, session.state);
-  const patch: GraphPatchEvent = speakerProfileUpdates.length
-    ? {
-      ...extractionPatch,
-      upsertSpeakerProfiles: speakerProfileUpdates,
-    }
-    : extractionPatch;
-  mergePatchIntoSession(session, patch);
-  const event = createSessionEvent(session, patch);
+  let degraded = false;
+  let patch: GraphPatchEvent = {};
+
+  try {
+    const speakerProfileUpdates = inferSpeakerProfileUpdates(session.state);
+    const extractionPatch = await provider.extract(chunk, session.state);
+    patch = speakerProfileUpdates.length
+      ? {
+        ...extractionPatch,
+        upsertSpeakerProfiles: speakerProfileUpdates,
+      }
+      : extractionPatch;
+    mergePatchIntoSession(session, patch);
+  } catch (error) {
+    degraded = true;
+    console.error("[TranscriptIngest] Failed to build patch", error);
+  }
+
   await store.saveSession(session);
-  await store.appendEvent(session.state.id, event);
-  publishEvent(session.state.id, event);
+
+  if (hasPatchContent(patch)) {
+    const event = createSessionEvent(session, patch);
+    await store.appendEvent(session.state.id, event);
+    publishEvent(session.state.id, event);
+  }
+
+  console.log(
+    `[TranscriptIngest] ${JSON.stringify({
+      sessionId: session.state.id,
+      chunkId: chunk.id,
+      totalMs: Date.now() - ingestStartedAt,
+      degraded,
+      patch: summarizePatch(patch),
+    })}`,
+  );
 
   return c.json({ ok: true, patch });
 });
@@ -217,6 +240,29 @@ function createSessionEvent(session: StoredSession, patch: GraphPatchEvent): Ses
   };
   session.nextEventId += 1;
   return event;
+}
+
+function hasPatchContent(patch: GraphPatchEvent) {
+  return Boolean(
+    (patch.addNodes?.length ?? 0) ||
+    (patch.addEdges?.length ?? 0) ||
+    (patch.addDecisions?.length ?? 0) ||
+    (patch.addActions?.length ?? 0) ||
+    (patch.addIssues?.length ?? 0) ||
+    (patch.highlightNodeIds?.length ?? 0) ||
+    (patch.upsertSpeakerProfiles?.length ?? 0),
+  );
+}
+
+function summarizePatch(patch: GraphPatchEvent) {
+  return {
+    addNodes: patch.addNodes?.length ?? 0,
+    addEdges: patch.addEdges?.length ?? 0,
+    addDecisions: patch.addDecisions?.length ?? 0,
+    addActions: patch.addActions?.length ?? 0,
+    addIssues: patch.addIssues?.length ?? 0,
+    upsertSpeakerProfiles: patch.upsertSpeakerProfiles?.length ?? 0,
+  };
 }
 
 function publishEvent(sessionId: string, event: SessionEvent) {
