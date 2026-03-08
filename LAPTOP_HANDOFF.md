@@ -57,12 +57,41 @@ Last updated: 2026-03-08
 - Cloud Build configs exist for both services.
 - Dockerfiles exist for both services.
 - Firestore rules/indexes and env examples are checked in.
+- Continuous deploy to Cloud Run is set up from GitHub pushes to `main`.
 
 ## Live deployed URLs
 
 - Web: `https://launch-copilot-web-qblbvltlrq-uc.a.run.app`
 - Agent: `https://launch-copilot-agent-353476176382.us-central1.run.app`
 - Agent health: `https://launch-copilot-agent-353476176382.us-central1.run.app/health`
+
+## Continuous deploy
+
+Cloud Build triggers are active and deploy on pushes to `main`:
+
+- `deploy-web-main`
+- `deploy-agent-main`
+
+Verify them with:
+
+```bash
+gcloud builds triggers list --region=us-central1
+```
+
+Trigger setup script:
+
+```bash
+./scripts/setup-cloudbuild-triggers.sh
+```
+
+Important implementation detail:
+
+- the repo uses a 2nd-gen Cloud Build GitHub connection: `hydroacrid-github`
+- trigger creation had to use `gcloud alpha builds triggers create repository`
+- trigger creation also required an explicit service account:
+  `projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/353476176382-compute@developer.gserviceaccount.com`
+
+If the triggers ever need to be recreated, rerun the script above.
 
 ## Important recent git history
 
@@ -124,6 +153,12 @@ Recommended cleanup:
 
 - No fully finished one-shot voice interruption UX yet.
 - This remains polish, not core loop.
+
+### 6. Local dev and deployed web are not using one URL helper yet
+
+- deployed builds are correct and point to the Cloud Run agent
+- local code still has duplicated fallback logic outside `agent-client.ts`
+- if replay starts calling `localhost:4000`, local dev is using stale or duplicated config, not the deployed bundle
 
 ## What still needs to be completed
 
@@ -236,6 +271,12 @@ gcloud builds submit \
   .
 ```
 
+### List continuous deploy triggers
+
+```bash
+gcloud builds triggers list --region=us-central1
+```
+
 ## Recommended first move after opening the laptop again
 
 1. Read this file.
@@ -243,3 +284,4 @@ gcloud builds submit \
 3. Remove the stray `localhost:4000` fallback duplication.
 4. Update `PHASES.md`.
 5. Run an actual browser replay test before touching more product features.
+6. If deploy behavior looks off, inspect the Cloud Build triggers before debugging Cloud Run itself.
