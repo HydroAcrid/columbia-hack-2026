@@ -384,7 +384,12 @@ export default function Home() {
     <div className="relative h-screen w-screen overflow-hidden bg-[var(--surface-ground)]">
       {/* ── Full-screen graph canvas ── */}
       <div className="absolute inset-0 z-0">
-        <GraphPanel nodes={state.nodes} edges={state.edges} />
+        <GraphPanel
+          nodes={state.nodes}
+          edges={state.edges}
+          transcript={state.transcript}
+          speakerProfiles={state.speakerProfiles}
+        />
       </div>
 
       {/* ── Floating command bar ── */}

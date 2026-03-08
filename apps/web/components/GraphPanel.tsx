@@ -15,7 +15,12 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type { GraphEdge, GraphNode } from "@copilot/shared";
+import type {
+  GraphEdge,
+  GraphNode,
+  SpeakerProfile,
+  TranscriptChunk,
+} from "@copilot/shared";
 
 /* ──────────────────────────────────────────
    Node visual system
@@ -62,15 +67,30 @@ const TYPE_LABELS: Record<string, string> = {
   milestone: "Milestone",
 };
 
-function EntityNode({ data }: { data: { label: string; nodeType: string } }) {
+type SpeakerMatchState = "matched" | "active";
+
+interface EntityNodeData extends Record<string, unknown> {
+  label: string;
+  nodeType: string;
+  speakerMatchLabel?: string;
+  speakerMatchState?: SpeakerMatchState;
+}
+
+function EntityNode({ data }: { data: EntityNodeData }) {
   const theme = NODE_THEMES[data.nodeType] ?? NODE_THEMES.system;
+  const isActiveSpeaker = data.speakerMatchState === "active";
+  const boxShadow = isActiveSpeaker
+    ? `0 0 0 1px ${theme.accent}22, 0 0 0 4px ${theme.accent}12, 0 10px 24px ${theme.accent}22`
+    : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)";
 
   return (
     <div
-      className="animate-node-enter group relative flex items-center gap-3 rounded-xl border bg-white px-4 py-3 transition-all duration-200 hover:shadow-lg"
+      className={`animate-node-enter group relative flex items-center gap-3 rounded-xl border bg-white px-4 py-3 transition-all duration-200 hover:shadow-lg ${
+        isActiveSpeaker ? "animate-pulse-subtle" : ""
+      }`}
       style={{
-        borderColor: theme.border,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+        borderColor: isActiveSpeaker ? theme.accent : theme.border,
+        boxShadow,
         minWidth: 140,
       }}
     >
@@ -87,8 +107,24 @@ function EntityNode({ data }: { data: { label: string; nodeType: string } }) {
         <div className="truncate text-[13px] font-semibold leading-tight" style={{ color: theme.text }}>
           {data.label}
         </div>
-        <div className="mt-0.5 text-[10px] font-medium tracking-wide" style={{ color: theme.accent, opacity: 0.7 }}>
-          {TYPE_LABELS[data.nodeType] ?? data.nodeType}
+        <div className="mt-0.5 flex items-center gap-1.5">
+          <div className="text-[10px] font-medium tracking-wide" style={{ color: theme.accent, opacity: 0.7 }}>
+            {TYPE_LABELS[data.nodeType] ?? data.nodeType}
+          </div>
+          {data.speakerMatchLabel ? (
+            <span
+              className={`inline-flex items-center rounded-full px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em] ${
+                isActiveSpeaker ? "animate-pulse-subtle" : ""
+              }`}
+              style={{
+                background: `${theme.accent}14`,
+                color: theme.accent,
+                boxShadow: `inset 0 0 0 1px ${theme.accent}24`,
+              }}
+            >
+              {data.speakerMatchLabel}
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -106,14 +142,17 @@ const nodeTypes: NodeTypes = { entity: EntityNode };
 const NODE_GAP_X = 240;
 const NODE_GAP_Y = 140;
 
-function toFlowNodes(nodes: GraphNode[]): Node[] {
+function toFlowNodes(
+  nodes: GraphNode[],
+  annotations: Map<string, { label: string; state: SpeakerMatchState }>,
+): Node<EntityNodeData>[] {
   const byType: Record<string, GraphNode[]> = {};
   for (const node of nodes) {
     (byType[node.type] ??= []).push(node);
   }
 
   const typeOrder = ["person", "team", "system", "milestone"];
-  const result: Node[] = [];
+  const result: Node<EntityNodeData>[] = [];
   let y = 0;
 
   for (const type of typeOrder) {
@@ -128,7 +167,12 @@ function toFlowNodes(nodes: GraphNode[]): Node[] {
         id: group[i].id,
         type: "entity",
         position: { x: offsetX + i * NODE_GAP_X, y },
-        data: { label: group[i].label, nodeType: group[i].type },
+        data: {
+          label: group[i].label,
+          nodeType: group[i].type,
+          speakerMatchLabel: annotations.get(group[i].id)?.label,
+          speakerMatchState: annotations.get(group[i].id)?.state,
+        },
       });
     }
 
@@ -183,14 +227,20 @@ function toFlowEdges(edges: GraphEdge[]): Edge[] {
 interface GraphPanelProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  transcript: TranscriptChunk[];
+  speakerProfiles: SpeakerProfile[];
 }
 
-export function GraphPanel({ nodes, edges }: GraphPanelProps) {
-  const initialNodes = useMemo(() => toFlowNodes(nodes), [nodes]);
+export function GraphPanel({ nodes, edges, transcript, speakerProfiles }: GraphPanelProps) {
+  const speakerAnnotations = useMemo(
+    () => deriveSpeakerAnnotations(nodes, transcript, speakerProfiles),
+    [nodes, speakerProfiles, transcript],
+  );
+  const initialNodes = useMemo(() => toFlowNodes(nodes, speakerAnnotations), [nodes, speakerAnnotations]);
   const initialEdges = useMemo(() => toFlowEdges(edges), [edges]);
-  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialNodes);
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<Node<EntityNodeData>>(initialNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const flowRef = useRef<ReactFlowInstance<Node, Edge> | null>(null);
+  const flowRef = useRef<ReactFlowInstance<Node<EntityNodeData>, Edge> | null>(null);
 
   useEffect(() => {
     setFlowNodes(initialNodes);
@@ -203,7 +253,7 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
     }
   }, [initialEdges, initialNodes, setFlowEdges, setFlowNodes]);
 
-  const onInit = useCallback((instance: ReactFlowInstance<Node, Edge>) => {
+  const onInit = useCallback((instance: ReactFlowInstance<Node<EntityNodeData>, Edge>) => {
     flowRef.current = instance;
     if (initialNodes.length > 0) {
       instance.fitView({ padding: 0.35 });
@@ -228,4 +278,110 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
       <Controls showInteractive={false} position="bottom-left" />
     </ReactFlow>
   );
+}
+
+function deriveSpeakerAnnotations(
+  nodes: GraphNode[],
+  transcript: TranscriptChunk[],
+  speakerProfiles: SpeakerProfile[],
+) {
+  const eligibleProfiles = speakerProfiles.filter((profile) => profile.confidence !== "low");
+  if (!eligibleProfiles.length) {
+    return new Map<string, { label: string; state: SpeakerMatchState }>();
+  }
+
+  const personNodesByName = new Map<string, GraphNode[]>();
+  for (const node of nodes) {
+    if (node.type !== "person") {
+      continue;
+    }
+
+    const normalized = normalizeName(node.label);
+    if (!normalized) {
+      continue;
+    }
+
+    const group = personNodesByName.get(normalized) ?? [];
+    group.push(node);
+    personNodesByName.set(normalized, group);
+  }
+
+  const profilesByName = new Map<string, SpeakerProfile[]>();
+  for (const profile of eligibleProfiles) {
+    const normalized = normalizeName(profile.name);
+    if (!normalized) {
+      continue;
+    }
+
+    const group = profilesByName.get(normalized) ?? [];
+    group.push(profile);
+    profilesByName.set(normalized, group);
+  }
+
+  const matchedSpeakerIds = new Set<string>();
+  const annotations = new Map<string, { label: string; state: SpeakerMatchState }>();
+
+  for (const [normalizedName, personNodes] of personNodesByName) {
+    if (personNodes.length !== 1) {
+      continue;
+    }
+
+    const matchingProfiles = profilesByName.get(normalizedName) ?? [];
+    if (matchingProfiles.length !== 1) {
+      continue;
+    }
+
+    const node = personNodes[0];
+    const profile = matchingProfiles[0];
+    matchedSpeakerIds.add(profile.speakerId);
+    annotations.set(node.id, {
+      label: "Matched",
+      state: "matched",
+    });
+  }
+
+  const activeSpeakerId = findMostRecentMatchedSpeakerId(transcript, matchedSpeakerIds);
+  if (!activeSpeakerId) {
+    return annotations;
+  }
+
+  for (const [normalizedName, profiles] of profilesByName) {
+    if (profiles.length !== 1 || profiles[0].speakerId !== activeSpeakerId) {
+      continue;
+    }
+
+    const personNodes = personNodesByName.get(normalizedName) ?? [];
+    if (personNodes.length !== 1) {
+      continue;
+    }
+
+    annotations.set(personNodes[0].id, {
+      label: "Live speaker",
+      state: "active",
+    });
+  }
+
+  return annotations;
+}
+
+function findMostRecentMatchedSpeakerId(transcript: TranscriptChunk[], matchedSpeakerIds: Set<string>) {
+  for (let index = transcript.length - 1; index >= 0; index -= 1) {
+    const speakerId = transcript[index]?.speaker;
+    if (speakerId && matchedSpeakerIds.has(speakerId)) {
+      return speakerId;
+    }
+  }
+
+  return null;
+}
+
+function normalizeName(value: string) {
+  const normalized = value
+    .toLowerCase()
+    .replace(/\s*\(.*?\)\s*/g, " ")
+    .replace(/[^a-z0-9\s'-]/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  return normalized || null;
 }
