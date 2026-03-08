@@ -1,0 +1,22 @@
+{
+  "name": "@copilot/agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node --import tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@copilot/graph": "workspace:*",
+    "@copilot/shared": "workspace:*",
+    "@hono/node-server": "^1.19.11",
+    "hono": "^4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4",
+    "typescript": "^5.7"
+  }
+}
