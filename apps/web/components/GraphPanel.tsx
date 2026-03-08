@@ -2,45 +2,56 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
-  ReactFlow,
   Background,
   Controls,
-  type Node,
-  type Edge,
-  type NodeTypes,
-  type ReactFlowInstance,
   Handle,
   Position,
-  useNodesState,
+  ReactFlow,
+  type Edge,
+  type Node,
+  type NodeTypes,
+  type ReactFlowInstance,
   useEdgesState,
+  useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type { GraphNode, GraphEdge } from "@copilot/shared";
+import type { GraphEdge, GraphNode } from "@copilot/shared";
 
-const NODE_STYLES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+/* ──────────────────────────────────────────
+   Node visual system
+   ────────────────────────────────────────── */
+
+const NODE_THEMES: Record<
+  string,
+  { bg: string; border: string; text: string; accent: string; icon: string }
+> = {
   person: {
-    bg: "#f8fafc",
-    border: "#bfdbfe",
-    text: "#1e3a5f",
-    badge: "#93c5fd",
+    bg: "#ffffff",
+    border: "#dbeafe",
+    text: "#1e40af",
+    accent: "#3b82f6",
+    icon: "P",
   },
   team: {
-    bg: "#f8fdf9",
-    border: "#bbf7d0",
-    text: "#14532d",
-    badge: "#86efac",
+    bg: "#ffffff",
+    border: "#d1fae5",
+    text: "#065f46",
+    accent: "#10b981",
+    icon: "T",
   },
   system: {
-    bg: "#faf8ff",
-    border: "#ddd6fe",
-    text: "#4c1d95",
-    badge: "#c4b5fd",
+    bg: "#ffffff",
+    border: "#ede9fe",
+    text: "#5b21b6",
+    accent: "#8b5cf6",
+    icon: "S",
   },
   milestone: {
-    bg: "#fffbf5",
-    border: "#fed7aa",
-    text: "#7c2d12",
-    badge: "#fdba74",
+    bg: "#ffffff",
+    border: "#fef3c7",
+    text: "#92400e",
+    accent: "#f59e0b",
+    icon: "M",
   },
 };
 
@@ -52,29 +63,35 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 function EntityNode({ data }: { data: { label: string; nodeType: string } }) {
-  const style = NODE_STYLES[data.nodeType] ?? NODE_STYLES.system;
+  const theme = NODE_THEMES[data.nodeType] ?? NODE_THEMES.system;
+
   return (
     <div
-      className="rounded-xl border px-5 py-3 text-center transition-shadow hover:shadow-md"
+      className="animate-node-enter group relative flex items-center gap-3 rounded-xl border bg-white px-4 py-3 transition-all duration-200 hover:shadow-lg"
       style={{
-        background: style.bg,
-        borderColor: style.border,
-        color: style.text,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-        minWidth: 100,
+        borderColor: theme.border,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+        minWidth: 140,
       }}
     >
       <Handle type="target" position={Position.Top} />
-      <div className="text-[13px] font-semibold leading-tight">{data.label}</div>
+
       <div
-        className="mx-auto mt-1.5 w-fit rounded-full px-2 py-px text-[9px] font-semibold uppercase tracking-wider"
-        style={{
-          background: style.badge + "33",
-          color: style.text,
-        }}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white"
+        style={{ background: theme.accent }}
       >
-        {TYPE_LABELS[data.nodeType] ?? data.nodeType}
+        {theme.icon}
       </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-semibold leading-tight" style={{ color: theme.text }}>
+          {data.label}
+        </div>
+        <div className="mt-0.5 text-[10px] font-medium tracking-wide" style={{ color: theme.accent, opacity: 0.7 }}>
+          {TYPE_LABELS[data.nodeType] ?? data.nodeType}
+        </div>
+      </div>
+
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
@@ -82,10 +99,17 @@ function EntityNode({ data }: { data: { label: string; nodeType: string } }) {
 
 const nodeTypes: NodeTypes = { entity: EntityNode };
 
+/* ──────────────────────────────────────────
+   Layout — compute positions by type tier
+   ────────────────────────────────────────── */
+
+const NODE_GAP_X = 240;
+const NODE_GAP_Y = 140;
+
 function toFlowNodes(nodes: GraphNode[]): Node[] {
   const byType: Record<string, GraphNode[]> = {};
-  for (const n of nodes) {
-    (byType[n.type] ??= []).push(n);
+  for (const node of nodes) {
+    (byType[node.type] ??= []).push(node);
   }
 
   const typeOrder = ["person", "team", "system", "milestone"];
@@ -94,44 +118,67 @@ function toFlowNodes(nodes: GraphNode[]): Node[] {
 
   for (const type of typeOrder) {
     const group = byType[type] ?? [];
-    const totalWidth = group.length * 200;
-    const offsetX = -totalWidth / 2;
-    for (let i = 0; i < group.length; i++) {
+    if (group.length === 0) continue;
+
+    const totalWidth = group.length * NODE_GAP_X;
+    const offsetX = -totalWidth / 2 + NODE_GAP_X / 2;
+
+    for (let i = 0; i < group.length; i += 1) {
       result.push({
         id: group[i].id,
         type: "entity",
-        position: { x: offsetX + i * 200, y },
+        position: { x: offsetX + i * NODE_GAP_X, y },
         data: { label: group[i].label, nodeType: group[i].type },
       });
     }
-    if (group.length > 0) y += 160;
+
+    y += NODE_GAP_Y;
   }
 
   return result;
 }
 
+/* ──────────────────────────────────────────
+   Edge styling — refined, minimal
+   ────────────────────────────────────────── */
+
 const EDGE_COLORS: Record<string, string> = {
-  owns: "#a3d9b1",
-  depends_on: "#93b5e1",
-  blocks: "#e5a0a0",
-  relates_to: "#c8c4c0",
+  owns: "#86efac",
+  depends_on: "#93c5fd",
+  blocks: "#fca5a5",
+  relates_to: "#d1d5db",
 };
 
 function toFlowEdges(edges: GraphEdge[]): Edge[] {
-  return edges.map((e) => {
-    const stroke = EDGE_COLORS[e.type] ?? EDGE_COLORS.relates_to;
-    const showLabel = e.type === "blocks" || e.type === "depends_on";
+  return edges.map((edge) => {
+    const stroke = EDGE_COLORS[edge.type] ?? EDGE_COLORS.relates_to;
+    const isImportant = edge.type === "blocks";
+
     return {
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      label: showLabel ? (e.label ?? e.type) : undefined,
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      label: isImportant ? edge.type : undefined,
       type: "smoothstep",
-      style: { stroke, strokeWidth: 1.5 },
-      labelStyle: { fontSize: 10, fill: "#a8a29e" },
+      animated: edge.type === "blocks",
+      style: {
+        stroke,
+        strokeWidth: isImportant ? 2 : 1.5,
+        strokeOpacity: 0.8,
+      },
+      labelStyle: {
+        fontSize: 9,
+        fontWeight: 500,
+        fill: "#9ca3af",
+        fontFamily: "var(--font-sans)",
+      },
     };
   });
 }
+
+/* ──────────────────────────────────────────
+   GraphPanel component
+   ────────────────────────────────────────── */
 
 interface GraphPanelProps {
   nodes: GraphNode[];
@@ -141,7 +188,6 @@ interface GraphPanelProps {
 export function GraphPanel({ nodes, edges }: GraphPanelProps) {
   const initialNodes = useMemo(() => toFlowNodes(nodes), [nodes]);
   const initialEdges = useMemo(() => toFlowEdges(edges), [edges]);
-
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialEdges);
   const flowRef = useRef<ReactFlowInstance<Node, Edge> | null>(null);
@@ -150,42 +196,36 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
     setFlowNodes(initialNodes);
     setFlowEdges(initialEdges);
 
-    if (flowRef.current) {
+    if (flowRef.current && initialNodes.length > 0) {
       requestAnimationFrame(() => {
-        flowRef.current?.fitView({ padding: 0.3, duration: 250 });
+        flowRef.current?.fitView({ padding: 0.35, duration: 400 });
       });
     }
   }, [initialEdges, initialNodes, setFlowEdges, setFlowNodes]);
 
   const onInit = useCallback((instance: ReactFlowInstance<Node, Edge>) => {
     flowRef.current = instance;
-    instance.fitView({ padding: 0.3 });
-  }, []);
+    if (initialNodes.length > 0) {
+      instance.fitView({ padding: 0.35 });
+    }
+  }, [initialNodes.length]);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="shrink-0 border-b border-[var(--border)] px-5 py-3.5">
-        <h2 className="text-[13px] font-semibold text-[var(--text-secondary)]">
-          Knowledge Graph
-        </h2>
-      </div>
-      <div className="flex-1">
-        <ReactFlow
-          colorMode="light"
-          nodes={flowNodes}
-          edges={flowEdges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onInit={onInit}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.3 }}
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background gap={24} size={1.2}/>
-          <Controls showInteractive={false} />
-        </ReactFlow>
-      </div>
-    </div>
+    <ReactFlow
+      colorMode="light"
+      nodes={flowNodes}
+      edges={flowEdges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onInit={onInit}
+      nodeTypes={nodeTypes}
+      fitView
+      fitViewOptions={{ padding: 0.35 }}
+      proOptions={{ hideAttribution: true }}
+      defaultEdgeOptions={{ type: "smoothstep" }}
+    >
+      <Background gap={20} size={1} color="#e5e7eb" />
+      <Controls showInteractive={false} position="bottom-left" />
+    </ReactFlow>
   );
 }

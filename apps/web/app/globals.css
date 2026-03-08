@@ -3,52 +3,80 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ──────────────────────────────────────────
-   Design tokens
+   Design tokens — cool neutral palette
+   Inspired by Linear, Figma, Whimsical
    ────────────────────────────────────────── */
 
 :root {
   /* Surfaces */
-  --surface: #fafaf9;
+  --surface-ground: #f7f8fa;
   --surface-panel: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.88);
+  --surface-inset: #f3f4f6;
 
   /* Borders */
-  --border: #e8e5e3;
-  --border-light: #f0eeec;
+  --border-primary: #e2e4e9;
+  --border-subtle: #eef0f3;
+  --border-overlay: rgba(0, 0, 0, 0.06);
 
   /* Text */
-  --text-primary: #1c1917;
-  --text-secondary: #78716c;
-  --text-tertiary: #a8a29e;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #9ca3af;
+  --text-muted: #d1d5db;
 
-  /* Accents */
+  /* Accents — restrained semantic palette */
   --accent-blue: #3b82f6;
-  --accent-green: #16a34a;
-  --accent-amber: #d97706;
-  --accent-red: #dc2626;
-  --accent-violet: #7c3aed;
+  --accent-blue-muted: rgba(59, 130, 246, 0.08);
+  --accent-green: #10b981;
+  --accent-green-muted: rgba(16, 185, 129, 0.08);
+  --accent-amber: #f59e0b;
+  --accent-amber-muted: rgba(245, 158, 11, 0.08);
+  --accent-red: #ef4444;
+  --accent-red-muted: rgba(239, 68, 68, 0.08);
+  --accent-violet: #8b5cf6;
+  --accent-violet-muted: rgba(139, 92, 246, 0.08);
 
   /* Radii */
+  --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  /* Shadows — cool blue-gray tint */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03);
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-enter: 500ms;
 
   /* Fonts */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 @theme inline {
-  --color-surface: var(--surface);
+  --color-surface-ground: var(--surface-ground);
   --color-surface-panel: var(--surface-panel);
-  --color-border: var(--border);
-  --color-border-light: var(--border-light);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-inset: var(--surface-inset);
+  --color-border-primary: var(--border-primary);
+  --color-border-subtle: var(--border-subtle);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* ──────────────────────────────────────────
@@ -63,34 +91,173 @@ html,
 body {
   height: 100%;
   margin: 0;
-  background: var(--surface);
+  overflow: hidden;
+  background: var(--surface-ground);
   color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ──────────────────────────────────────────
-   React Flow overrides
+   Scrollbar — thin, minimal, unobtrusive
    ────────────────────────────────────────── */
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.10);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* ──────────────────────────────────────────
+   Overlay panel — frosted glass
+   ────────────────────────────────────────── */
+
+.overlay-panel {
+  background: var(--surface-overlay);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--border-overlay);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-overlay);
+}
+
+/* ──────────────────────────────────────────
+   Entry animations
+   ────────────────────────────────────────── */
+
+@keyframes nodeEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes overlayAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes edgeDraw {
+  from {
+    stroke-dashoffset: 200;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-node-enter {
+  animation: nodeEnter var(--duration-slow) var(--ease-out-expo) both;
+}
+
+.animate-slide-in {
+  animation: slideIn 300ms var(--ease-out-expo) both;
+}
+
+.animate-fade-up {
+  animation: fadeUp 300ms var(--ease-out-expo) both;
+}
+
+.animate-overlay-appear {
+  animation: overlayAppear var(--duration-enter) var(--ease-out-expo) both;
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2s ease-in-out infinite;
+}
+
+/* ──────────────────────────────────────────
+   React Flow — premium workspace overrides
+   ────────────────────────────────────────── */
+
+.react-flow__pane {
+  cursor: grab !important;
+}
+
+.react-flow__pane:active {
+  cursor: grabbing !important;
+}
+
 .react-flow__controls {
-  border-radius: var(--radius-md) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow-sm) !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border-overlay) !important;
+  box-shadow: var(--shadow-md) !important;
   overflow: hidden;
+  background: var(--surface-overlay) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  margin: 0 !important;
+  bottom: 20px !important;
+  left: 20px !important;
 }
 
 .react-flow__controls-button {
-  background: var(--surface-panel) !important;
+  background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border-light) !important;
-  width: 28px !important;
-  height: 28px !important;
-  padding: 4px !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 8px !important;
+  transition: background 150ms ease !important;
 }
 
 .react-flow__controls-button:hover {
-  background: var(--surface) !important;
+  background: var(--surface-inset) !important;
 }
 
 .react-flow__controls-button:last-child {
@@ -110,11 +277,38 @@ body {
 .react-flow__edge-text {
   fill: var(--text-tertiary) !important;
   font-size: 10px !important;
+  font-weight: 500 !important;
+  font-family: var(--font-sans) !important;
+}
+
+.react-flow__edge path {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: edgeDraw 0.6s var(--ease-out-expo) forwards;
 }
 
 .react-flow__handle {
-  width: 6px !important;
-  height: 6px !important;
-  background: var(--border) !important;
-  border: none !important;
+  width: 5px !important;
+  height: 5px !important;
+  background: var(--border-primary) !important;
+  border: 1.5px solid white !important;
+  border-radius: 50% !important;
+  transition: all 150ms ease !important;
+}
+
+.react-flow__node:hover .react-flow__handle {
+  background: var(--accent-blue) !important;
+  width: 7px !important;
+  height: 7px !important;
+}
+
+.react-flow__background {
+  opacity: 0.4 !important;
+}
+
+.react-flow__minimap {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border-overlay) !important;
+  box-shadow: var(--shadow-md) !important;
+  overflow: hidden !important;
 }
