@@ -13,7 +13,7 @@ This repo is prepared for a split deployment:
 - Gemini is used for structured extraction on the agent.
 - Gemini TTS / interruption remains planned.
 - Gemini Live STT is no longer the target implementation.
-- Deployed live mode is still not fully production-ready because the frontend STT path still depends on `ws://localhost:4002`.
+- Live STT now goes through the agent service websocket path at `/stt`, so local and deployed mode use the same routing shape.
 
 ## Web deploy
 

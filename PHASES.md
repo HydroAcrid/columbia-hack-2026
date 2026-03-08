@@ -48,7 +48,7 @@ This file is now a current-state roadmap rather than a historical pre-build plan
 
 ### Deepgram live mode
 
-- The deployed frontend still depends on `ws://localhost:4002` for STT transport.
+- Live STT now routes through the agent service websocket path at `/stt`.
 - Result: local live mode can work, but deployed live mode is not production-ready.
 
 ### Web URL plumbing
@@ -65,7 +65,7 @@ This file is now a current-state roadmap rather than a historical pre-build plan
 
 ### 1. Productionize deployed live STT transport
 
-- Remove the browser dependency on `ws://localhost:4002`.
+- Rehearse and harden the deployed `/stt` live transport path.
 - Keep Deepgram as the STT provider.
 - Preserve the existing `TranscriptChunk` contract and downstream session API.
 

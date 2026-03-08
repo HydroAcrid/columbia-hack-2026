@@ -12,7 +12,7 @@ Hackathon project for a launch-planning meeting copilot with:
 - Deepgram handles live speech-to-text because speaker separation matters in real conversation.
 - Gemini handles structured extraction on the agent from replay and live transcript chunks.
 - Gemini-backed TTS / interruption is still planned, but Gemini Live is no longer the STT target.
-- Deployed live mode is not fully production-ready yet because the frontend STT path still depends on `ws://localhost:4002`.
+- Live STT now connects to the agent service at `/stt`, so the same path works locally and on deployed Cloud Run.
 
 ## Repo layout
 
@@ -137,7 +137,7 @@ pnpm --filter @copilot/web dev
 2. Confirm the agent health endpoint returns hybrid extraction:
    `curl -sS https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health`
 3. Use replay mode as the primary demo path.
-4. Treat live mode as local-only until the `ws://localhost:4002` dependency is removed from the deployed path.
+4. If live mode fails, verify the agent service is reachable and the browser can connect to the agent `/stt` websocket path.
 5. If the web deploy looks stale, redeploy with `gcloud builds submit --config cloudbuild.web.yaml .` after confirming the agent service URL is still current.
 
 ## GitHub tracker notes
@@ -149,7 +149,7 @@ pnpm --filter @copilot/web dev
   - [#6](https://github.com/HydroAcrid/columbia-hack-2026/issues/6) assumed Gemini Live STT and should be considered superseded by the Deepgram STT decision
   - [#7](https://github.com/HydroAcrid/columbia-hack-2026/issues/7) is effectively implemented via the shared live pipeline, but the live adapter in use is Deepgram, not Gemini Live
 - Missing issues worth adding:
-  - productionize deployed live STT transport by removing the browser dependency on `ws://localhost:4002`
+  - harden deployed live STT transport and rehearse it end-to-end on the Cloud Run stack
   - centralize web agent URL plumbing for replay/live/local/deployed
   - add a browser smoke-test matrix for deployed replay and live fallback behavior
 - Tracker cleanup still requires manual GitHub edits once the team is ready to re-scope issue text and labels.

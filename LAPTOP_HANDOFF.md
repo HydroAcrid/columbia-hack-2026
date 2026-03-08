@@ -121,7 +121,7 @@ This means `PHASES.md` is no longer a full description of the current state. It 
 ### 1. Deepgram STT is the chosen live path, but deployed live STT is not finished
 
 - Deepgram is the correct STT choice because the product needs multi-speaker detection.
-- The browser adapter still points to `ws://localhost:4002`.
+- The browser live STT adapter now derives its websocket target from the agent base URL and connects to `/stt`.
 - Result: local live mode can work, but deployed live mode is still not production-ready.
 
 ### 2. Localhost fallback bug still exists in live-mode code
@@ -182,7 +182,7 @@ Recommended cleanup:
 
 ### Highest priority next work
 
-1. Fix deployed live STT transport so the browser no longer depends on `ws://localhost:4002`.
+1. Smoke-test deployed live STT transport through the agent `/stt` websocket path.
 2. Clean the web agent URL plumbing so replay/live/local/deployed use one source of truth.
 3. Add the demo runbook and fallback checklist in issue [#10](https://github.com/HydroAcrid/columbia-hack-2026/issues/10).
 4. Re-scope issue [#8](https://github.com/HydroAcrid/columbia-hack-2026/issues/8) to Gemini TTS / interruption.

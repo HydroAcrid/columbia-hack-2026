@@ -1,5 +1,6 @@
 import type { TranscriptChunk } from "@copilot/shared";
 import type { TranscriptSource } from "./transcriptSource";
+import { getAgentBaseUrl } from "./agent-client";
 
 export class DeepgramSTTAdapter implements TranscriptSource {
   private ws: WebSocket | null = null;
@@ -15,8 +16,7 @@ export class DeepgramSTTAdapter implements TranscriptSource {
     this.chunkSequence = 0;
 
     return new Promise((resolve, reject) => {
-      // Connect to the backend proxy
-      this.ws = new WebSocket("ws://localhost:4002");
+      this.ws = new WebSocket(getSttWebSocketUrl());
 
       this.ws.onopen = async () => {
         try {
@@ -90,4 +90,18 @@ export class DeepgramSTTAdapter implements TranscriptSource {
       this.ws = null;
     }
   }
+}
+
+function getSttWebSocketUrl() {
+  const override = process.env.NEXT_PUBLIC_STT_WS_URL;
+  if (override) {
+    return override;
+  }
+
+  const agentUrl = new URL(getAgentBaseUrl());
+  agentUrl.protocol = agentUrl.protocol === "https:" ? "wss:" : "ws:";
+  agentUrl.pathname = "/stt";
+  agentUrl.search = "";
+  agentUrl.hash = "";
+  return agentUrl.toString();
 }

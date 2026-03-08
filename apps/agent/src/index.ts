@@ -2,11 +2,11 @@ import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
-import { serve } from "@hono/node-server";
+import { createAdaptorServer } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { applyPatch } from "@copilot/graph";
-import { startSttServer } from "./stt-server.js";
+import { attachSttServer } from "./stt-server.js";
 import {
   TranscriptChunk,
   type GraphPatchEvent,
@@ -159,7 +159,10 @@ app.get("/sessions/:id/state", (c) => {
 
 const port = config.port;
 
-serve({ fetch: app.fetch, port }, () => {
+const server = createAdaptorServer({ fetch: app.fetch });
+attachSttServer(server);
+
+server.listen(port, () => {
   console.log(`Agent service listening on http://localhost:${port}`);
   console.log(`Session store backend: ${config.sessionStoreBackend}`);
   if (config.vertex.enabled) {
@@ -167,7 +170,6 @@ serve({ fetch: app.fetch, port }, () => {
       `Vertex config detected for ${config.vertex.location} (${config.vertex.model ?? config.vertex.liveModel ?? "model unset"})`,
     );
   }
-  startSttServer();
 });
 
 function mergePatchIntoSession(session: StoredSession, patch: GraphPatchEvent) {

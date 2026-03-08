@@ -1,13 +1,28 @@
+import type { IncomingMessage } from "node:http";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 
-export function startSttServer() {
-  const port = process.env.STT_PORT ? parseInt(process.env.STT_PORT, 10) : 4002;
-  const wss = new WebSocketServer({ port });
+type UpgradeCapableServer = {
+  on(event: "upgrade", listener: (request: IncomingMessage, socket: any, head: Buffer) => void): unknown;
+};
 
-  console.log(`STT WebSocket proxy listening on ws://localhost:${port}`);
+export function attachSttServer(server: UpgradeCapableServer) {
+  const wss = new WebSocketServer({ noServer: true });
 
-  wss.on("connection", (ws) => {
+  console.log("STT WebSocket proxy attached at /stt");
+
+  server.on("upgrade", (request, socket, head) => {
+    const url = new URL(request.url ?? "/", "http://localhost");
+    if (url.pathname !== "/stt") {
+      return;
+    }
+
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  });
+
+  wss.on("connection", (ws: WebSocket) => {
     console.log("[STT] Browser connected");
     const apiKey = process.env.DEEPGRAM_API_KEY;
     if (!apiKey) {
