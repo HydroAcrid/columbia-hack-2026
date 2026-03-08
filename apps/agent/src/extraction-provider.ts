@@ -50,7 +50,7 @@ export interface ExtractionProviderMetadata {
 
 export function createExtractionProvider(vertex: VertexConfig) {
   const geminiApiKey = process.env.GEMINI_API_KEY;
-  const geminiModel = process.env.GEMINI_MODEL ?? vertex.model ?? "gemini-2.5-flash";
+  const geminiModel = process.env.GEMINI_MODEL ?? vertex.model ?? "gemini-2.5-pro";
 
   if (geminiApiKey) {
     console.log(`[Extraction] Using Hybrid provider (demo lookup + Gemini for live) with ${geminiModel}`);

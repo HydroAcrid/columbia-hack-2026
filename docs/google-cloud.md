@@ -86,6 +86,7 @@ The agent now reads model configuration from env and Secret Manager:
 
 - `GEMINI_API_KEY`
 - `VERTEX_MODEL`
+  Default extraction model in this repo: `gemini-2.5-pro`
 - `VERTEX_LIVE_MODEL`
 - `GOOGLE_APPLICATION_CREDENTIALS` if you are not using ambient credentials
 

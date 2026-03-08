@@ -1,6 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { GraphPatchEvent, SessionState, TranscriptChunk } from "@copilot/shared";
 import type { ExtractionProvider } from "./extraction-provider.js";
+import {
+  buildGraphExtractionContext,
+  normalizeGraphPatch,
+} from "./graph-engine.js";
 
 /**
  * GeminiExtractionProvider
@@ -29,13 +33,19 @@ You MUST respond with valid JSON matching this exact schema:
 IMPORTANT RULES:
 - Only extract information that is EXPLICITLY stated or strongly implied.
 - If the text is filler, small talk, or off-topic, return empty arrays for everything.
-- Do NOT re-create nodes that already exist (check the existingNodeIds list).
+- Reuse canonical entity IDs and labels from the provided entity inventory whenever relevant.
+- If a spoken variant or ASR misspelling maps to a canonical entity, use the canonical label and canonical ID.
+- Do NOT create near-duplicate nodes for the same concept with slightly different spelling or pronunciation.
 - Keep labels concise (2-5 words).
 - Use lowercase-with-hyphens for all IDs (e.g. "priya", "api-gateway", "e-priya-launch").
 - For edge IDs, use the format "e-<source>-<target>".
 - For decision/action/issue IDs, use the format "d-<short-key>", "a-<short-key>", "i-<short-key>".
 - The timestamp should use the earliest chunk's timestamp.
-- highlightNodeIds should list IDs of nodes most relevant to these chunks.`;
+- highlightNodeIds should list IDs of nodes most relevant to these chunks.
+- Prefer no output over noisy output.
+- Do NOT create nodes for generic nouns like backend, database, system, flow, or team unless they are explicitly scoped.
+- Avoid weak "relates_to" edges unless they add concrete structure.
+- Keep the graph clean and selective: blockers, dependencies, ownership, milestones, and concrete actions matter most.`;
 
 // How long to wait for more chunks before sending a batch to Gemini
 const BATCH_WINDOW_MS = 3000;
@@ -100,22 +110,13 @@ export class GeminiExtractionProvider implements ExtractionProvider {
     const combinedText = chunks.map((c) => `${c.speaker}: ${c.text}`).join("\n");
     const earliestTimestamp = chunks[0].timestamp;
 
-    // Build context
-    const existingNodeIds = state.nodes.map((n) => n.id);
-    const recentTranscript = state.transcript
-      .slice(-3)
-      .map((c) => `${c.speaker}: ${c.text}`)
-      .join("\n");
+    const context = buildGraphExtractionContext(state, chunks);
 
     const prompt = `## New transcript text (${chunks.length} chunk(s))
 ${combinedText}
 Earliest timestamp: ${earliestTimestamp}
 
-## Recent conversation context (before these chunks)
-${recentTranscript || "(start of conversation)"}
-
-## Existing node IDs (do NOT re-create these)
-${existingNodeIds.length > 0 ? existingNodeIds.join(", ") : "(none yet)"}
+${context}
 
 Extract any relevant graph information from the new transcript text above.`;
 
@@ -123,12 +124,7 @@ Extract any relevant graph information from the new transcript text above.`;
       console.log(`[GeminiExtraction] Extracting batch of ${chunks.length} chunks: "${combinedText.substring(0, 80)}..."`);
       const result = await this.model.generateContent(prompt);
       const text = result.response.text();
-      const patch = JSON.parse(text) as GraphPatchEvent;
-
-      // Filter out existing nodes
-      if (patch.addNodes) {
-        patch.addNodes = patch.addNodes.filter((n) => !existingNodeIds.includes(n.id));
-      }
+      const patch = normalizeGraphPatch(JSON.parse(text) as GraphPatchEvent, state);
 
       const hasContent =
         (patch.addNodes?.length ?? 0) +

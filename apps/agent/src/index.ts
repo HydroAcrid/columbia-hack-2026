@@ -14,6 +14,11 @@ import {
 } from "@copilot/shared";
 import { readAgentConfig } from "./config.js";
 import { createExtractionProvider } from "./extraction-provider.js";
+import {
+  mergeActionItems,
+  mergeDecisionItems,
+  mergeIssueItems,
+} from "./graph-engine.js";
 import { inferSpeakerProfileUpdates } from "./speaker-identity.js";
 import {
   createSessionStore,
@@ -176,22 +181,10 @@ function mergePatchIntoSession(session: StoredSession, patch: GraphPatchEvent) {
 
   session.state.nodes = graph.nodes;
   session.state.edges = graph.edges;
-  mergeItems(session.state.decisions, patch.addDecisions);
-  mergeItems(session.state.actions, patch.addActions);
-  mergeItems(session.state.issues, patch.addIssues);
+  mergeDecisionItems(session.state.decisions, patch.addDecisions);
+  mergeActionItems(session.state.actions, patch.addActions);
+  mergeIssueItems(session.state.issues, patch.addIssues);
   mergeSpeakerProfiles(session.state, patch.upsertSpeakerProfiles);
-}
-
-function mergeItems<T extends { id: string }>(target: T[], items: T[] | undefined) {
-  if (!items?.length) {
-    return;
-  }
-
-  for (const item of items) {
-    if (!target.some((existing) => existing.id === item.id)) {
-      target.push(item);
-    }
-  }
 }
 
 function mergeSpeakerProfiles(

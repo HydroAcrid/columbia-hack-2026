@@ -1,4 +1,15 @@
 import type { GraphEdge, GraphNode, GraphPatchEvent } from "@copilot/shared";
+import {
+  canonicalizeGraphLabel,
+  normalizeGraphLabel,
+} from "./canonicalization.js";
+
+export {
+  canonicalizeGraphLabel,
+  getCanonicalAliasEntries,
+  normalizeGraphLabel,
+  slugifyGraphId,
+} from "./canonicalization.js";
 
 export interface GraphState {
   nodes: GraphNode[];
@@ -138,7 +149,7 @@ function resolveNodeId(nodeIdMap: Map<string, string>, id: string) {
 }
 
 function nodeKey(node: Pick<GraphNode, "label" | "type">) {
-  return `${node.type}:${normalizeLabel(node.label)}`;
+  return `${node.type}:${normalizeGraphLabel(node.label)}`;
 }
 
 function edgeKey(edge: Pick<GraphEdge, "source" | "target" | "type">) {
@@ -146,10 +157,5 @@ function edgeKey(edge: Pick<GraphEdge, "source" | "target" | "type">) {
 }
 
 function normalizeLabel(label: string) {
-  return label
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+  return normalizeGraphLabel(label);
 }
