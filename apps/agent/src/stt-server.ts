@@ -41,6 +41,7 @@ export function attachSttServer(server: UpgradeCapableServer) {
     }
 
     let dgConnection: any = null;
+    let pendingUtterance: { speaker: string; text: string } | null = null;
 
     try {
       dgConnection = deepgram.listen.live({
@@ -67,28 +68,47 @@ export function attachSttServer(server: UpgradeCapableServer) {
       });
 
       dgConnection.on(LiveTranscriptionEvents.Transcript, (data: any) => {
-        if (data.channel?.alternatives?.[0]) {
-          const transcript = data.channel.alternatives[0].transcript;
-          const words = data.channel.alternatives[0].words;
-          
-          if (words && words.length > 0) {
-            const speakers = new Set(words.map((w: any) => w.speaker).filter((s: any) => s !== undefined));
-            const speaker = speakers.size > 1 ? `${words[0]?.speaker}+` : words[0]?.speaker;
-            
-            if (transcript) {
-              ws.send(
-                JSON.stringify({
-                  text: transcript,
-                  speaker: `Speaker ${speaker}`,
-                })
-              );
-            }
-          }
+        const alternative = data.channel?.alternatives?.[0];
+        if (!alternative) {
+          return;
+        }
+
+        const transcript = normalizeTranscriptText(alternative.transcript);
+        const words = alternative.words;
+        if (!transcript || !Array.isArray(words) || words.length === 0) {
+          return;
+        }
+
+        const speakers = new Set(words.map((w: any) => w.speaker).filter((s: any) => s !== undefined));
+        const speaker = `Speaker ${speakers.size > 1 ? `${words[0]?.speaker}+` : words[0]?.speaker}`;
+        const isFinal = Boolean(data.is_final);
+        const speechFinal = Boolean(data.speech_final);
+
+        if (!isFinal) {
+          return;
+        }
+
+        if (!pendingUtterance) {
+          pendingUtterance = { speaker, text: transcript };
+        } else if (pendingUtterance.speaker === speaker) {
+          pendingUtterance.text = mergeTranscriptText(pendingUtterance.text, transcript);
+        } else {
+          ws.send(JSON.stringify(pendingUtterance));
+          pendingUtterance = { speaker, text: transcript };
+        }
+
+        if (speechFinal && pendingUtterance) {
+          ws.send(JSON.stringify(pendingUtterance));
+          pendingUtterance = null;
         }
       });
 
       dgConnection.on(LiveTranscriptionEvents.Close, () => {
         console.log("[STT] Connection closed.");
+        if (pendingUtterance) {
+          ws.send(JSON.stringify(pendingUtterance));
+          pendingUtterance = null;
+        }
         ws.close();
       });
 
@@ -101,4 +121,40 @@ export function attachSttServer(server: UpgradeCapableServer) {
       ws.close();
     }
   });
+}
+
+function normalizeTranscriptText(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function mergeTranscriptText(existing: string, incoming: string) {
+  if (!existing) {
+    return incoming;
+  }
+
+  if (!incoming || existing === incoming) {
+    return existing;
+  }
+
+  if (incoming.startsWith(existing)) {
+    return incoming;
+  }
+
+  if (existing.endsWith(incoming)) {
+    return existing;
+  }
+
+  const existingWords = existing.split(/\s+/);
+  const incomingWords = incoming.split(/\s+/);
+  const maxOverlap = Math.min(existingWords.length, incomingWords.length);
+
+  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+    const existingSuffix = existingWords.slice(-overlap).join(" ").toLowerCase();
+    const incomingPrefix = incomingWords.slice(0, overlap).join(" ").toLowerCase();
+    if (existingSuffix === incomingPrefix) {
+      return [...existingWords, ...incomingWords.slice(overlap)].join(" ");
+    }
+  }
+
+  return `${existing} ${incoming}`.replace(/\s+/g, " ").trim();
 }
