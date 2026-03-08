@@ -5,8 +5,13 @@ import type {
 
 const AGENT_BASE_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? "http://localhost:4000";
 
-export function getSessionEventsUrl(sessionId: string) {
-  return `${AGENT_BASE_URL}/sessions/${sessionId}/events`;
+export function getSessionEventsUrl(sessionId: string, lastEventId?: string | null) {
+  const url = new URL(`${AGENT_BASE_URL}/sessions/${sessionId}/events`);
+  if (lastEventId) {
+    url.searchParams.set("lastEventId", lastEventId);
+  }
+
+  return url.toString();
 }
 
 export async function createSession() {

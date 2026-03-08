@@ -29,6 +29,9 @@ const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? "http://localhost:4000";
 type ConnectionState = "connecting" | "connected" | "disconnected";
 type Mode = "replay" | "live";
 
+const SESSION_STORAGE_KEY = "launch-copilot:session-id";
+const LAST_EVENT_STORAGE_KEY = "launch-copilot:last-event-id";
+
 function createEmptySessionState(id: string): SessionState {
   return {
     id,
@@ -102,6 +105,42 @@ function sleep(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function readStorage(key: string) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key: string, value: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage quota or privacy-mode failures.
+  }
+}
+
+function removeStorage(key: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+}
+
 /* ──────────────────────────────────────────
    Main page
    ────────────────────────────────────────── */
@@ -119,6 +158,7 @@ export default function Home() {
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const replayRunRef = useRef(0);
+  const lastEventIdRef = useRef<string | null>(null);
 
   // Live adapter — only when connected to a live session
   const adapterRef = useRef<GeminiLiveAdapter | null>(null);
@@ -148,6 +188,24 @@ export default function Home() {
 
       try {
         eventSourceRef.current?.close();
+        const restoredSessionId = readStorage(SESSION_STORAGE_KEY);
+
+        if (restoredSessionId) {
+          try {
+            const restoredState = await getSessionState(restoredSessionId);
+            if (cancelled) return;
+
+            setSessionId(restoredSessionId);
+            setSessionState(restoredState);
+            lastEventIdRef.current = readStorage(LAST_EVENT_STORAGE_KEY);
+            setConnectionState("connecting");
+            return;
+          } catch {
+            removeStorage(SESSION_STORAGE_KEY);
+            removeStorage(LAST_EVENT_STORAGE_KEY);
+            lastEventIdRef.current = null;
+          }
+        }
 
         const session = await createSession();
         const state = await getSessionState(session.id);
@@ -155,6 +213,9 @@ export default function Home() {
           return;
         }
 
+        writeStorage(SESSION_STORAGE_KEY, session.id);
+        removeStorage(LAST_EVENT_STORAGE_KEY);
+        lastEventIdRef.current = null;
         setSessionId(session.id);
         setSessionState(state);
         setConnectionState("connecting");
@@ -188,7 +249,7 @@ export default function Home() {
       return;
     }
 
-    const source = new EventSource(getSessionEventsUrl(sessionId));
+    const source = new EventSource(getSessionEventsUrl(sessionId, lastEventIdRef.current));
     eventSourceRef.current = source;
 
     source.onopen = () => {
@@ -196,6 +257,11 @@ export default function Home() {
     };
 
     source.onmessage = (event) => {
+      if (event.lastEventId) {
+        lastEventIdRef.current = event.lastEventId;
+        writeStorage(LAST_EVENT_STORAGE_KEY, event.lastEventId);
+      }
+
       const patch = JSON.parse(event.data) as GraphPatchEvent;
       setSessionState((current) => (current ? mergeSessionState(current, patch) : current));
     };
@@ -232,6 +298,9 @@ export default function Home() {
 
       const session = await createSession();
       const emptyState = createEmptySessionState(session.id);
+      writeStorage(SESSION_STORAGE_KEY, session.id);
+      removeStorage(LAST_EVENT_STORAGE_KEY);
+      lastEventIdRef.current = null;
       setSessionId(session.id);
       setSessionState(emptyState);
       setConnectionState("connecting");
