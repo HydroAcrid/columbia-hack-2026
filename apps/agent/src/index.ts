@@ -4,44 +4,47 @@ import { cors } from "hono/cors";
 import { applyPatch } from "@copilot/graph";
 import {
   TranscriptChunk,
-  demoExtractionByChunkId,
   type GraphPatchEvent,
   type SessionState,
 } from "@copilot/shared";
+import { readAgentConfig } from "./config.js";
+import { createExtractionProvider } from "./extraction-provider.js";
+import {
+  createSessionStore,
+  type SessionEvent,
+  type SessionStore,
+  type StoredSession,
+} from "./session-store.js";
 
 const app = new Hono();
 const encoder = new TextEncoder();
-
-interface SessionEvent {
-  id: string;
-  patch: GraphPatchEvent;
-}
-
-interface SessionRecord {
-  state: SessionState;
-  events: SessionEvent[];
-  subscribers: Set<ReadableStreamDefaultController<Uint8Array>>;
-  nextEventId: number;
-}
-
-const sessions = new Map<string, SessionRecord>();
+const config = readAgentConfig();
+const { provider, metadata: extractionMetadata } = createExtractionProvider(config.vertex);
+const store = createSessionStore(config);
+const subscribers = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
 
 app.use("*", cors());
 
 app.get("/health", (c) => {
-  return c.json({ status: "ok", service: "copilot-agent", timestamp: Date.now() });
+  return c.json({
+    status: "ok",
+    service: "copilot-agent",
+    timestamp: Date.now(),
+    sessionStoreBackend: config.sessionStoreBackend,
+    vertex: extractionMetadata.vertex,
+    extractionMode: extractionMetadata.mode,
+  });
 });
 
-app.post("/sessions", (c) => {
+app.post("/sessions", async (c) => {
   const id = crypto.randomUUID();
-  const session = createSession(id);
-  sessions.set(id, session);
+  await store.createSession(id);
 
   return c.json({ id });
 });
 
 app.post("/sessions/:id/transcript-chunks", async (c) => {
-  const session = sessions.get(c.req.param("id"));
+  const session = await store.getSession(c.req.param("id"));
   if (!session) {
     return c.json({ error: "Session not found" }, 404);
   }
@@ -54,16 +57,19 @@ app.post("/sessions/:id/transcript-chunks", async (c) => {
   }
 
   session.state.transcript.push(chunk);
-
-  const patch = demoExtractionByChunkId[chunk.id] ?? {};
+  const patch = await provider.extract(chunk, session.state);
   mergePatchIntoSession(session, patch);
-  publishEvent(session, patch);
+  const event = createSessionEvent(session, patch);
+  await store.saveSession(session);
+  await store.appendEvent(session.state.id, event);
+  publishEvent(session.state.id, event);
 
   return c.json({ ok: true, patch });
 });
 
 app.get("/sessions/:id/events", async (c) => {
-  const session = sessions.get(c.req.param("id"));
+  const sessionId = c.req.param("id");
+  const session = await store.getSession(sessionId);
   if (!session) {
     return c.json({ error: "Session not found" }, 404);
   }
@@ -74,10 +80,7 @@ app.get("/sessions/:id/events", async (c) => {
   const replayUpperBound = session.nextEventId;
   const replayEvents = lastEventId === null
     ? []
-    : session.events.filter((event) => {
-        const eventId = parseEventId(event.id);
-        return eventId !== null && eventId > lastEventId && eventId < replayUpperBound;
-      });
+    : await store.listEventsAfter(sessionId, lastEventId, replayUpperBound);
 
   let activeController: ReadableStreamDefaultController<Uint8Array> | null = null;
   const stream = new ReadableStream<Uint8Array>({
@@ -87,10 +90,16 @@ app.get("/sessions/:id/events", async (c) => {
       for (const event of replayEvents) {
         controller.enqueue(serializeEvent(event));
       }
-      session.subscribers.add(controller);
+      const sessionSubscribers = subscribers.get(sessionId) ?? new Set();
+      sessionSubscribers.add(controller);
+      subscribers.set(sessionId, sessionSubscribers);
 
       c.req.raw.signal.addEventListener("abort", () => {
-        session.subscribers.delete(controller);
+        const currentSubscribers = subscribers.get(sessionId);
+        currentSubscribers?.delete(controller);
+        if (currentSubscribers?.size === 0) {
+          subscribers.delete(sessionId);
+        }
         try {
           controller.close();
         } catch {
@@ -100,7 +109,11 @@ app.get("/sessions/:id/events", async (c) => {
     },
     cancel() {
       if (activeController) {
-        session.subscribers.delete(activeController);
+        const sessionSubscribers = subscribers.get(sessionId);
+        sessionSubscribers?.delete(activeController);
+        if (sessionSubscribers?.size === 0) {
+          subscribers.delete(sessionId);
+        }
       }
     },
   });
@@ -115,38 +128,29 @@ app.get("/sessions/:id/events", async (c) => {
 });
 
 app.get("/sessions/:id/state", (c) => {
-  const session = sessions.get(c.req.param("id"));
-  if (!session) {
-    return c.json({ error: "Session not found" }, 404);
-  }
+  const session = store.getSession(c.req.param("id"));
+  return session.then((record) => {
+    if (!record) {
+      return c.json({ error: "Session not found" }, 404);
+    }
 
-  return c.json(session.state);
+    return c.json(record.state);
+  });
 });
 
-const port = Number(process.env.PORT ?? 4000);
+const port = config.port;
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`Agent service listening on http://localhost:${port}`);
+  console.log(`Session store backend: ${config.sessionStoreBackend}`);
+  if (config.vertex.enabled) {
+    console.log(
+      `Vertex config detected for ${config.vertex.location} (${config.vertex.model ?? config.vertex.liveModel ?? "model unset"})`,
+    );
+  }
 });
 
-function createSession(id: string): SessionRecord {
-  return {
-    state: {
-      id,
-      transcript: [],
-      nodes: [],
-      edges: [],
-      decisions: [],
-      actions: [],
-      issues: [],
-    },
-    events: [],
-    subscribers: new Set(),
-    nextEventId: 1,
-  };
-}
-
-function mergePatchIntoSession(session: SessionRecord, patch: GraphPatchEvent) {
+function mergePatchIntoSession(session: StoredSession, patch: GraphPatchEvent) {
   const graph = applyPatch(
     {
       nodes: session.state.nodes,
@@ -174,20 +178,33 @@ function mergeItems<T extends { id: string }>(target: T[], items: T[] | undefine
   }
 }
 
-function publishEvent(session: SessionRecord, patch: GraphPatchEvent) {
+function createSessionEvent(session: StoredSession, patch: GraphPatchEvent): SessionEvent {
   const event: SessionEvent = {
-    id: String(session.nextEventId++),
+    id: String(session.nextEventId),
     patch,
   };
-  session.events.push(event);
+  session.nextEventId += 1;
+  return event;
+}
+
+function publishEvent(sessionId: string, event: SessionEvent) {
+  const sessionSubscribers = subscribers.get(sessionId);
+  if (!sessionSubscribers?.size) {
+    return;
+  }
+
   const payload = serializeEvent(event);
 
-  for (const subscriber of session.subscribers) {
+  for (const subscriber of sessionSubscribers) {
     try {
       subscriber.enqueue(payload);
     } catch {
-      session.subscribers.delete(subscriber);
+      sessionSubscribers.delete(subscriber);
     }
+  }
+
+  if (sessionSubscribers.size === 0) {
+    subscribers.delete(sessionId);
   }
 }
 

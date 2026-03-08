@@ -1,0 +1,11 @@
+node_modules
+.git
+.gitignore
+.next
+.firebase
+firebase-debug.log
+firebase-debug.*.log
+**/node_modules
+**/.next
+**/dist
+**/coverage

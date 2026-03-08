@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json --noEmit false",
     "start": "node --import tsx src/index.ts",
+    "start:prod": "node dist/index.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@copilot/graph": "workspace:*",
     "@copilot/shared": "workspace:*",
+    "@google-cloud/firestore": "^8.0.0",
     "@hono/node-server": "^1.19.11",
     "hono": "^4"
   },

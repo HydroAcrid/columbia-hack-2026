@@ -3,7 +3,8 @@ import type {
   TranscriptChunk,
 } from "@copilot/shared";
 
-const AGENT_BASE_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? "http://localhost:4000";
+const DEFAULT_AGENT_BASE_URL = "https://launch-copilot-agent-353476176382.us-central1.run.app";
+const AGENT_BASE_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? DEFAULT_AGENT_BASE_URL;
 
 export function getSessionEventsUrl(sessionId: string, lastEventId?: string | null) {
   const url = new URL(`${AGENT_BASE_URL}/sessions/${sessionId}/events`);
@@ -15,7 +16,7 @@ export function getSessionEventsUrl(sessionId: string, lastEventId?: string | nu
 }
 
 export async function createSession() {
-  const response = await fetch(`${AGENT_BASE_URL}/sessions`, {
+  const response = await request(`${AGENT_BASE_URL}/sessions`, {
     method: "POST",
   });
 
@@ -23,12 +24,12 @@ export async function createSession() {
 }
 
 export async function getSessionState(sessionId: string) {
-  const response = await fetch(`${AGENT_BASE_URL}/sessions/${sessionId}/state`);
+  const response = await request(`${AGENT_BASE_URL}/sessions/${sessionId}/state`);
   return parseJson<SessionState>(response);
 }
 
 export async function postTranscriptChunk(sessionId: string, chunk: TranscriptChunk) {
-  const response = await fetch(`${AGENT_BASE_URL}/sessions/${sessionId}/transcript-chunks`, {
+  const response = await request(`${AGENT_BASE_URL}/sessions/${sessionId}/transcript-chunks`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -39,6 +40,10 @@ export async function postTranscriptChunk(sessionId: string, chunk: TranscriptCh
   return parseJson(response);
 }
 
+export function getAgentBaseUrl() {
+  return AGENT_BASE_URL;
+}
+
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const message = await response.text();
@@ -46,4 +51,14 @@ async function parseJson<T>(response: Response): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function request(input: string, init?: RequestInit) {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    throw new Error(
+      `Unable to reach the agent at ${AGENT_BASE_URL}. ${error instanceof Error ? error.message : "Network request failed."}`,
+    );
+  }
 }
