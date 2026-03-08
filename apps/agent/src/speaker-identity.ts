@@ -1,6 +1,7 @@
 import type { SessionState, SpeakerProfile, TranscriptChunk } from "@copilot/shared";
 
 const DIRECT_NAME_PATTERNS = [
+  /\b(?:this is|it(?:'s| is))\s+me\s*,\s*([A-Za-z]+(?:\s+[A-Za-z]+)?)/i,
   /\b(?:i am|i'm|this is|my name is)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i,
 ];
 
@@ -35,7 +36,9 @@ const NAME_STOPWORDS = new Set([
   "launch",
   "let",
   "maybe",
+  "me",
   "my",
+  "myself",
   "no",
   "not",
   "now",

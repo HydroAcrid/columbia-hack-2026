@@ -34,6 +34,26 @@ test("locks an explicit self-identification immediately at high confidence", () 
   ]);
 });
 
+test("prefers the actual name in appositive self-identification phrases", () => {
+  const state = createState([
+    {
+      id: "1",
+      speaker: "Speaker 1",
+      text: "This is me, Kevin, and I'll be talking through the diagram.",
+      timestamp: 1,
+    },
+  ]);
+
+  assert.deepEqual(inferSpeakerProfileUpdates(state), [
+    {
+      speakerId: "Speaker 1",
+      name: "Kevin",
+      confidence: "high",
+      evidenceCount: 3,
+    },
+  ]);
+});
+
 test("weak address evidence cannot override a locked explicit name", () => {
   const transcript: TranscriptChunk[] = [
     { id: "1", speaker: "Speaker 1", text: "My name is Kevin", timestamp: 1 },
