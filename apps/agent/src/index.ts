@@ -68,12 +68,26 @@ app.get("/sessions/:id/events", async (c) => {
     return c.json({ error: "Session not found" }, 404);
   }
 
+  const lastEventId = parseEventId(
+    c.req.header("last-event-id") ?? c.req.header("Last-Event-ID") ?? c.req.query("lastEventId"),
+  );
+  const replayUpperBound = session.nextEventId;
+  const replayEvents = lastEventId === null
+    ? []
+    : session.events.filter((event) => {
+        const eventId = parseEventId(event.id);
+        return eventId !== null && eventId > lastEventId && eventId < replayUpperBound;
+      });
+
   let activeController: ReadableStreamDefaultController<Uint8Array> | null = null;
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       activeController = controller;
-      session.subscribers.add(controller);
       controller.enqueue(encoder.encode(": connected\n\n"));
+      for (const event of replayEvents) {
+        controller.enqueue(serializeEvent(event));
+      }
+      session.subscribers.add(controller);
 
       c.req.raw.signal.addEventListener("abort", () => {
         session.subscribers.delete(controller);
@@ -166,10 +180,7 @@ function publishEvent(session: SessionRecord, patch: GraphPatchEvent) {
     patch,
   };
   session.events.push(event);
-
-  const payload = encoder.encode(
-    `id: ${event.id}\ndata: ${JSON.stringify(event.patch)}\n\n`,
-  );
+  const payload = serializeEvent(event);
 
   for (const subscriber of session.subscribers) {
     try {
@@ -178,4 +189,17 @@ function publishEvent(session: SessionRecord, patch: GraphPatchEvent) {
       session.subscribers.delete(subscriber);
     }
   }
+}
+
+function parseEventId(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function serializeEvent(event: SessionEvent) {
+  return encoder.encode(`id: ${event.id}\ndata: ${JSON.stringify(event.patch)}\n\n`);
 }
