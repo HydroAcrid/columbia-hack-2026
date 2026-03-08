@@ -7,12 +7,30 @@ Hackathon project for a launch-planning meeting copilot with:
 - decisions, actions, and issues extraction
 - Cloud Run deployment for both web and agent
 
+## Team
+
+Team members and contributors:
+
+- Kevin Dotel (`HydroAcrid`)
+- Nelly Nguyen (`nellynguyen`)
+
 ## Architecture
 
 - Deepgram handles live speech-to-text because speaker separation matters in real conversation.
 - Gemini handles structured extraction on the agent from replay and live transcript chunks.
-- Gemini-backed TTS / interruption is still planned, but Gemini Live is no longer the STT target.
+- Gemini-backed TTS / interruption is handled on the agent, with browser speech fallback if Gemini audio generation fails.
 - Live STT now connects to the agent service at `/stt`, so the same path works locally and on deployed Cloud Run.
+
+## Tech stack
+
+- Web: Next.js 16, React 19, Tailwind CSS 4, React Flow (`@xyflow/react`)
+- Agent: Hono on Node.js, WebSocket STT bridge, SSE for session events
+- Speech-to-text: Deepgram via the agent `/stt` websocket
+- GenAI:
+  - `@google/generative-ai` for graph / insight extraction
+  - `@google/genai` for Cricket TTS audio generation
+- Persistence: Firestore for session state and ordered event replay
+- Hosting: Cloud Run, Cloud Build, Secret Manager, Artifact Registry
 
 ## Repo layout
 
@@ -46,9 +64,7 @@ The project is deployed on Google Cloud:
 
 ### Continuous deploy
 
-Pushes to `main` will auto-deploy once the new project triggers are created.
-
-Expected triggers:
+Pushes to `main` auto-deploy in `hackathon-test-key` via:
 
 - `deploy-web-main`
 - `deploy-agent-main`
@@ -92,13 +108,7 @@ What it does:
 - resolves the current project number dynamically
 - points the web build at the current project's agent service URL
 
-Current status:
-
-- the Developer Connect / Cloud Build GitHub connection has been created in `hackathon-test-key`
-- GitHub OAuth / app authorization still has to be completed once in the Google Cloud console before triggers can be created
-- current trigger list in `hackathon-test-key` is empty until that OAuth step is finished
-
-Important: trigger creation required the 2nd-gen repository trigger path and an explicit service account:
+Important: trigger creation used the 2nd-gen repository trigger path and an explicit service account:
 
 - command family: `gcloud alpha builds triggers create repository`
 - service account pattern: `projects/hackathon-test-key/serviceAccounts/<PROJECT_NUMBER>-compute@developer.gserviceaccount.com`
@@ -118,40 +128,43 @@ If you need the deployed agent in local web dev:
 
 ```bash
 export NEXT_PUBLIC_AGENT_URL="$(gcloud run services describe launch-copilot-agent --project=hackathon-test-key --region=us-central1 --format='value(status.url)')"
-pnpm --filter @copilot/web dev
+corepack pnpm --filter @copilot/web dev
 ```
 
-## Remaining work
+## Current status
 
 - Gemini extraction: done
 - Deepgram STT local path: done
-- Deepgram STT deployed path: not done
-- Gemini TTS interruption path: not done
-- Unified URL plumbing for web replay/live: not done
-- Demo runbook / rehearsal checklist: not done
-- Tracker accuracy: not done
+- Deepgram STT deployed path: implemented via agent `/stt`
+- Gemini TTS interruption path: implemented
+- Continuous deploy to `hackathon-test-key`: active on pushes to `main`
+
+## Demo caveats
+
+- Rehearse the deployed live mic path once before demo time.
+- If Gemini TTS is slow or blocked by browser audio permissions, the web client falls back to browser speech synthesis.
+- Local web dev talks to `http://localhost:4000` by default; set `NEXT_PUBLIC_AGENT_URL` if you want local web to target the deployed agent.
 
 ## Demo runbook
 
 1. Open `https://launch-copilot-web-fh43iudbha-uc.a.run.app`
 2. Confirm the agent health endpoint returns hybrid extraction:
    `curl -sS https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health`
-3. Use replay mode as the primary demo path.
+3. Use live mode as the primary demo path if the mic and browser permissions are healthy; use replay as backup.
 4. If live mode fails, verify the agent service is reachable and the browser can connect to the agent `/stt` websocket path.
-5. If the web deploy looks stale, redeploy with `gcloud builds submit --config cloudbuild.web.yaml .` after confirming the agent service URL is still current.
+5. If the web deploy looks stale, push to `main` or redeploy manually with `gcloud builds submit --config cloudbuild.web.yaml .`.
 
 ## GitHub tracker notes
 
 - Open issues that still matter:
-  - [#8](https://github.com/HydroAcrid/columbia-hack-2026/issues/8) should be treated as Gemini TTS / interruption work, not Gemini Live STT
+  - [#8](https://github.com/HydroAcrid/columbia-hack-2026/issues/8) should now be treated as follow-up polish / reliability work for Cricket interruption, not Gemini Live STT
   - [#10](https://github.com/HydroAcrid/columbia-hack-2026/issues/10) should remain the demo runbook / fallback checklist
 - Closed issues that no longer match the product direction:
   - [#6](https://github.com/HydroAcrid/columbia-hack-2026/issues/6) assumed Gemini Live STT and should be considered superseded by the Deepgram STT decision
   - [#7](https://github.com/HydroAcrid/columbia-hack-2026/issues/7) is effectively implemented via the shared live pipeline, but the live adapter in use is Deepgram, not Gemini Live
 - Missing issues worth adding:
-  - harden deployed live STT transport and rehearse it end-to-end on the Cloud Run stack
-  - centralize web agent URL plumbing for replay/live/local/deployed
-  - add a browser smoke-test matrix for deployed replay and live fallback behavior
+  - end-to-end browser smoke-test coverage for deployed live mode and Cricket audio
+  - any remaining graph/insight polish items you want to land after the demo
 - Tracker cleanup still requires manual GitHub edits once the team is ready to re-scope issue text and labels.
 
 ## Useful docs

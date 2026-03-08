@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { applyPatch } from "@copilot/graph";
 import { attachSttServer } from "./stt-server.js";
-import { textToSpeechGeminiLive } from "./tts-server.js";
+import { textToSpeechGemini } from "./tts-server.js";
 import {
   TranscriptChunk,
   type GraphPatchEvent,
@@ -117,13 +117,19 @@ app.post("/tts", async (c) => {
   }
 
   console.log(`[TTS] Request: "${text.substring(0, 80)}..."`);
-  const audioBase64 = await textToSpeechGeminiLive(text);
+  const ttsResult = await textToSpeechGemini(text);
 
-  if (!audioBase64) {
+  if (!ttsResult) {
     return c.json({ error: "TTS failed" }, 500);
   }
 
-  return c.json({ audio: audioBase64, sampleRate: 24000, channels: 1, bitDepth: 16 });
+  return c.json({
+    audio: ttsResult.audioBase64,
+    mimeType: ttsResult.mimeType,
+    sampleRate: ttsResult.sampleRate ?? 24000,
+    channels: 1,
+    bitDepth: 16,
+  });
 });
 
 app.get("/sessions/:id/events", async (c) => {
@@ -267,7 +273,8 @@ function hasPatchContent(patch: GraphPatchEvent) {
     (patch.addActions?.length ?? 0) ||
     (patch.addIssues?.length ?? 0) ||
     (patch.highlightNodeIds?.length ?? 0) ||
-    (patch.upsertSpeakerProfiles?.length ?? 0),
+    (patch.upsertSpeakerProfiles?.length ?? 0) ||
+    patch.interruptMessage,
   );
 }
 
@@ -279,6 +286,7 @@ function summarizePatch(patch: GraphPatchEvent) {
     addActions: patch.addActions?.length ?? 0,
     addIssues: patch.addIssues?.length ?? 0,
     upsertSpeakerProfiles: patch.upsertSpeakerProfiles?.length ?? 0,
+    interruptMessage: patch.interruptMessage ?? null,
   };
 }
 

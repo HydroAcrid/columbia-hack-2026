@@ -6,7 +6,7 @@ import { getAgentBaseUrl } from "./agent-client";
 /**
  * useCricketTTS
  *
- * Calls POST /tts on the agent backend, which uses Gemini Live API
+ * Calls POST /tts on the agent backend, which uses Gemini TTS
  * to generate speech audio (base64 PCM, 24kHz, 16-bit, mono).
  * Decodes and plays via AudioContext. Falls back to browser speechSynthesis.
  */
@@ -79,7 +79,7 @@ export function useCricketTTS() {
       source.buffer = buffer;
       source.connect(ctx.destination);
       source.onended = () => {
-        console.log("[CricketTTS] ✅ Finished (Gemini Live audio)");
+        console.log("[CricketTTS] ✅ Finished (Gemini audio)");
         finishSpeaking();
       };
       source.start();

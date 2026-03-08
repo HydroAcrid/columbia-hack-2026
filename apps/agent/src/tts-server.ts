@@ -1,16 +1,19 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 
-// Models to try in order
 const TTS_MODELS = [
-  "gemini-2.5-flash-preview-native-audio-dialog",
-  "gemini-2.0-flash-live-001",
-];
+  "gemini-2.5-flash-preview-tts",
+  "gemini-2.5-pro-preview-tts",
+] as const;
 
-/**
- * Speaks a text message using the Gemini Live API and returns PCM audio
- * as a base64-encoded string (24kHz, 16-bit, mono).
- */
-export async function textToSpeechGeminiLive(text: string): Promise<string | null> {
+const DEFAULT_VOICE = "Kore";
+
+type TtsResult = {
+  audioBase64: string;
+  mimeType: string | null;
+  sampleRate: number | null;
+};
+
+export async function textToSpeechGemini(text: string): Promise<TtsResult | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error("[TTS] No GEMINI_API_KEY set");
@@ -18,12 +21,35 @@ export async function textToSpeechGeminiLive(text: string): Promise<string | nul
   }
 
   const ai = new GoogleGenAI({ apiKey });
+  const prompt = buildTtsPrompt(text);
 
   for (const model of TTS_MODELS) {
     try {
       console.log(`[TTS] Trying model: ${model}`);
-      const result = await attemptLiveTTS(ai, model, text);
-      if (result) return result;
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: DEFAULT_VOICE,
+              },
+            },
+          },
+        },
+      });
+
+      const audio = extractAudioFromTtsResponse(response);
+      if (audio) {
+        console.log(
+          `[TTS] Generated audio with ${model} (${audio.mimeType ?? "unknown mime"}, rate=${audio.sampleRate ?? "unknown"})`,
+        );
+        return audio;
+      }
+
+      console.warn(`[TTS] Model ${model} returned no audio data`);
     } catch (err: any) {
       console.warn(`[TTS] Model ${model} failed:`, err?.message ?? err);
     }
@@ -33,100 +59,43 @@ export async function textToSpeechGeminiLive(text: string): Promise<string | nul
   return null;
 }
 
-async function attemptLiveTTS(
-  ai: GoogleGenAI,
-  model: string,
-  text: string,
-): Promise<string | null> {
-  return new Promise<string | null>((resolve) => {
-    const audioChunks: string[] = [];
-    let resolved = false;
-    let sessionRef: { sendClientContent(payload: unknown): void } | null = null;
+export function extractAudioFromTtsResponse(response: unknown): TtsResult | null {
+  const candidates = (response as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string; mimeType?: string } }> } }> })
+    ?.candidates;
 
-    const done = (result: string | null) => {
-      if (!resolved) {
-        resolved = true;
-        clearTimeout(timeout);
-        resolve(result);
+  for (const candidate of candidates ?? []) {
+    for (const part of candidate.content?.parts ?? []) {
+      const audioBase64 = part.inlineData?.data;
+      if (!audioBase64) {
+        continue;
       }
-    };
 
-    const timeout = setTimeout(() => {
-      console.warn(`[TTS] Timed out on model ${model} (got ${audioChunks.length} chunks so far)`);
-      done(audioChunks.length > 0 ? audioChunks.join("") : null);
-    }, 15000);
+      const mimeType = part.inlineData?.mimeType ?? null;
+      return {
+        audioBase64,
+        mimeType,
+        sampleRate: parseSampleRate(mimeType),
+      };
+    }
+  }
 
-    ai.live
-      .connect({
-        model,
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: "Kore",
-              },
-            },
-          },
-          systemInstruction:
-            "You are Cricket, a helpful AI meeting assistant. Speak the following message aloud naturally and conversationally, as if speaking in a meeting. Keep it brief.",
-        },
-        callbacks: {
-          onopen: () => {
-            console.log(`[TTS] WebSocket open for ${model}`);
-          },
-          onmessage: (message: any) => {
-            // Wait for setupComplete before sending content
-            if (message.setupComplete) {
-              console.log(`[TTS] Setup complete for ${model}, sending text...`);
-              if (sessionRef) {
-                sessionRef.sendClientContent({
-                  turns: [
-                    {
-                      role: "user",
-                      parts: [{ text }],
-                    },
-                  ],
-                  turnComplete: true,
-                });
-              }
-              return;
-            }
+  return null;
+}
 
-            // Collect audio chunks
-            if (message.serverContent?.modelTurn?.parts) {
-              for (const part of message.serverContent.modelTurn.parts) {
-                if (part.inlineData?.data) {
-                  audioChunks.push(part.inlineData.data);
-                }
-              }
-            }
+export function parseSampleRate(mimeType: string | null | undefined): number | null {
+  if (!mimeType) {
+    return null;
+  }
 
-            if (message.serverContent?.turnComplete) {
-              console.log(`[TTS] ✅ Turn complete — got ${audioChunks.length} audio chunks from ${model}`);
-              done(audioChunks.length > 0 ? audioChunks.join("") : null);
-            }
-          },
-          onerror: (e: any) => {
-            console.error(`[TTS] Error from ${model}:`, e?.message ?? e);
-            done(null);
-          },
-          onclose: () => {
-            console.log(`[TTS] Connection closed for ${model} (${audioChunks.length} chunks collected)`);
-            // Only resolve if we haven't already — give audio a chance to arrive
-            if (!resolved && audioChunks.length > 0) {
-              done(audioChunks.join(""));
-            }
-          },
-        },
-      })
-      .then((session: { sendClientContent(payload: unknown): void }) => {
-        sessionRef = session;
-        console.log(`[TTS] Session established for ${model}, waiting for setupComplete...`);
-      })
-      .catch((err: unknown) => {
-        console.error(`[TTS] Failed to connect to ${model}:`, err);
-        done(null);
-      });
-  });
+  const match = /rate=(\d+)/i.exec(mimeType);
+  return match ? Number.parseInt(match[1] ?? "", 10) : null;
+}
+
+function buildTtsPrompt(text: string): string {
+  return [
+    "You are Cricket, an AI meeting assistant.",
+    "Read the following reply aloud naturally and conversationally, as if speaking briefly in a meeting.",
+    "Do not add any preamble, stage directions, or extra words.",
+    `Reply: ${text}`,
+  ].join("\n");
 }

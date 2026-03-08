@@ -11,7 +11,7 @@ This repo is prepared for a split deployment:
 
 - Deepgram is the live speech-to-text provider because speaker diarization is required.
 - Gemini is used for structured extraction on the agent.
-- Gemini TTS / interruption remains planned.
+- Gemini TTS / interruption runs on the agent, with browser fallback still available in the web client.
 - Gemini Live STT is no longer the target implementation.
 - Live STT now goes through the agent service websocket path at `/stt`, so local and deployed mode use the same routing shape.
 
@@ -113,5 +113,5 @@ gcloud run services list --project=hackathon-test-key --region=us-central1
 - Gemini extraction: done
 - Deepgram STT local path: done
 - Deepgram STT deployed path: not done
-- Gemini TTS interruption path: not done
+- Gemini TTS interruption path: implemented, but still worth rehearsing end-to-end before demo
 - Unified URL plumbing for web replay/live: not done
