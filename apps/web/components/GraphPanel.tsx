@@ -155,6 +155,7 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
       </div>
       <div className="flex-1">
         <ReactFlow
+          colorMode="light"
           nodes={flowNodes}
           edges={flowEdges}
           onNodesChange={onNodesChange}
@@ -165,7 +166,7 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
           fitViewOptions={{ padding: 0.3 }}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={40} size={0.4} color="#d6d3d1" />
+          <Background gap={24} size={1.2}/>
           <Controls showInteractive={false} />
         </ReactFlow>
       </div>

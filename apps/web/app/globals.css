@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ──────────────────────────────────────────
    Design tokens
    ────────────────────────────────────────── */
@@ -53,6 +55,10 @@
    Base
    ────────────────────────────────────────── */
 
+html {
+  color-scheme: light;
+}
+
 html,
 body {
   height: 100%;
@@ -66,10 +72,6 @@ body {
 /* ──────────────────────────────────────────
    React Flow overrides
    ────────────────────────────────────────── */
-
-.react-flow__background {
-  background: var(--surface) !important;
-}
 
 .react-flow__controls {
   border-radius: var(--radius-md) !important;
