@@ -34,6 +34,7 @@ export function createSessionStore(config: AgentConfig): SessionStore {
       new Firestore({
         projectId: config.googleCloudProject ?? undefined,
         databaseId: config.firestoreDatabaseId ?? undefined,
+        ignoreUndefinedProperties: true,
       }),
     );
   }
@@ -122,10 +123,11 @@ class FirestoreSessionStore implements SessionStore {
       throw new Error(`Invalid event id "${event.id}"`);
     }
 
+    const patch = stripFirestoreUndefined(event.patch);
     await this.eventsRef(sessionId).doc(event.id).set({
       id: event.id,
       sequence,
-      patch: event.patch,
+      patch,
       createdAt: Date.now(),
     });
   }
@@ -205,4 +207,21 @@ function cloneSessionEvent(event: SessionEvent): SessionEvent {
     id: event.id,
     patch: structuredClone(event.patch),
   };
+}
+
+export function stripFirestoreUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => stripFirestoreUndefined(entry))
+      .filter((entry) => entry !== undefined) as T;
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value)
+      .filter(([, entry]) => entry !== undefined)
+      .map(([key, entry]) => [key, stripFirestoreUndefined(entry)]);
+    return Object.fromEntries(entries) as T;
+  }
+
+  return value;
 }

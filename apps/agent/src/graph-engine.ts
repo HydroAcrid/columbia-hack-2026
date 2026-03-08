@@ -616,6 +616,10 @@ function ensureUniqueNodeId(baseId: string, type: GraphNode["type"], usedIds: Se
 }
 
 function compactGraphPatch(patch: GraphPatchEvent): GraphPatchEvent {
+  const interruptMessage = typeof patch.interruptMessage === "string"
+    ? patch.interruptMessage.trim() || undefined
+    : undefined;
+
   return {
     ...patch,
     addNodes: patch.addNodes?.length ? patch.addNodes : undefined,
@@ -624,6 +628,7 @@ function compactGraphPatch(patch: GraphPatchEvent): GraphPatchEvent {
     addDecisions: patch.addDecisions?.length ? patch.addDecisions : undefined,
     addIssues: patch.addIssues?.length ? patch.addIssues : undefined,
     highlightNodeIds: patch.highlightNodeIds?.length ? patch.highlightNodeIds : undefined,
+    interruptMessage,
   };
 }
 

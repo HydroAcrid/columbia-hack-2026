@@ -41,7 +41,7 @@ async function attemptLiveTTS(
   return new Promise<string | null>((resolve) => {
     const audioChunks: string[] = [];
     let resolved = false;
-    let sessionRef: any = null;
+    let sessionRef: { sendClientContent(payload: unknown): void } | null = null;
 
     const done = (result: string | null) => {
       if (!resolved) {
@@ -120,11 +120,11 @@ async function attemptLiveTTS(
           },
         },
       })
-      .then((session) => {
+      .then((session: { sendClientContent(payload: unknown): void }) => {
         sessionRef = session;
         console.log(`[TTS] Session established for ${model}, waiting for setupComplete...`);
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         console.error(`[TTS] Failed to connect to ${model}:`, err);
         done(null);
       });
