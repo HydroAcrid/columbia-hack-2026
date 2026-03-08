@@ -28,6 +28,12 @@ Hackathon project for a launch-planning meeting copilot with:
 - Read the current URLs from Cloud Run after deploy:
   `gcloud run services list --project=hackathon-test-key --region=us-central1`
 
+## Demo URLs
+
+- Web: `https://launch-copilot-web-fh43iudbha-uc.a.run.app`
+- Agent: `https://launch-copilot-agent-fh43iudbha-uc.a.run.app`
+- Agent health: `https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health`
+
 ## Deployment
 
 The project is deployed on Google Cloud:
@@ -40,9 +46,9 @@ The project is deployed on Google Cloud:
 
 ### Continuous deploy
 
-Pushes to `main` now trigger automatic Cloud Build deploys.
+Pushes to `main` will auto-deploy once the new project triggers are created.
 
-Active triggers:
+Expected triggers:
 
 - `deploy-web-main`
 - `deploy-agent-main`
@@ -50,7 +56,7 @@ Active triggers:
 Check them with:
 
 ```bash
-gcloud builds triggers list --region=us-central1
+gcloud builds triggers list --project=hackathon-test-key --region=us-central1
 ```
 
 ### Manual deploy fallback
@@ -86,6 +92,12 @@ What it does:
 - resolves the current project number dynamically
 - points the web build at the current project's agent service URL
 
+Current status:
+
+- the Developer Connect / Cloud Build GitHub connection has been created in `hackathon-test-key`
+- GitHub OAuth / app authorization still has to be completed once in the Google Cloud console before triggers can be created
+- current trigger list in `hackathon-test-key` is empty until that OAuth step is finished
+
 Important: trigger creation required the 2nd-gen repository trigger path and an explicit service account:
 
 - command family: `gcloud alpha builds triggers create repository`
@@ -117,6 +129,15 @@ pnpm --filter @copilot/web dev
 - Demo runbook / rehearsal checklist: not done
 - Tracker accuracy: not done
 
+## Demo runbook
+
+1. Open `https://launch-copilot-web-fh43iudbha-uc.a.run.app`
+2. Confirm the agent health endpoint returns hybrid extraction:
+   `curl -sS https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health`
+3. Use replay mode as the primary demo path.
+4. Treat live mode as local-only until the `ws://localhost:4002` dependency is removed from the deployed path.
+5. If the web deploy looks stale, redeploy with `gcloud builds submit --config cloudbuild.web.yaml .` after confirming the agent service URL is still current.
+
 ## GitHub tracker notes
 
 - Open issues that still matter:
@@ -129,6 +150,7 @@ pnpm --filter @copilot/web dev
   - productionize deployed live STT transport by removing the browser dependency on `ws://localhost:4002`
   - centralize web agent URL plumbing for replay/live/local/deployed
   - add a browser smoke-test matrix for deployed replay and live fallback behavior
+- Tracker cleanup still requires manual GitHub edits once the team is ready to re-scope issue text and labels.
 
 ## Useful docs
 

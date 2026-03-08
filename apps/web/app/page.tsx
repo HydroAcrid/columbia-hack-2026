@@ -24,8 +24,6 @@ import {
 import { DeepgramSTTAdapter } from "@/lib/deepgramSTTAdapter";
 import { useLiveTranscript } from "@/lib/useLiveTranscript";
 
-const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? "http://localhost:4000";
-
 type ConnectionState = "connecting" | "connected" | "disconnected";
 type Mode = "replay" | "live";
 

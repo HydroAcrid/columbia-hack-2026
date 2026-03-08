@@ -23,6 +23,12 @@ export async function createSession() {
   return parseJson<{ id: string }>(response);
 }
 
+export async function createSessionResponse() {
+  return request(`${AGENT_BASE_URL}/sessions`, {
+    method: "POST",
+  });
+}
+
 export async function getSessionState(sessionId: string) {
   const response = await request(`${AGENT_BASE_URL}/sessions/${sessionId}/state`);
   return parseJson<SessionState>(response);
@@ -38,6 +44,16 @@ export async function postTranscriptChunk(sessionId: string, chunk: TranscriptCh
   });
 
   return parseJson(response);
+}
+
+export async function postTranscriptChunkResponse(sessionId: string, chunk: TranscriptChunk) {
+  return request(`${AGENT_BASE_URL}/sessions/${sessionId}/transcript-chunks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(chunk),
+  });
 }
 
 export function getAgentBaseUrl() {

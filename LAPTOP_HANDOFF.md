@@ -65,15 +65,15 @@ Last updated: 2026-03-08
 
 ## Live deployed URLs
 
-The old `gcloud-hackathon-edoscin8fh6pt` URLs are stale. Read the current URLs from Cloud Run in `hackathon-test-key`:
-
-```bash
-gcloud run services list --project=hackathon-test-key --region=us-central1
-```
+- Web: `https://launch-copilot-web-fh43iudbha-uc.a.run.app`
+- Agent: `https://launch-copilot-agent-fh43iudbha-uc.a.run.app`
+- Agent health: `https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health`
 
 ## Continuous deploy
 
-Cloud Build triggers are active and deploy on pushes to `main`:
+Cloud Build triggers in `hackathon-test-key` are not active yet. Auto-deploy on pushes to `main` will work after the GitHub OAuth step is completed and the triggers are created.
+
+Expected triggers:
 
 - `deploy-web-main`
 - `deploy-agent-main`
@@ -81,7 +81,7 @@ Cloud Build triggers are active and deploy on pushes to `main`:
 Verify them with:
 
 ```bash
-gcloud builds triggers list --region=us-central1
+gcloud builds triggers list --project=hackathon-test-key --region=us-central1
 ```
 
 Trigger setup script:
@@ -95,6 +95,7 @@ Important implementation detail:
 - the repo uses a 2nd-gen Cloud Build GitHub connection: `hydroacrid-github`
 - trigger creation had to use `gcloud alpha builds triggers create repository`
 - trigger creation also requires the active project's compute service account
+- current state in `hackathon-test-key`: the GitHub connection exists, but OAuth / GitHub app authorization still has to be completed once before triggers can be created
 
 If the triggers ever need to be recreated, rerun the script above.
 
@@ -237,15 +238,13 @@ pnpm --filter @copilot/web dev
 ### Agent health
 
 ```bash
-AGENT_URL="$(gcloud run services describe launch-copilot-agent --project=hackathon-test-key --region=us-central1 --format='value(status.url)')"
-curl -sS "${AGENT_URL}/health"
+curl -sS https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health
 ```
 
 ### Create a session
 
 ```bash
-AGENT_URL="$(gcloud run services describe launch-copilot-agent --project=hackathon-test-key --region=us-central1 --format='value(status.url)')"
-curl -sS -X POST "${AGENT_URL}/sessions"
+curl -sS -X POST https://launch-copilot-agent-fh43iudbha-uc.a.run.app/sessions
 ```
 
 ### Deploy web
@@ -265,7 +264,7 @@ gcloud builds submit --config cloudbuild.agent.yaml .
 ### List continuous deploy triggers
 
 ```bash
-gcloud builds triggers list --region=us-central1
+gcloud builds triggers list --project=hackathon-test-key --region=us-central1
 ```
 
 ## Recommended first move after opening the laptop again

@@ -3,8 +3,10 @@
 import { useCallback, useRef, useState } from "react";
 import type { TranscriptChunk } from "@copilot/shared";
 import type { TranscriptSource } from "./transcriptSource";
-
-const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? "http://localhost:4000";
+import {
+  createSessionResponse,
+  postTranscriptChunkResponse,
+} from "./agent-client";
 
 export interface LiveTranscriptState {
   chunks: TranscriptChunk[];
@@ -60,7 +62,7 @@ export function useLiveTranscript(
   const recoverSession = useCallback(async (): Promise<string | null> => {
     try {
       console.log("[useLiveTranscript] Creating new session...");
-      const res = await fetch(`${AGENT_URL}/sessions`, { method: "POST" });
+      const res = await createSessionResponse();
       if (!res.ok) {
         console.error("[useLiveTranscript] Failed to create session:", await res.text());
         return null;
@@ -80,11 +82,7 @@ export function useLiveTranscript(
         console.log(`[useLiveTranscript] Re-uploading ${existing.length} chunks to ${newId}`);
         for (const chunk of existing) {
           try {
-            await fetch(`${AGENT_URL}/sessions/${newId}/transcript-chunks`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(chunk),
-            });
+            await postTranscriptChunkResponse(newId, chunk);
           } catch {
             // Best-effort — don't abort the whole recovery for one chunk
           }
@@ -120,11 +118,7 @@ export function useLiveTranscript(
     // 3. Try to POST the chunk
     try {
       console.log(`[useLiveTranscript] POSTing chunk to session ${sid}:`, chunk.text);
-      const res = await fetch(`${AGENT_URL}/sessions/${sid}/transcript-chunks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(chunk),
-      });
+      const res = await postTranscriptChunkResponse(sid, chunk);
 
       if (res.status === 404) {
         // ── Backend restarted — recover inline ──
