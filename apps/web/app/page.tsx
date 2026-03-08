@@ -216,11 +216,13 @@ export default function Home() {
     lastError: cricketTTS.lastError,
   });
   const lastHeardRequestKeyRef = useRef<string | null>(null);
-  const pendingCricketRequestKeyRef = useRef<string | null>(null);
   const modeRef = useRef(mode);
   modeRef.current = mode;
   const cricketTTSPhaseRef = useRef(cricketTTS.phase);
   cricketTTSPhaseRef.current = cricketTTS.phase;
+  const cricketVoicePhaseRef = useRef(cricketVoiceState.phase);
+  cricketVoicePhaseRef.current = cricketVoiceState.phase;
+  const lastSpokenInterruptRef = useRef<{ text: string; at: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -308,15 +310,29 @@ export default function Home() {
       const patch = JSON.parse(event.data) as GraphPatchEvent;
       setSessionState((current) => (current ? mergeSessionState(current, patch) : current));
 
-      // Cricket voice mode: consume at most one spoken response per heard request.
+      // Cricket voice mode: speak when a direct Cricket response arrives,
+      // but suppress near-duplicate replayed replies.
       if (
         patch.interruptMessage &&
         modeRef.current === "live" &&
-        pendingCricketRequestKeyRef.current &&
         cricketTTSPhaseRef.current !== "requesting" &&
-        cricketTTSPhaseRef.current !== "speaking"
+        cricketTTSPhaseRef.current !== "speaking" &&
+        (cricketVoicePhaseRef.current === "heard" || cricketVoicePhaseRef.current === "thinking")
       ) {
-        pendingCricketRequestKeyRef.current = null;
+        const now = Date.now();
+        const lastSpoken = lastSpokenInterruptRef.current;
+        if (
+          lastSpoken &&
+          lastSpoken.text === patch.interruptMessage &&
+          now - lastSpoken.at < 5000
+        ) {
+          return;
+        }
+
+        lastSpokenInterruptRef.current = {
+          text: patch.interruptMessage,
+          at: now,
+        };
         beginResponse(patch.interruptMessage);
         cricketSpeakRef.current(patch.interruptMessage);
       }
@@ -349,13 +365,11 @@ export default function Home() {
     }
 
     lastHeardRequestKeyRef.current = request.key;
-    pendingCricketRequestKeyRef.current = request.key;
     markHeard(request.text);
   }, [cricketTTS.phase, cricketVoiceState.phase, liveChunks, markHeard, mode]);
 
   useEffect(() => {
     lastHeardRequestKeyRef.current = null;
-    pendingCricketRequestKeyRef.current = null;
   }, [mode, sessionId]);
 
   async function handleStartReplay() {
