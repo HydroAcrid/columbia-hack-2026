@@ -1,228 +1,227 @@
-# Live Launch Meeting Copilot — Demo Script (Two Presenters)
+# Nota Demo Script
 
-Use this script to run a tight, impressive demo that showcases **every feature**: live transcript, graph extraction (nodes + edges), decisions, actions, issues (blocker / warning / info), and ownership.
+This is the recommended live demo for the current product.
 
----
+The app is `Nota`.
+The assistant is `Cricket`.
 
-## Replay vs Live — Which to Use?
+The best story is to talk about Nota itself, because that naturally produces:
+- people and ownership
+- systems and tech stack
+- milestones
+- blockers and risks
+- actions and decisions
+- a strong Cricket Q&A moment at the end
 
-| | **Live** | **Replay** |
-|---|----------|------------|
-| **What it does** | **Real mic** → Deepgram STT → your speech becomes transcript → **Gemini** extracts entities, decisions, actions, issues in real time. | **No mic.** The app “plays” a pre-recorded meeting script; the graph fills from **curated demo data** so every feature appears on cue. |
-| **Why use it** | Shows the real product: “We’re actually speaking and it’s extracting.” More impressive. | Guaranteed to look perfect. Same story every time; good if Live isn’t available or as a backup. |
-| **When it works** | **Local:** needs agent + Deepgram (and optionally Gemini) running. **Deployed:** agent must have `DEEPGRAM_API_KEY` and `GEMINI_API_KEY`; browser connects to `wss://agent-url/stt`. | Works everywhere (local and deployed); no mic or STT needed. |
+## Goal
 
-**Recommendation:** **Use Live** when you can (real mic, real extraction). Have **Replay** as backup or as a second beat: “Now here’s the same conversation in replay so you see every feature land on cue.”
+Show this sequence clearly:
+1. live transcript appears
+2. graph builds from the conversation
+3. insights panel captures actions, blockers, and decisions
+4. Cricket answers a question using the meeting context
 
----
+## Roles
 
-**Roles**
-- **Person A** — Driver + graph focus (starts Live/Replay, points at center canvas).
-- **Person B** — Narrator + insights focus (points at left transcript, right Operator Brief).
+- `Kevin`: product/demo driver
+- `Nelly`: technical narrator and second speaker
 
----
+## Recommended Setup
 
-## Before You Start (Checklist)
+- Use `Live` mode, not replay, as the main path.
+- Keep replay available only as backup.
+- Start with the graph and insights visible.
+- Speak clearly and pause for a beat between major lines.
+- Do not trigger Cricket until enough meeting context exists.
 
-- [ ] One laptop, one browser, **full screen** (F11 or zoom out so panels are visible).
-- [ ] Open: **https://launch-copilot-web-fh43iudbha-uc.a.run.app** (or local: `http://localhost:3000`).
-- [ ] Wait for **Live** (green) in the top bar. If it says Connecting, wait a few seconds.
-- [ ] **If using Live:** Switch to **Live** mode, then click the mic to start. Grant mic permission.  
-- [ ] **If using Replay:** Leave mode on **Replay**; Person A will click **Replay** when you start.
-- [ ] Person A has hand on mouse; Person B knows where the transcript (left) and Operator Brief (right) are.
+## Pre-Demo Check
 
----
+- Open the deployed app.
+- Confirm transcript is updating.
+- Confirm graph updates appear within a couple seconds.
+- Confirm the insights panel is visible on the right.
+- Confirm Cricket voice mode works once before presenting.
 
-## Script A — Live Mode (Real Mic, Real Extraction)
+## Main Script
 
-**Person A**  
-*[Switch to **Live**, start the mic.]*
+### Opening
 
-**Person A**  
-“We’re going to run a short launch-planning meeting. Everything you see — transcript and graph — is coming from **our voices right now**. No pre-recorded tape.”
+`Kevin`
 
-*Then **both** take turns reading the lines below. Speak clearly; pause briefly between lines so Deepgram and Gemini can process. Point at the graph and Operator Brief as nodes, decisions, actions, and issues appear.*
+"We built Nota to turn live project conversations into a shared visual map of what matters."
 
-**Person A (Priya)**  
-“Alright, let’s lock down the launch timeline. We’re targeting March 28 for the public release of Project Aurora.”
+`Nelly`
 
-**Person B (Kevin)**  
-“The API gateway is ready, but the billing integration still depends on the payments team finishing their v2 migration.”
+"As we talk, Nota is generating a diagram in real time and extracting actions, blockers, and decisions into the operator brief."
 
-**Person A (Sara)**  
-“The onboarding flow redesign is done on my end. I handed it off to frontend last week.”
+### Establish the Product
 
-**Person B (Kevin)**  
-“We picked that up. The new onboarding screens are in staging, but we haven’t gotten QA sign-off yet.”
+`Kevin`
 
-**Person A (Priya)**  
-“Who owns the QA pass for onboarding? I don’t see it assigned anywhere.”
+"The product we’re building is called Nota, and the assistant inside it is called Cricket."
 
-**Person B (Marcus)**  
-“I can flag that with the QA lead, but honestly the staging environment has been flaky. We should fix the deploy pipeline first.”
+`Nelly`
 
-**Person A (Priya)**  
-“Okay, decision: we fix staging reliability before we run the final QA pass. Kevin, can your team own that?”
+"The point is that teams should not leave meetings with scattered notes. They should leave with a structured graph, ownership, and next steps."
 
-**Person B (Kevin)**  
-“Yes, we’ll prioritise the staging fix. But if payments v2 slips, billing integration blocks the whole launch.”
+### Establish the Stack
 
-*As the graph and panels update, call out what’s appearing (e.g. “There’s the first decision,” “Now we have a blocker issue,” “Actions with owners”).*
+`Kevin`
 
-**Person A or B (closing)**  
-“So that’s **live**: our speech → transcript → extraction → graph and Operator Brief. Instead of leaving meetings with scattered notes, teams leave with **structured knowledge** they can actually use.”
+"On the frontend, we’re using Next.js with React Flow to render the live diagram."
 
----
+`Nelly`
 
-## Script B — Replay Mode (Curated Demo, No Mic)
+"On the backend, we run the agent on Google Cloud Run, and Firestore stores the session state."
 
-*Use this if Live isn’t working (e.g. no mic, deployed STT issues) or as a second run to show every feature on cue.*
+`Kevin`
 
-**Person A**  
-*[Click **Replay** in the top right.]*
+"For live transcription, we use Deepgram because we need speaker-aware transcription and diarization."
 
-**Person A**  
-“We’re starting a simulated launch-planning meeting. Watch the left panel — that’s the **live transcript** as the meeting would be spoken.”
+`Nelly`
 
-*Then follow along as the 8 lines play automatically (no mic). Narrate what appears:*
+"For intelligence, we use Gemini to extract graph structure, decisions, actions, issues, and Cricket’s spoken responses."
 
----
+### Establish People and Ownership
 
-**Person B**  
-*[As first line appears in transcript.]*
+`Kevin`
 
-“First line in: **Priya** locks the launch date — March 28 for Project Aurora.”
+"I’m Kevin, and I’m owning the product flow, deployment setup, and the final demo orchestration."
 
-**Person A**  
-*[Point at center graph as first nodes appear.]*
+`Nelly`
 
-“The graph is **extracting in real time**. You’re seeing **people** and **milestones** — Priya and the Aurora launch — and the first **decision** is already in the Operator Brief: *Target March 28 for Project Aurora public launch*.”
+"I’m Nelly, and I’m owning the voice interaction experience and the assistant behavior."
 
----
+### Establish Concrete Project Structure
 
-**Person B**  
-*[As Kevin’s line and new nodes appear.]*
+`Kevin`
 
-“**Kevin** from Engineering: API gateway is ready, billing depends on the payments team. Watch the graph — we now have **teams** and **systems**: Engineering, Payments, API Gateway, Billing, and the **depends_on** relationship: Billing waiting on Payments v2.”
+"One milestone is getting the deployed live demo stable for presentation tonight."
 
-**Person A**  
-*[Briefly point at an edge.]*
+`Nelly`
 
-“So we’re not just entities — we’re capturing **relationships**: who owns what, what depends on what.”
+"One action item is that Kevin finalizes the demo runbook and deployment checks."
 
----
+`Kevin`
 
-**Person B**  
-*[As Sara and onboarding appear.]*
+"Another action item is that Nelly validates the final end-to-end voice rehearsal."
 
-“**Sara** from Design: onboarding redesign done, handed to frontend. Graph adds **Sara**, **Onboarding Flow**, and an **owns** edge — she designed it.”
+### Establish Blockers and Risks
 
----
+`Nelly`
 
-**Person B**  
-*[As Kevin’s second line and staging appear.]*
+"A blocker we had earlier was that live transcription was still tied to a localhost websocket path, which broke the deployed flow."
 
-“**Kevin** again: onboarding is in staging, no QA sign-off yet. We get **Staging** as a system, and the first **issue** in the right panel: *QA sign-off for onboarding is still pending* — that’s an **info**-level issue.”
+`Kevin`
 
-**Person A**  
-*[Point at Issues section.]*
+"We fixed that by routing the live speech-to-text path through the agent service instead of a local-only websocket."
 
-“Issues can be **info**, **warning**, or **blocker**. We’ll see a blocker in a second.”
+`Nelly`
 
----
+"Another risk is that graph extraction can get noisy or slow if the model creates duplicate systems or weak edges."
 
-**Person B**  
-*[As Priya asks who owns QA.]*
+`Kevin`
 
-“**Priya** asks who owns the QA pass — it’s unassigned. Right panel: new issue — *No owner assigned for onboarding QA pass* — that’s a **blocker**.”
+"So we tightened the graph engine to reuse canonical entities, suppress weak structure, and keep the diagram clean."
 
-**Person A**  
-*[Point at the blocker badge if visible.]*
+### Establish One More Concrete Technical Detail
 
-“So the system is surfacing **ownership gaps** live.”
+`Nelly`
 
----
+"We also improved speaker identity inference, so if someone explicitly says their name, Nota can lock that speaker identity with much more stability."
 
-**Person B**  
-*[As Marcus appears.]*
+## Cricket Moment
 
-“**Marcus** from Ops: he’ll flag it with QA, but staging has been flaky — fix the deploy pipeline first. Graph adds **Marcus**, and a **blocks** edge: Staging **blocks** Onboarding. We also get our first **action**: *Flag QA assignment for onboarding with QA lead*, **owner Marcus**.”
+Pause for a second so the graph and insights settle.
 
-**Person A**  
-*[Point at Actions section.]*
+Then ask Cricket direct, context-rich questions.
 
-“Actions show **who owns them** — so nothing falls through the cracks.”
+`Kevin`
 
----
+"Cricket, who owns what right now?"
 
-**Person B**  
-*[As Priya’s decision line appears.]*
+Pause for Cricket to answer.
 
-“**Priya** makes it explicit: decision — fix staging reliability before final QA pass; Kevin’s team owns it. That’s a second **decision** in the brief.”
+`Nelly`
 
-**Person A**  
-*[Point at Decisions section.]*
+"Cricket, what blockers or risks are still active?"
 
-“Decisions are captured as they’re said — no digging through notes later.”
+Pause for Cricket to answer.
 
----
+`Kevin`
 
-**Person B**  
-*[As Kevin’s last line appears.]*
+"Cricket, what are we still missing before demo time?"
 
-“**Kevin** commits to the staging fix but calls out the risk: if Payments v2 slips, billing **blocks** the whole launch. Graph adds the **blocks** edge from Billing to the Aurora launch, and we get another **action** — *Fix staging deploy pipeline reliability*, **owner Kevin** — and a **warning** issue: *Billing integration blocked by Payments Team v2 migration*.”
+## Closing
 
-**Person A**  
-*[Sweep the graph once.]*
+`Kevin`
 
-“So in one short conversation we’ve got **people**, **teams**, **systems**, and a **milestone**; **owns**, **depends_on**, **blocks**, and **relates_to**; **decisions**, **actions**, and **issues** at three severity levels — all extracted live.”
+"That’s Nota: a live conversation becomes a diagram, a structured operator brief, and a real meeting assistant."
 
----
+`Nelly`
 
-## Closing (Person A or B)
+"Instead of manually summarizing after the fact, the meeting becomes usable knowledge while it is happening."
 
-**Person A or B**  
+## What This Script Should Trigger
 
-“Instead of leaving meetings with scattered notes, teams leave with **structured knowledge** they can actually use. That’s the Live Launch Meeting Copilot.”
+- `person` nodes:
+  - Kevin
+  - Nelly
+- `system` nodes:
+  - Nota
+  - Deepgram
+  - Gemini
+  - Google Cloud Run
+  - Firestore
+  - React Flow
+- `milestone` node:
+  - deployed live demo / demo tonight
+- insights:
+  - action items for Kevin and Nelly
+  - blocker about the old localhost websocket path
+  - risk around graph noise / latency
+  - decisions or commitments around routing/fixes
 
----
+## Delivery Notes
 
-## Feature Checklist (What You Showed)
+- Keep sentences explicit and concrete.
+- Prefer real nouns over vague phrases like `backend stuff` or `database thing`.
+- If you want something in the graph, name the actual system.
+- Do not trigger Cricket too early.
+- Let the audience watch the graph for a few seconds before the first Cricket question.
 
-| Feature | Where it appeared |
-|--------|--------------------|
-| Live transcript | Left panel, line by line |
-| Person nodes | Priya, Kevin, Sara, Marcus |
-| Team nodes | Engineering, Payments Team |
-| System nodes | API Gateway, Billing, Onboarding Flow, Staging |
-| Milestone node | Aurora Launch (Mar 28) |
-| **owns** edge | e.g. Priya→launch, Kevin→Eng, Eng→API Gateway, Sara→Onboarding |
-| **depends_on** edge | Billing → Payments |
-| **blocks** edge | Staging→Onboarding, Billing→Aurora Launch |
-| **relates_to** edge | Marcus → Staging |
-| Decisions | 2 (launch date; fix staging before QA) |
-| Actions with owner | 2 (Marcus: flag QA; Kevin: fix staging) |
-| Issue severity **info** | QA sign-off pending |
-| Issue severity **blocker** | No owner for onboarding QA |
-| Issue severity **warning** | Billing blocked by Payments v2 |
-| Highlighting | Nodes briefly highlight as patches apply |
+## Backup Path
 
----
+If live mode becomes unreliable:
+- switch to replay
+- narrate the graph and insights manually
+- keep the same product story: Nota organizes the meeting, and Cricket is the assistant layer
 
-## If Something Breaks
+## Fast Version
 
-- **Live mic not working / no extraction:** Fall back to **Replay** (Script B). Switch to Replay mode, click Replay, and narrate as the curated demo plays.
-- **Replay not starting:** Check **Live** (green) in the top bar. If **Offline**, refresh and wait for connection.
-- **No graph updates:** If the agent is down, you’ll see transcript only. Health check: `curl -sS https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health`
-- **Wrong URL:** Deployed: `https://launch-copilot-web-fh43iudbha-uc.a.run.app`. Local: `http://localhost:3000` (agent must be running for local).
+If you only have 45 to 60 seconds:
 
----
+`Kevin`
 
-## Optional: Live Mode Teaser
+"We built Nota to turn live project conversations into a structured diagram and operator brief."
 
-If you have time and are on **local** (with Deepgram proxy):
+`Nelly`
 
-- Switch to **Live**, start mic, and say one or two lines (e.g. “We decided to move the launch to April 5”).
-- Point out: “Same pipeline — live speech goes to the same extraction and graph. Deployed live is coming next.”
+"As we talk, it extracts systems, owners, blockers, and actions in real time."
 
-Keep this short; **Replay is the main demo**.
+`Kevin`
+
+"We use Deepgram for live diarized transcription and Gemini for extraction and Cricket responses."
+
+`Nelly`
+
+"I own the voice assistant layer, and Kevin owns product flow and demo orchestration."
+
+`Kevin`
+
+"Our milestone is stabilizing the deployed demo tonight, and our last risk was the live websocket path, which we fixed."
+
+`Nelly`
+
+"Cricket, what blockers are still active?"
+
