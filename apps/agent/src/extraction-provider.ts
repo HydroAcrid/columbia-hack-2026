@@ -27,8 +27,8 @@ export class DemoExtractionProvider implements ExtractionProvider {
 class HybridExtractionProvider implements ExtractionProvider {
   private gemini: GeminiExtractionProvider;
 
-  constructor(apiKey: string) {
-    this.gemini = new GeminiExtractionProvider(apiKey);
+  constructor(apiKey: string, model: string) {
+    this.gemini = new GeminiExtractionProvider(apiKey, model);
   }
 
   async extract(chunk: TranscriptChunk, state: SessionState): Promise<GraphPatchEvent> {
@@ -50,11 +50,12 @@ export interface ExtractionProviderMetadata {
 
 export function createExtractionProvider(vertex: VertexConfig) {
   const geminiApiKey = process.env.GEMINI_API_KEY;
+  const geminiModel = process.env.GEMINI_MODEL ?? vertex.model ?? "gemini-2.5-flash";
 
   if (geminiApiKey) {
-    console.log("[Extraction] Using Hybrid provider (demo lookup + Gemini for live)");
+    console.log(`[Extraction] Using Hybrid provider (demo lookup + Gemini for live) with ${geminiModel}`);
     return {
-      provider: new HybridExtractionProvider(geminiApiKey),
+      provider: new HybridExtractionProvider(geminiApiKey, geminiModel),
       metadata: {
         mode: "hybrid",
         vertex,

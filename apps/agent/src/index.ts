@@ -1,4 +1,7 @@
-import "dotenv/config";
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import dotenv from "dotenv";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -14,9 +17,10 @@ import { createExtractionProvider } from "./extraction-provider.js";
 import {
   createSessionStore,
   type SessionEvent,
-  type SessionStore,
   type StoredSession,
 } from "./session-store.js";
+
+loadEnvFiles();
 
 const app = new Hono();
 const encoder = new TextEncoder();
@@ -222,4 +226,21 @@ function parseEventId(value: string | null | undefined) {
 
 function serializeEvent(event: SessionEvent) {
   return encoder.encode(`id: ${event.id}\ndata: ${JSON.stringify(event.patch)}\n\n`);
+}
+
+function loadEnvFiles() {
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const workspaceRoot = resolve(currentDir, "../../..");
+  const packageRoot = resolve(currentDir, "..");
+
+  for (const path of [
+    resolve(workspaceRoot, ".env.local"),
+    resolve(workspaceRoot, ".env"),
+    resolve(packageRoot, ".env.local"),
+    resolve(packageRoot, ".env"),
+  ]) {
+    if (existsSync(path)) {
+      dotenv.config({ path, override: false });
+    }
+  }
 }

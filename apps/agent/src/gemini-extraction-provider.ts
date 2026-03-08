@@ -49,10 +49,10 @@ export class GeminiExtractionProvider implements ExtractionProvider {
   private batchResolvers: Array<(patch: GraphPatchEvent) => void> = [];
   private latestState: SessionState | null = null;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model: string) {
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model,
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
