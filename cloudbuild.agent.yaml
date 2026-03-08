@@ -3,6 +3,8 @@ substitutions:
   _REGION: us-central1
   _AR_REPOSITORY: launch-copilot
   _IMAGE_TAG: latest
+  _GEMINI_SECRET_NAME: gemini-api-key
+  _DEEPGRAM_SECRET_NAME: deepgram-api-key
   _SESSION_STORE_BACKEND: firestore
   _VERTEX_LOCATION: us-central1
   _VERTEX_MODEL: gemini-2.5-flash
@@ -32,6 +34,7 @@ steps:
       - --platform=managed
       - --allow-unauthenticated
       - --set-env-vars=SESSION_STORE_BACKEND=${_SESSION_STORE_BACKEND},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_REGION=${_REGION},VERTEX_LOCATION=${_VERTEX_LOCATION},VERTEX_MODEL=${_VERTEX_MODEL},VERTEX_LIVE_MODEL=${_VERTEX_LIVE_MODEL}
+      - --update-secrets=GEMINI_API_KEY=${_GEMINI_SECRET_NAME}:latest,DEEPGRAM_API_KEY=${_DEEPGRAM_SECRET_NAME}:latest
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}

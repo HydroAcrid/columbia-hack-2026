@@ -1,18 +1,34 @@
 substitutions:
   _SERVICE_NAME: launch-copilot-web
+  _AGENT_SERVICE_NAME: launch-copilot-agent
   _REGION: us-central1
   _AR_REPOSITORY: launch-copilot
   _IMAGE_TAG: latest
-  _NEXT_PUBLIC_AGENT_URL: https://launch-copilot-agent-353476176382.us-central1.run.app
 
 steps:
-  - name: gcr.io/cloud-builders/docker
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
     args:
-      - build
-      - --file=apps/web/Dockerfile
-      - --build-arg=NEXT_PUBLIC_AGENT_URL=${_NEXT_PUBLIC_AGENT_URL}
-      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}
-      - .
+      - -ceu
+      - |
+        AGENT_URL="$(gcloud run services describe "${_AGENT_SERVICE_NAME}" --region="${_REGION}" --format='value(status.url)')"
+        if [[ -z "${AGENT_URL}" ]]; then
+          echo "Unable to resolve Cloud Run URL for ${_AGENT_SERVICE_NAME} in ${PROJECT_ID}/${_REGION}" >&2
+          exit 1
+        fi
+        printf '%s' "${AGENT_URL}" > /workspace/.agent_url
+
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        AGENT_URL="$(cat /workspace/.agent_url)"
+        docker build \
+          --file=apps/web/Dockerfile \
+          --build-arg=NEXT_PUBLIC_AGENT_URL="${AGENT_URL}" \
+          --tag="${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPOSITORY}/${_SERVICE_NAME}:${_IMAGE_TAG}" \
+          .
 
   - name: gcr.io/cloud-builders/docker
     args:

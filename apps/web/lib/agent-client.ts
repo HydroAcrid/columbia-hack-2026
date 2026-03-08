@@ -3,7 +3,7 @@ import type {
   TranscriptChunk,
 } from "@copilot/shared";
 
-const DEFAULT_AGENT_BASE_URL = "https://launch-copilot-agent-353476176382.us-central1.run.app";
+const DEFAULT_AGENT_BASE_URL = "http://localhost:4000";
 const AGENT_BASE_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? DEFAULT_AGENT_BASE_URL;
 
 export function getSessionEventsUrl(sessionId: string, lastEventId?: string | null) {

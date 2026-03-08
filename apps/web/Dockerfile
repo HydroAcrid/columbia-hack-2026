@@ -3,7 +3,7 @@ FROM node:20-slim AS builder
 ENV NODE_ENV=production
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-ARG NEXT_PUBLIC_AGENT_URL=https://launch-copilot-agent-353476176382.us-central1.run.app
+ARG NEXT_PUBLIC_AGENT_URL
 ENV NEXT_PUBLIC_AGENT_URL=$NEXT_PUBLIC_AGENT_URL
 
 RUN corepack enable

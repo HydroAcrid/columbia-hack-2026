@@ -2,17 +2,17 @@
 
 set -euo pipefail
 
-PROJECT_ID="${PROJECT_ID:-gcloud-hackathon-edoscin8fh6pt}"
-PROJECT_NUMBER="${PROJECT_NUMBER:-353476176382}"
+PROJECT_ID="${PROJECT_ID:-hackathon-test-key}"
+PROJECT_NUMBER="${PROJECT_NUMBER:-}"
 REGION="${REGION:-us-central1}"
 CONNECTION_NAME="${CONNECTION_NAME:-hydroacrid-github}"
 REPOSITORY_NAME="${REPOSITORY_NAME:-columbia-hack-2026}"
 REMOTE_URI="${REMOTE_URI:-https://github.com/HydroAcrid/columbia-hack-2026.git}"
 WEB_TRIGGER_NAME="${WEB_TRIGGER_NAME:-deploy-web-main}"
 AGENT_TRIGGER_NAME="${AGENT_TRIGGER_NAME:-deploy-agent-main}"
-AGENT_URL="${AGENT_URL:-https://launch-copilot-agent-353476176382.us-central1.run.app}"
+AGENT_SERVICE_NAME="${AGENT_SERVICE_NAME:-launch-copilot-agent}"
 AR_REPOSITORY="${AR_REPOSITORY:-launch-copilot}"
-TRIGGER_SERVICE_ACCOUNT="${TRIGGER_SERVICE_ACCOUNT:-projects/${PROJECT_ID}/serviceAccounts/${PROJECT_NUMBER}-compute@developer.gserviceaccount.com}"
+TRIGGER_SERVICE_ACCOUNT="${TRIGGER_SERVICE_ACCOUNT:-}"
 
 CONNECTION_RESOURCE="projects/${PROJECT_ID}/locations/${REGION}/connections/${CONNECTION_NAME}"
 REPOSITORY_RESOURCE="${CONNECTION_RESOURCE}/repositories/${REPOSITORY_NAME}"
@@ -27,6 +27,14 @@ require_cmd() {
 require_cmd gcloud
 
 gcloud config set project "${PROJECT_ID}" >/dev/null
+
+if [[ -z "${PROJECT_NUMBER}" ]]; then
+  PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+fi
+
+if [[ -z "${TRIGGER_SERVICE_ACCOUNT}" ]]; then
+  TRIGGER_SERVICE_ACCOUNT="projects/${PROJECT_ID}/serviceAccounts/${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+fi
 
 ensure_secret_manager_permissions() {
   gcloud services enable secretmanager.googleapis.com >/dev/null
@@ -113,14 +121,14 @@ ensure_trigger \
   "cloudbuild.web.yaml" \
   "Deploy web Cloud Run service on pushes to main" \
   "apps/web/**,packages/**,cloudbuild.web.yaml,pnpm-lock.yaml,pnpm-workspace.yaml,package.json" \
-  "_SERVICE_NAME=launch-copilot-web,_REGION=${REGION},_AR_REPOSITORY=${AR_REPOSITORY},_IMAGE_TAG=latest,_NEXT_PUBLIC_AGENT_URL=${AGENT_URL}"
+  "_SERVICE_NAME=launch-copilot-web,_AGENT_SERVICE_NAME=${AGENT_SERVICE_NAME},_REGION=${REGION},_AR_REPOSITORY=${AR_REPOSITORY},_IMAGE_TAG=latest"
 
 ensure_trigger \
   "${AGENT_TRIGGER_NAME}" \
   "cloudbuild.agent.yaml" \
   "Deploy agent Cloud Run service on pushes to main" \
   "apps/agent/**,packages/**,cloudbuild.agent.yaml,pnpm-lock.yaml,pnpm-workspace.yaml,package.json,firestore.rules,firestore.indexes.json" \
-  "_SERVICE_NAME=launch-copilot-agent,_REGION=${REGION},_AR_REPOSITORY=${AR_REPOSITORY},_IMAGE_TAG=latest,_SESSION_STORE_BACKEND=firestore,_VERTEX_LOCATION=${REGION},_VERTEX_MODEL=,_VERTEX_LIVE_MODEL="
+  "_SERVICE_NAME=${AGENT_SERVICE_NAME},_REGION=${REGION},_AR_REPOSITORY=${AR_REPOSITORY},_IMAGE_TAG=latest,_GEMINI_SECRET_NAME=gemini-api-key,_DEEPGRAM_SECRET_NAME=deepgram-api-key,_SESSION_STORE_BACKEND=firestore,_VERTEX_LOCATION=${REGION},_VERTEX_MODEL=gemini-2.5-flash,_VERTEX_LIVE_MODEL=gemini-live-2.5-flash-preview"
 
 echo
 echo "Cloud Build trigger setup complete."

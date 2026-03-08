@@ -6,8 +6,11 @@ runConfig:
   concurrency: 80
 
 env:
+  # Firebase App Hosting is not the active deploy target.
+  # If this file is reused, replace this with the current Cloud Run agent URL
+  # from the active project before deploying.
   - variable: NEXT_PUBLIC_AGENT_URL
-    value: https://launch-copilot-agent-353476176382.us-central1.run.app
+    value: https://replace-with-launch-copilot-agent-url
     availability:
       - BUILD
       - RUNTIME

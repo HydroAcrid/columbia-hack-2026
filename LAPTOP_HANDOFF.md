@@ -58,12 +58,15 @@ Last updated: 2026-03-08
 - Dockerfiles exist for both services.
 - Firestore rules/indexes and env examples are checked in.
 - Continuous deploy to Cloud Run is set up from GitHub pushes to `main`.
+- Active target project is now `hackathon-test-key`.
 
 ## Live deployed URLs
 
-- Web: `https://launch-copilot-web-qblbvltlrq-uc.a.run.app`
-- Agent: `https://launch-copilot-agent-353476176382.us-central1.run.app`
-- Agent health: `https://launch-copilot-agent-353476176382.us-central1.run.app/health`
+The old `gcloud-hackathon-edoscin8fh6pt` URLs are stale. Read the current URLs from Cloud Run in `hackathon-test-key`:
+
+```bash
+gcloud run services list --project=hackathon-test-key --region=us-central1
+```
 
 ## Continuous deploy
 
@@ -88,8 +91,7 @@ Important implementation detail:
 
 - the repo uses a 2nd-gen Cloud Build GitHub connection: `hydroacrid-github`
 - trigger creation had to use `gcloud alpha builds triggers create repository`
-- trigger creation also required an explicit service account:
-  `projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/353476176382-compute@developer.gserviceaccount.com`
+- trigger creation also requires the active project's compute service account
 
 If the triggers ever need to be recreated, rerun the script above.
 
@@ -244,31 +246,29 @@ pnpm --filter @copilot/web dev
 ### Agent health
 
 ```bash
-curl -sS https://launch-copilot-agent-353476176382.us-central1.run.app/health
+AGENT_URL="$(gcloud run services describe launch-copilot-agent --project=hackathon-test-key --region=us-central1 --format='value(status.url)')"
+curl -sS "${AGENT_URL}/health"
 ```
 
 ### Create a session
 
 ```bash
-curl -sS -X POST https://launch-copilot-agent-353476176382.us-central1.run.app/sessions
+AGENT_URL="$(gcloud run services describe launch-copilot-agent --project=hackathon-test-key --region=us-central1 --format='value(status.url)')"
+curl -sS -X POST "${AGENT_URL}/sessions"
 ```
 
 ### Deploy web
 
 ```bash
-gcloud builds submit \
-  --config cloudbuild.web.yaml \
-  --substitutions _SERVICE_NAME=launch-copilot-web,_REGION=us-central1,_AR_REPOSITORY=launch-copilot,_IMAGE_TAG=latest,_NEXT_PUBLIC_AGENT_URL=https://launch-copilot-agent-353476176382.us-central1.run.app \
-  .
+gcloud config set project hackathon-test-key
+gcloud builds submit --config cloudbuild.web.yaml .
 ```
 
 ### Deploy agent
 
 ```bash
-gcloud builds submit \
-  --config cloudbuild.agent.yaml \
-  --substitutions _SERVICE_NAME=launch-copilot-agent,_REGION=us-central1,_AR_REPOSITORY=launch-copilot \
-  .
+gcloud config set project hackathon-test-key
+gcloud builds submit --config cloudbuild.agent.yaml .
 ```
 
 ### List continuous deploy triggers

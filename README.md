@@ -14,11 +14,12 @@ Hackathon project for a launch-planning meeting copilot with:
 - `packages/shared` — shared schemas and demo script
 - `packages/graph` — graph merge and dedupe logic
 
-## Live environments
+## Target project
 
-- Web: `https://launch-copilot-web-qblbvltlrq-uc.a.run.app`
-- Agent: `https://launch-copilot-agent-353476176382.us-central1.run.app`
-- Agent health: `https://launch-copilot-agent-353476176382.us-central1.run.app/health`
+- Google Cloud project: `hackathon-test-key`
+- Cloud Run service names: `launch-copilot-web`, `launch-copilot-agent`
+- Read the current URLs from Cloud Run after deploy:
+  `gcloud run services list --project=hackathon-test-key --region=us-central1`
 
 ## Deployment
 
@@ -48,19 +49,15 @@ gcloud builds triggers list --region=us-central1
 Deploy web:
 
 ```bash
-gcloud builds submit \
-  --config cloudbuild.web.yaml \
-  --substitutions _SERVICE_NAME=launch-copilot-web,_REGION=us-central1,_AR_REPOSITORY=launch-copilot,_IMAGE_TAG=latest,_NEXT_PUBLIC_AGENT_URL=https://launch-copilot-agent-353476176382.us-central1.run.app \
-  .
+gcloud config set project hackathon-test-key
+gcloud builds submit --config cloudbuild.web.yaml .
 ```
 
 Deploy agent:
 
 ```bash
-gcloud builds submit \
-  --config cloudbuild.agent.yaml \
-  --substitutions _SERVICE_NAME=launch-copilot-agent,_REGION=us-central1,_AR_REPOSITORY=launch-copilot \
-  .
+gcloud config set project hackathon-test-key
+gcloud builds submit --config cloudbuild.agent.yaml .
 ```
 
 ### Trigger setup
@@ -76,12 +73,14 @@ What it does:
 - ensures Secret Manager permissions for the Cloud Build service agent
 - uses the GitHub connection `hydroacrid-github`
 - uses the 2nd-gen Cloud Build repository resource for this repo
-- creates the `main` branch deploy triggers
+- creates the `main` branch deploy triggers in `hackathon-test-key`
+- resolves the current project number dynamically
+- points the web build at the current project's agent service URL
 
 Important: trigger creation required the 2nd-gen repository trigger path and an explicit service account:
 
 - command family: `gcloud alpha builds triggers create repository`
-- service account: `projects/gcloud-hackathon-edoscin8fh6pt/serviceAccounts/353476176382-compute@developer.gserviceaccount.com`
+- service account pattern: `projects/hackathon-test-key/serviceAccounts/<PROJECT_NUMBER>-compute@developer.gserviceaccount.com`
 
 ## Local development
 
@@ -95,7 +94,7 @@ pnpm --filter @copilot/web dev
 If you need the deployed agent in local web dev:
 
 ```bash
-export NEXT_PUBLIC_AGENT_URL=https://launch-copilot-agent-353476176382.us-central1.run.app
+export NEXT_PUBLIC_AGENT_URL="$(gcloud run services describe launch-copilot-agent --project=hackathon-test-key --region=us-central1 --format='value(status.url)')"
 pnpm --filter @copilot/web dev
 ```
 
