@@ -40,10 +40,12 @@ function createLiveConfig(overrides: Partial<LiveExtractionConfig> = {}): LiveEx
 
 function createProvider(
   generateContent: (prompt: string) => Promise<{ response: { text(): string } }>,
+  generateAnswerContent: (prompt: string) => Promise<{ response: { text(): string } }> = generateContent,
   liveConfig: Partial<LiveExtractionConfig> = {},
 ) {
   return new GeminiExtractionProvider("test", "gemini-2.5-flash", createLiveConfig(liveConfig), {
     modelClient: { generateContent },
+    answerModelClient: { generateContent: generateAnswerContent },
     logger: {
       log: () => undefined,
       warn: () => undefined,
@@ -128,7 +130,7 @@ test("holds filler batches until they become meaningful", async () => {
         }),
       },
     };
-  }, { minMeaningfulWords: 4, batchIdleMs: 20, batchMaxMs: 80 });
+  }, undefined, { minMeaningfulWords: 4, batchIdleMs: 20, batchMaxMs: 80 });
 
   const chunk1 = createChunk("live-1", "uh", 1);
   const chunk2 = createChunk("live-2", "yeah", 2);
@@ -166,4 +168,74 @@ test("returns an empty patch when the model response is invalid JSON", async () 
 
   await sleep(35);
   assert.deepEqual(await resultPromise, {});
+});
+
+test("generates a dedicated Cricket interrupt message for direct requests", async () => {
+  const extractionPrompts: string[] = [];
+  const answerPrompts: string[] = [];
+  const provider = createProvider(
+    async (prompt) => {
+      extractionPrompts.push(prompt);
+      return {
+        response: {
+          text: () => JSON.stringify({
+            addIssues: [{ id: "i-1", text: "Billing migration is blocking launch.", severity: "blocker", timestamp: 1 }],
+          }),
+        },
+      };
+    },
+    async (prompt) => {
+      answerPrompts.push(prompt);
+      return {
+        response: {
+          text: () => "Billing migration is the blocker right now, and Kevin owns the staging fix.",
+        },
+      };
+    },
+  );
+
+  const chunk = createChunk("live-1", "Cricket, what is blocking launch right now?", 1);
+  const state = createState([
+    chunk,
+    createChunk("old-1", "Kevin owns the staging fix.", 0.5),
+  ]);
+  state.issues = [{ id: "existing-issue", text: "Billing migration is blocking launch.", severity: "blocker", timestamp: 0.25 }];
+
+  const resultPromise = provider.extract(chunk, state);
+  await sleep(35);
+  const patch = await resultPromise;
+
+  assert.equal(extractionPrompts.length, 1);
+  assert.equal(answerPrompts.length, 1);
+  assert.equal(patch.interruptMessage, "Billing migration is the blocker right now, and Kevin owns the staging fix.");
+});
+
+test("does not generate a Cricket answer for non-request mentions", async () => {
+  let answerCalls = 0;
+  const provider = createProvider(
+    async () => ({
+      response: {
+        text: () => JSON.stringify({
+          addNodes: [{ id: "cricket", label: "Cricket", type: "system" }],
+        }),
+      },
+    }),
+    async () => {
+      answerCalls += 1;
+      return {
+        response: {
+          text: () => "This should not be used.",
+        },
+      };
+    },
+  );
+
+  const chunk = createChunk("live-1", "We renamed the app Cricket last week.", 1);
+  const resultPromise = provider.extract(chunk, createState([chunk]));
+
+  await sleep(35);
+  const patch = await resultPromise;
+
+  assert.equal(answerCalls, 0);
+  assert.equal(patch.interruptMessage, undefined);
 });

@@ -108,10 +108,3 @@ Get the current Cloud Run URLs in the new project with:
 gcloud run services list --project=hackathon-test-key --region=us-central1
 ```
 
-## Remaining work
-
-- Gemini extraction: done
-- Deepgram STT local path: done
-- Deepgram STT deployed path: not done
-- Gemini TTS interruption path: implemented, but still worth rehearsing end-to-end before demo
-- Unified URL plumbing for web replay/live: not done

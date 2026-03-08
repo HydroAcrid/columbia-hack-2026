@@ -1,4 +1,4 @@
-# Cricket
+# Nota
 
 Hackathon project for a launch-planning meeting copilot with:
 
@@ -28,7 +28,7 @@ Team members and contributors:
 - Speech-to-text: Deepgram via the agent `/stt` websocket
 - GenAI:
   - `@google/generative-ai` for graph / insight extraction
-  - `@google/genai` for Cricket TTS audio generation
+  - `@google/genai` for Nota TTS audio generation
 - Persistence: Firestore for session state and ordered event replay
 - Hosting: Cloud Run, Cloud Build, Secret Manager, Artifact Registry
 
@@ -153,22 +153,3 @@ corepack pnpm --filter @copilot/web dev
 3. Use live mode as the primary demo path if the mic and browser permissions are healthy; use replay as backup.
 4. If live mode fails, verify the agent service is reachable and the browser can connect to the agent `/stt` websocket path.
 5. If the web deploy looks stale, push to `main` or redeploy manually with `gcloud builds submit --config cloudbuild.web.yaml .`.
-
-## GitHub tracker notes
-
-- Open issues that still matter:
-  - [#8](https://github.com/HydroAcrid/columbia-hack-2026/issues/8) should now be treated as follow-up polish / reliability work for Cricket interruption, not Gemini Live STT
-  - [#10](https://github.com/HydroAcrid/columbia-hack-2026/issues/10) should remain the demo runbook / fallback checklist
-- Closed issues that no longer match the product direction:
-  - [#6](https://github.com/HydroAcrid/columbia-hack-2026/issues/6) assumed Gemini Live STT and should be considered superseded by the Deepgram STT decision
-  - [#7](https://github.com/HydroAcrid/columbia-hack-2026/issues/7) is effectively implemented via the shared live pipeline, but the live adapter in use is Deepgram, not Gemini Live
-- Missing issues worth adding:
-  - end-to-end browser smoke-test coverage for deployed live mode and Cricket audio
-  - any remaining graph/insight polish items you want to land after the demo
-- Tracker cleanup still requires manual GitHub edits once the team is ready to re-scope issue text and labels.
-
-## Useful docs
-
-- [Laptop handoff](./LAPTOP_HANDOFF.md)
-- [Google Cloud notes](./docs/google-cloud.md)
-- [Build phases](./PHASES.md)

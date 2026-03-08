@@ -8,7 +8,9 @@ import type {
   SessionState,
 } from "@copilot/shared";
 import {
+  buildCricketAnswerContext,
   buildLiveExtractionContext,
+  mergePatchIntoSessionState,
   mergeActionItems,
   mergeDecisionItems,
   mergeIssueItems,
@@ -243,4 +245,58 @@ test("builds a slim live extraction context with limited transcript, nodes, edge
   assert.match(context, /Cloud Run is blocking launch/);
   assert.doesNotMatch(context, /Legacy Service was mentioned earlier/);
   assert.match(context, /"superbase" => "Supabase"/);
+});
+
+test("builds a dedicated Cricket answer context with insights and graph state", () => {
+  const state = createState({
+    transcript: [
+      { id: "t-1", speaker: "Speaker 0", text: "Cricket, who owns staging?", timestamp: 1 },
+      { id: "t-2", speaker: "Speaker 1", text: "Kevin owns the staging fix.", timestamp: 2 },
+    ],
+    nodes: [
+      { id: "kevin", label: "Kevin", type: "person" },
+      { id: "staging", label: "Staging", type: "system" },
+      { id: "launch", label: "Launch", type: "milestone" },
+    ],
+    edges: [
+      { id: "e-staging-launch", source: "staging", target: "launch", type: "blocks", label: "blocks" },
+    ],
+    decisions: [
+      { id: "d-1", text: "Fix staging before final QA.", timestamp: 2 },
+    ],
+    actions: [
+      { id: "a-1", text: "Fix staging reliability", owner: "Kevin", timestamp: 2 },
+    ],
+    issues: [
+      { id: "i-1", text: "Staging is blocking launch readiness.", severity: "blocker", timestamp: 2 },
+    ],
+    speakerProfiles: [
+      { speakerId: "Speaker 1", name: "Kevin", confidence: "high", evidenceCount: 3 },
+    ],
+  });
+
+  const context = buildCricketAnswerContext(state, "Cricket, who owns staging?");
+
+  assert.match(context, /Current user request to Cricket/);
+  assert.match(context, /Fix staging before final QA/);
+  assert.match(context, /Fix staging reliability \(owner: Kevin\)/);
+  assert.match(context, /\[blocker\] Staging is blocking launch readiness/);
+  assert.match(context, /Kevin \(person\)/);
+});
+
+test("merges a normalized patch into session state for Cricket answer context", () => {
+  const state = createState({
+    transcript: [{ id: "t-1", speaker: "Speaker 0", text: "Cricket, who owns staging?", timestamp: 1 }],
+  });
+
+  const merged = mergePatchIntoSessionState(state, {
+    addNodes: [{ id: "kevin", label: "Kevin", type: "person" }],
+    addActions: [{ id: "a-1", text: "Fix staging reliability", owner: "Kevin", timestamp: 1 }],
+    addIssues: [{ id: "i-1", text: "Staging is blocking launch readiness.", severity: "blocker", timestamp: 1 }],
+  });
+
+  assert.equal(state.nodes.length, 0);
+  assert.equal(merged.nodes.length, 1);
+  assert.equal(merged.actions[0]?.owner, "Kevin");
+  assert.equal(merged.issues[0]?.severity, "blocker");
 });

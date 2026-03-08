@@ -1,4 +1,5 @@
 import {
+  applyPatch,
   canonicalizeGraphLabel,
   getCanonicalAliasEntries,
   normalizeGraphLabel,
@@ -164,6 +165,105 @@ export function buildLiveExtractionContext(
 - Skip generic nouns and weak structure
 - Prefer blockers, dependencies, owners, milestones, decisions, actions, and issues`,
   ].join("\n");
+}
+
+export function buildCricketAnswerContext(
+  state: SessionState,
+  triggeringRequest: string,
+) {
+  const normalizedRequest = normalizeGraphLabel(triggeringRequest);
+  const recentTranscript = state.transcript
+    .slice(-8)
+    .map((chunk) => `${chunk.speaker}: ${chunk.text}`);
+  const selectedNodes = selectLiveContextNodes(
+    state.nodes,
+    state.edges,
+    normalizedRequest,
+    normalizedRequest,
+    12,
+  );
+  const selectedNodeIds = new Set(selectedNodes.map((node) => node.id));
+  const selectedEdges = selectLiveContextEdges(state.edges, selectedNodeIds, 10);
+  const labelById = new Map(state.nodes.map((node) => [node.id, node.label]));
+  const speakerInventory = state.speakerProfiles
+    .map((profile) => `- ${profile.speakerId} => ${profile.name} (${profile.confidence})`)
+    .sort();
+  const decisions = state.decisions
+    .slice(-6)
+    .map((decision) => `- ${decision.text}`);
+  const actions = state.actions
+    .slice(-6)
+    .map((action) => `- ${action.text}${action.owner ? ` (owner: ${action.owner})` : ""}`);
+  const issues = state.issues
+    .slice(-6)
+    .map((issue) => `- [${issue.severity}] ${issue.text}`);
+
+  return [
+    "## Current user request to Cricket",
+    triggeringRequest,
+    "",
+    "## Recent meeting transcript",
+    recentTranscript.length ? recentTranscript.join("\n") : "(no recent transcript yet)",
+    "",
+    "## Current decisions",
+    decisions.length ? decisions.join("\n") : "(none yet)",
+    "",
+    "## Current action items",
+    actions.length ? actions.join("\n") : "(none yet)",
+    "",
+    "## Current issues and blockers",
+    issues.length ? issues.join("\n") : "(none yet)",
+    "",
+    "## Relevant graph entities",
+    selectedNodes.length
+      ? selectedNodes.map((node) => `- ${node.label} (${node.type})`).join("\n")
+      : "(none yet)",
+    "",
+    "## Relevant graph relationships",
+    selectedEdges.length
+      ? selectedEdges
+        .map((edge) => {
+          const source = labelById.get(edge.source) ?? edge.source;
+          const target = labelById.get(edge.target) ?? edge.target;
+          return `- ${source} -[${edge.type}]-> ${target}`;
+        })
+        .join("\n")
+      : "(none yet)",
+    "",
+    "## Known speaker identities",
+    speakerInventory.length ? speakerInventory.join("\n") : "(none yet)",
+  ].join("\n");
+}
+
+export function mergePatchIntoSessionState(
+  state: SessionState,
+  patch: GraphPatchEvent,
+): SessionState {
+  const graph = applyPatch(
+    {
+      nodes: state.nodes,
+      edges: state.edges,
+    },
+    patch,
+  );
+
+  const nextState: SessionState = {
+    ...state,
+    transcript: [...state.transcript],
+    nodes: graph.nodes,
+    edges: graph.edges,
+    decisions: [...state.decisions],
+    actions: [...state.actions],
+    issues: [...state.issues],
+    speakerProfiles: [...state.speakerProfiles],
+  };
+
+  mergeDecisionItems(nextState.decisions, patch.addDecisions);
+  mergeActionItems(nextState.actions, patch.addActions);
+  mergeIssueItems(nextState.issues, patch.addIssues);
+  mergeSpeakerProfiles(nextState, patch.upsertSpeakerProfiles);
+
+  return nextState;
 }
 
 export function normalizeGraphPatch(
@@ -461,6 +561,27 @@ function dedupeActionItems(items: ActionItem[]) {
 
 function dedupeIssueItems(items: IssueItem[]) {
   return dedupeItems(items, (item) => normalizeInsightText(item.text));
+}
+
+function mergeSpeakerProfiles(
+  state: SessionState,
+  profiles: SessionState["speakerProfiles"] | undefined,
+) {
+  if (!profiles?.length) {
+    return;
+  }
+
+  const merged = new Map(
+    state.speakerProfiles.map((profile) => [profile.speakerId, profile]),
+  );
+
+  for (const profile of profiles) {
+    merged.set(profile.speakerId, profile);
+  }
+
+  state.speakerProfiles = [...merged.values()].sort((left, right) =>
+    left.speakerId.localeCompare(right.speakerId),
+  );
 }
 
 function dedupeItems<T>(items: T[], keyFor: (item: T) => string) {

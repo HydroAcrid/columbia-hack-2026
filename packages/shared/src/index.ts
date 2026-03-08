@@ -15,6 +15,12 @@ export {
   demoExtractions,
   demoExtractionByChunkId,
 } from "./demo-script.js";
+export {
+  containsCricketWakeWord,
+  extractCricketRequestText,
+  looksLikeCricketRequest,
+  normalizeCricketText,
+} from "./cricket.js";
 
 export type {
   NodeType as NodeTypeValue,

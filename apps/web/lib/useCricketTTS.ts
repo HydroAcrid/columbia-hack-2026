@@ -3,6 +3,9 @@
 import { useCallback, useRef, useState } from "react";
 import { getAgentBaseUrl } from "./agent-client";
 
+export type CricketTTSMode = "gemini" | "browser" | null;
+export type CricketTTSPhase = "idle" | "requesting" | "speaking" | "error";
+
 /**
  * useCricketTTS
  *
@@ -13,12 +16,25 @@ import { getAgentBaseUrl } from "./agent-client";
 export function useCricketTTS() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentMessage, setCurrentMessage] = useState<string | null>(null);
+  const [playbackMode, setPlaybackMode] = useState<CricketTTSMode>(null);
+  const [phase, setPhase] = useState<CricketTTSPhase>("idle");
+  const [lastError, setLastError] = useState<string | null>(null);
   const isSpeakingRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const finishSpeaking = useCallback(() => {
     isSpeakingRef.current = false;
     setIsSpeaking(false);
+    setCurrentMessage(null);
+    setPhase("idle");
+  }, []);
+
+  const failSpeaking = useCallback((message: string) => {
+    console.error("[CricketTTS] Error:", message);
+    isSpeakingRef.current = false;
+    setIsSpeaking(false);
+    setPhase("error");
+    setLastError(message);
     setCurrentMessage(null);
   }, []);
 
@@ -32,6 +48,9 @@ export function useCricketTTS() {
     isSpeakingRef.current = true;
     setIsSpeaking(true);
     setCurrentMessage(text);
+    setPlaybackMode(null);
+    setLastError(null);
+    setPhase("requesting");
 
     try {
       const agentUrl = getAgentBaseUrl();
@@ -43,14 +62,28 @@ export function useCricketTTS() {
 
       if (!res.ok) {
         console.warn("[CricketTTS] TTS endpoint returned", res.status, "— using browser fallback");
-        fallbackSpeak(text, finishSpeaking);
+        fallbackSpeak(text, {
+          onStart: () => {
+            setPlaybackMode("browser");
+            setPhase("speaking");
+          },
+          onEnd: finishSpeaking,
+          onError: (message) => failSpeaking(message),
+        });
         return;
       }
 
       const { audio, sampleRate } = await res.json();
       if (!audio) {
         console.warn("[CricketTTS] No audio returned — using browser fallback");
-        fallbackSpeak(text, finishSpeaking);
+        fallbackSpeak(text, {
+          onStart: () => {
+            setPlaybackMode("browser");
+            setPhase("speaking");
+          },
+          onEnd: finishSpeaking,
+          onError: (message) => failSpeaking(message),
+        });
         return;
       }
 
@@ -71,6 +104,9 @@ export function useCricketTTS() {
         audioContextRef.current = new AudioContext({ sampleRate: sampleRate || 24000 });
       }
       const ctx = audioContextRef.current;
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
 
       const buffer = ctx.createBuffer(1, float32.length, sampleRate || 24000);
       buffer.getChannelData(0).set(float32);
@@ -82,26 +118,44 @@ export function useCricketTTS() {
         console.log("[CricketTTS] ✅ Finished (Gemini audio)");
         finishSpeaking();
       };
+      setPlaybackMode("gemini");
+      setPhase("speaking");
       source.start();
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error("[CricketTTS] Error:", err);
-      fallbackSpeak(text, finishSpeaking);
+      fallbackSpeak(text, {
+        onStart: () => {
+          setPlaybackMode("browser");
+          setPhase("speaking");
+        },
+        onEnd: finishSpeaking,
+        onError: () => failSpeaking(message),
+      });
     }
-  }, [finishSpeaking]);
+  }, [failSpeaking, finishSpeaking]);
 
-  return { speak, isSpeaking, currentMessage };
+  return { speak, isSpeaking, currentMessage, playbackMode, phase, lastError };
 }
 
-function fallbackSpeak(text: string, onEnd: () => void) {
+function fallbackSpeak(
+  text: string,
+  handlers: {
+    onStart: () => void;
+    onEnd: () => void;
+    onError: (message: string) => void;
+  },
+) {
   if (typeof window === "undefined" || !window.speechSynthesis) {
-    onEnd();
+    handlers.onError("Browser speech synthesis is unavailable.");
     return;
   }
   console.log("[CricketTTS] Using browser speech fallback");
   const u = new SpeechSynthesisUtterance(text);
   u.rate = 1.0;
   u.pitch = 1.0;
-  u.onend = () => { console.log("[CricketTTS] ✅ Finished (browser)"); onEnd(); };
-  u.onerror = () => { onEnd(); };
+  u.onend = () => { console.log("[CricketTTS] ✅ Finished (browser)"); handlers.onEnd(); };
+  u.onerror = () => { handlers.onError("Browser speech synthesis failed."); };
+  handlers.onStart();
   window.speechSynthesis.speak(u);
 }

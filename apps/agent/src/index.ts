@@ -5,20 +5,16 @@ import dotenv from "dotenv";
 import { createAdaptorServer } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { applyPatch } from "@copilot/graph";
 import { attachSttServer } from "./stt-server.js";
 import { textToSpeechGemini } from "./tts-server.js";
 import {
   TranscriptChunk,
   type GraphPatchEvent,
-  type SessionState,
 } from "@copilot/shared";
 import { readAgentConfig } from "./config.js";
 import { createExtractionProvider } from "./extraction-provider.js";
 import {
-  mergeActionItems,
-  mergeDecisionItems,
-  mergeIssueItems,
+  mergePatchIntoSessionState,
 } from "./graph-engine.js";
 import { inferSpeakerProfileUpdates } from "./speaker-identity.js";
 import {
@@ -219,41 +215,7 @@ server.listen(port, () => {
 });
 
 function mergePatchIntoSession(session: StoredSession, patch: GraphPatchEvent) {
-  const graph = applyPatch(
-    {
-      nodes: session.state.nodes,
-      edges: session.state.edges,
-    },
-    patch,
-  );
-
-  session.state.nodes = graph.nodes;
-  session.state.edges = graph.edges;
-  mergeDecisionItems(session.state.decisions, patch.addDecisions);
-  mergeActionItems(session.state.actions, patch.addActions);
-  mergeIssueItems(session.state.issues, patch.addIssues);
-  mergeSpeakerProfiles(session.state, patch.upsertSpeakerProfiles);
-}
-
-function mergeSpeakerProfiles(
-  state: SessionState,
-  profiles: SessionState["speakerProfiles"] | undefined,
-) {
-  if (!profiles?.length) {
-    return;
-  }
-
-  const merged = new Map(
-    state.speakerProfiles.map((profile) => [profile.speakerId, profile]),
-  );
-
-  for (const profile of profiles) {
-    merged.set(profile.speakerId, profile);
-  }
-
-  state.speakerProfiles = [...merged.values()].sort((left, right) =>
-    left.speakerId.localeCompare(right.speakerId),
-  );
+  session.state = mergePatchIntoSessionState(session.state, patch);
 }
 
 function createSessionEvent(session: StoredSession, patch: GraphPatchEvent): SessionEvent {

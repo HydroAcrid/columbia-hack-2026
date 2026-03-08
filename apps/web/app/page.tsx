@@ -5,6 +5,7 @@ import { TranscriptPanel } from "@/components/TranscriptPanel";
 import { GraphPanel } from "@/components/GraphPanel";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import { LiveModeBar } from "@/components/LiveModeBar";
+import { CricketVoiceOverlay } from "@/components/CricketVoiceOverlay";
 import {
   createSession,
   getSessionEventsUrl,
@@ -20,10 +21,13 @@ import {
   type IssueItem,
   type SessionState,
   type TranscriptChunk,
+  containsCricketWakeWord,
+  extractCricketRequestText,
 } from "@copilot/shared";
 import { DeepgramSTTAdapter } from "@/lib/deepgramSTTAdapter";
 import { useLiveTranscript } from "@/lib/useLiveTranscript";
 import { useCricketTTS } from "@/lib/useCricketTTS";
+import { useCricketVoiceMode } from "@/lib/useCricketVoiceMode";
 
 type ConnectionState = "connecting" | "connected" | "disconnected";
 type Mode = "replay" | "live";
@@ -201,6 +205,22 @@ export default function Home() {
   const cricketTTS = useCricketTTS();
   const cricketSpeakRef = useRef(cricketTTS.speak);
   cricketSpeakRef.current = cricketTTS.speak;
+  const {
+    state: cricketVoiceState,
+    markHeard,
+    beginResponse,
+    reset: resetCricketVoice,
+  } = useCricketVoiceMode(mode, {
+    phase: cricketTTS.phase,
+    playbackMode: cricketTTS.playbackMode,
+    lastError: cricketTTS.lastError,
+  });
+  const lastHeardRequestKeyRef = useRef<string | null>(null);
+  const pendingCricketRequestKeyRef = useRef<string | null>(null);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const cricketTTSPhaseRef = useRef(cricketTTS.phase);
+  cricketTTSPhaseRef.current = cricketTTS.phase;
 
   useEffect(() => {
     let cancelled = false;
@@ -288,8 +308,16 @@ export default function Home() {
       const patch = JSON.parse(event.data) as GraphPatchEvent;
       setSessionState((current) => (current ? mergeSessionState(current, patch) : current));
 
-      // 🦗 Cricket TTS: if the patch contains an interruptMessage, speak it
-      if (patch.interruptMessage) {
+      // Cricket voice mode: consume at most one spoken response per heard request.
+      if (
+        patch.interruptMessage &&
+        modeRef.current === "live" &&
+        pendingCricketRequestKeyRef.current &&
+        cricketTTSPhaseRef.current !== "requesting" &&
+        cricketTTSPhaseRef.current !== "speaking"
+      ) {
+        pendingCricketRequestKeyRef.current = null;
+        beginResponse(patch.interruptMessage);
         cricketSpeakRef.current(patch.interruptMessage);
       }
     };
@@ -304,7 +332,31 @@ export default function Home() {
         eventSourceRef.current = null;
       }
     };
-  }, [sessionId]);
+  }, [beginResponse, mode, sessionId]);
+
+  useEffect(() => {
+    if (mode !== "live" || liveChunks.length === 0) {
+      return;
+    }
+
+    if (cricketVoiceState.phase === "speaking" || cricketTTS.phase === "requesting") {
+      return;
+    }
+
+    const request = resolveRecentCricketRequest(liveChunks);
+    if (!request || lastHeardRequestKeyRef.current === request.key) {
+      return;
+    }
+
+    lastHeardRequestKeyRef.current = request.key;
+    pendingCricketRequestKeyRef.current = request.key;
+    markHeard(request.text);
+  }, [cricketTTS.phase, cricketVoiceState.phase, liveChunks, markHeard, mode]);
+
+  useEffect(() => {
+    lastHeardRequestKeyRef.current = null;
+    pendingCricketRequestKeyRef.current = null;
+  }, [mode, sessionId]);
 
   async function handleStartReplay() {
     if (isReplaying) {
@@ -378,6 +430,7 @@ export default function Home() {
       }
     } else if (next === "replay" && mode === "live") {
       if (isRecording) await stop();
+      resetCricketVoice();
       setMode("replay");
     }
   };
@@ -416,7 +469,7 @@ export default function Home() {
               </svg>
             </div>
             <span className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
-              Cricket
+              Nota
             </span>
             <span className="hidden text-[12px] text-[var(--text-tertiary)] sm:inline">
               /
@@ -508,18 +561,8 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* ── Cricket speaking indicator ── */}
-      {cricketTTS.isSpeaking && cricketTTS.currentMessage && (
-        <div className="animate-overlay-appear absolute bottom-6 left-1/2 z-20 -translate-x-1/2">
-          <div className="overlay-panel flex items-center gap-2 rounded-xl px-4 py-2.5 shadow-lg">
-            <span className="text-lg">🦗</span>
-            <span className="text-sm font-medium text-[var(--text-primary)]">
-              Cricket: {cricketTTS.currentMessage}
-            </span>
-            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-          </div>
-        </div>
-      )}
+      {/* ── Nota voice mode overlay ── */}
+      {mode === "live" ? <CricketVoiceOverlay state={cricketVoiceState} /> : null}
     </div>
   );
 }
@@ -543,4 +586,37 @@ function StatusPill({ state }: { state: ConnectionState }) {
       {label}
     </span>
   );
+}
+
+function resolveRecentCricketRequest(chunks: TranscriptChunk[]) {
+  const last = chunks.at(-1);
+  if (!last) {
+    return null;
+  }
+
+  const direct = extractCricketRequestText(last.text);
+  if (direct) {
+    return {
+      key: last.id,
+      text: direct,
+    };
+  }
+
+  const previous = chunks.at(-2);
+  if (
+    previous &&
+    previous.speaker === last.speaker &&
+    last.timestamp - previous.timestamp <= 1.4 &&
+    containsCricketWakeWord(previous.text)
+  ) {
+    const combined = extractCricketRequestText(`${previous.text} ${last.text}`);
+    if (combined) {
+      return {
+        key: `${previous.id}:${last.id}`,
+        text: combined,
+      };
+    }
+  }
+
+  return null;
 }

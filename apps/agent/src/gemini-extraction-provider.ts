@@ -1,9 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { GraphPatchEvent, SessionState, TranscriptChunk } from "@copilot/shared";
+import {
+  extractCricketRequestText,
+  type GraphPatchEvent,
+  type SessionState,
+  type TranscriptChunk,
+} from "@copilot/shared";
 import type { LiveExtractionConfig } from "./config.js";
 import type { ExtractionProvider } from "./extraction-provider.js";
 import {
+  buildCricketAnswerContext,
   buildLiveExtractionContext,
+  mergePatchIntoSessionState,
   normalizeGraphPatch,
 } from "./graph-engine.js";
 
@@ -16,8 +23,7 @@ Return valid JSON with this schema:
   "addDecisions": [{ "id": "string", "text": "string", "timestamp": number }],
   "addActions": [{ "id": "string", "text": "string", "owner": "string", "timestamp": number }],
   "addIssues": [{ "id": "string", "text": "string", "severity": "blocker|warning|info", "timestamp": number }],
-  "highlightNodeIds": ["string"],
-  "interruptMessage": "string or null"
+  "highlightNodeIds": ["string"]
 }
 
 Rules:
@@ -27,16 +33,20 @@ Rules:
 - Prioritize blockers, dependencies, owners, milestones, explicit decisions, and concrete actions.
 - Use lowercase-with-hyphens IDs.
 - Use the earliest chunk timestamp for extracted items.
+- Do not generate assistant replies here. Another system handles Cricket voice responses separately.`;
 
-INTERRUPT RULES (for interruptMessage):
-- You are an AI meeting assistant named Cricket.
-- Set interruptMessage ONLY when BOTH conditions are true:
-  1. Someone says "Cricket" (the wake word is detected — confirmed by the system).
-  2. They ask a question or request information (e.g. "Cricket, any blockers?", "Cricket, who owns the API?", "Hey Cricket, what are we missing?").
-- When both conditions are met, respond concisely (1-2 sentences) using the full meeting context — transcript history, tracked issues/blockers, ownership gaps, and the knowledge graph.
-- Keep interruptMessage conversational and direct, as if speaking aloud in the meeting.
-- If cricketDetected is false in the prompt, ALWAYS set interruptMessage to null — no exceptions.
-- You may respond multiple times in a session.`;
+const CRICKET_SYSTEM_PROMPT = `You are Cricket, an active AI meeting collaborator.
+
+You answer only from the current meeting context that is provided to you.
+
+Rules:
+- Answer in 1-2 concise sentences.
+- Prefer concrete owners, blockers, dependencies, milestones, risks, and next steps.
+- Use the decisions, action items, issues, graph relationships, and recent transcript as first-class evidence.
+- If the answer is not supported by the provided meeting context, say you do not have enough context yet.
+- Do not invent facts, people, owners, or status updates.
+- Sound direct and conversational, as if speaking briefly in the meeting.
+- Return plain text only. No markdown, bullets, or quotes.`;
 
 const FILLER_WORDS = new Set([
   "a",
@@ -92,6 +102,7 @@ interface LoggerApi {
 
 export interface GeminiExtractionProviderOptions {
   modelClient?: GenerativeModelClient;
+  answerModelClient?: GenerativeModelClient;
   timers?: Partial<TimerApi>;
   logger?: Partial<LoggerApi>;
 }
@@ -111,7 +122,8 @@ const DEFAULT_LOGGER: LoggerApi = {
 type FlushReason = "idle" | "max";
 
 export class GeminiExtractionProvider implements ExtractionProvider {
-  private model: GenerativeModelClient;
+  private extractionModel: GenerativeModelClient;
+  private answerModel: GenerativeModelClient;
   private readonly liveConfig: LiveExtractionConfig;
   private readonly timers: TimerApi;
   private readonly logger: LoggerApi;
@@ -141,19 +153,28 @@ export class GeminiExtractionProvider implements ExtractionProvider {
     };
 
     if (options.modelClient) {
-      this.model = options.modelClient;
+      this.extractionModel = options.modelClient;
+    } else {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      this.extractionModel = genAI.getGenerativeModel({
+        model,
+        systemInstruction: SYSTEM_PROMPT,
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.1,
+        },
+      });
+      this.answerModel = options.answerModelClient ?? genAI.getGenerativeModel({
+        model,
+        systemInstruction: CRICKET_SYSTEM_PROMPT,
+        generationConfig: {
+          temperature: 0.2,
+        },
+      });
       return;
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({
-      model,
-      systemInstruction: SYSTEM_PROMPT,
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.1,
-      },
-    });
+    this.answerModel = options.answerModelClient ?? options.modelClient;
   }
 
   async extract(chunk: TranscriptChunk, state: SessionState): Promise<GraphPatchEvent> {
@@ -268,19 +289,13 @@ export class GeminiExtractionProvider implements ExtractionProvider {
 
     const combinedText = chunks.map((chunk) => `${chunk.speaker}: ${chunk.text}`).join("\n");
     const earliestTimestamp = chunks[0].timestamp;
-
-    // Deterministic Cricket detection — only tell Gemini to respond
-    // if "cricket" appears in the new transcript text
-    const cricketDetected = /\bcricket\b/i.test(combinedText);
+    const rawBatchText = chunks.map((chunk) => chunk.text).join(" ");
+    const cricketRequestText = extractCricketRequestText(rawBatchText);
+    const cricketDetected = Boolean(cricketRequestText);
 
     if (cricketDetected) {
-      this.logger.log(`[GeminiExtraction] 🦗 Cricket wake word detected in: "${combinedText.substring(0, 80)}"`);
+      this.logger.log(`[GeminiExtraction] 🦗 Cricket wake word detected in: "${cricketRequestText?.substring(0, 80)}"`);
     }
-
-    // Accumulated issues for Cricket's context
-    const existingIssues = state.issues.length > 0
-      ? state.issues.map((i) => `[${i.severity}] ${i.text}`).join("\n")
-      : "(none)";
 
     const context = buildLiveExtractionContext(state, chunks, {
       transcriptLines: this.liveConfig.contextTranscriptLines,
@@ -294,12 +309,7 @@ Earliest timestamp: ${earliestTimestamp}
 
 ${context}
 
-## Existing tracked issues/blockers (for Cricket context)
-${existingIssues}
-
-## cricketDetected: ${cricketDetected}
-
-Extract any relevant graph information from the live transcript batch above.${cricketDetected ? "\nCricket was called — generate an interruptMessage responding to the user's question using meeting context." : "\nDo NOT set interruptMessage."}`;
+Extract any relevant graph information from the live transcript batch above.`;
 
     this.logEvent("batch-flush", {
       reason,
@@ -311,7 +321,7 @@ Extract any relevant graph information from the live transcript batch above.${cr
 
     try {
       const modelStartedAt = this.timers.now();
-      const result = await this.model.generateContent(prompt);
+      const result = await this.extractionModel.generateContent(prompt);
       const modelMs = this.timers.now() - modelStartedAt;
       const rawText = result.response.text();
 
@@ -328,11 +338,29 @@ Extract any relevant graph information from the live transcript batch above.${cr
 
       const normalizeStartedAt = this.timers.now();
       const patch = normalizeGraphPatch(parsedPatch, state);
+      let finalPatch = patch;
       const normalizeMs = this.timers.now() - normalizeStartedAt;
+      let answerMs = 0;
+
+      if (cricketRequestText) {
+        const answerStartedAt = this.timers.now();
+        const interruptMessage = await this.generateCricketInterruptMessage(
+          mergePatchIntoSessionState(state, patch),
+          cricketRequestText,
+        );
+        answerMs = this.timers.now() - answerStartedAt;
+        finalPatch = interruptMessage
+          ? {
+            ...patch,
+            interruptMessage,
+          }
+          : patch;
+      }
+
       const totalMs = this.timers.now() - batchStartedAt;
 
-      if (patch.interruptMessage) {
-        this.logger.log(`[GeminiExtraction] 🦗 Cricket says: "${patch.interruptMessage}"`);
+      if (finalPatch.interruptMessage) {
+        this.logger.log(`[GeminiExtraction] 🦗 Cricket says: "${finalPatch.interruptMessage}"`);
       }
 
       this.logEvent("batch-complete", {
@@ -340,18 +368,19 @@ Extract any relevant graph information from the live transcript batch above.${cr
         waitMs,
         modelMs,
         normalizeMs,
+        answerMs,
         totalMs,
         chunks: chunks.length,
-        addNodes: patch.addNodes?.length ?? 0,
-        addEdges: patch.addEdges?.length ?? 0,
-        addDecisions: patch.addDecisions?.length ?? 0,
-        addActions: patch.addActions?.length ?? 0,
-        addIssues: patch.addIssues?.length ?? 0,
-        interruptMessage: patch.interruptMessage ?? null,
+        addNodes: finalPatch.addNodes?.length ?? 0,
+        addEdges: finalPatch.addEdges?.length ?? 0,
+        addDecisions: finalPatch.addDecisions?.length ?? 0,
+        addActions: finalPatch.addActions?.length ?? 0,
+        addIssues: finalPatch.addIssues?.length ?? 0,
+        interruptMessage: finalPatch.interruptMessage ?? null,
       });
 
       for (let index = 0; index < resolvers.length; index += 1) {
-        resolvers[index](index === 0 ? patch : {});
+        resolvers[index](index === 0 ? finalPatch : {});
       }
     } catch (error) {
       this.logEvent("batch-failed", {
@@ -369,6 +398,23 @@ Extract any relevant graph information from the live transcript batch above.${cr
 
   private logEvent(event: string, fields: Record<string, unknown>) {
     this.logger.log(`[GeminiExtraction] ${event} ${JSON.stringify(fields)}`);
+  }
+
+  private async generateCricketInterruptMessage(
+    mergedState: SessionState,
+    triggeringRequest: string,
+  ) {
+    try {
+      const prompt = `${buildCricketAnswerContext(mergedState, triggeringRequest)}
+
+Respond to the user's question as Cricket.`;
+      const response = await this.answerModel.generateContent(prompt);
+      const text = response.response.text().replace(/\s+/g, " ").trim().replace(/^"|"$/g, "");
+      return text || null;
+    } catch (error) {
+      this.logger.error("[GeminiExtraction] Cricket answer generation failed", error);
+      return null;
+    }
   }
 }
 
