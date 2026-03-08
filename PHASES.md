@@ -1,173 +1,94 @@
 # Build Phases — Live Launch Meeting Copilot
 
-## Phase 1: Revise plan.md and demo script ✅
+This file is now a current-state roadmap rather than a historical pre-build plan.
 
-- Rewrote product framing to "Live Launch Meeting Copilot"
-- Defined launch-planning demo scenario (Priya/PM, Kevin/Eng, Sara/Design, Marcus/Ops)
-- Locked stack: pnpm monorepo, Next.js, Node+TS agent, Zod schemas, Firestore later
-- Defined MVP priority order and fallback-first reliability requirement
+## Architecture lock
 
-## Phase 2: Scaffold monorepo and shared schemas ✅
+- Deepgram is the live STT path because multi-speaker detection is required.
+- Gemini is used for structured extraction on the agent.
+- Gemini TTS / interruption is still planned.
+- Gemini Live STT is no longer the target architecture.
 
-- Root `package.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, `.gitignore`
-- `packages/shared`: Zod schemas for `TranscriptChunk`, `GraphNode`, `GraphEdge`, `DecisionItem`, `ActionItem`, `IssueItem`, `GraphPatchEvent`, `SessionState`
-- `packages/graph`: `applyPatch()` and `dedupeNodes()` with shared types
+## Done
 
-## Phase 3: Web shell with three-panel layout ✅
+### Core session loop
 
-- Next.js app in `apps/web` with Tailwind and React Flow
-- Three panels: `TranscriptPanel`, `GraphPanel`, `InsightsPanel`
-- Mock data wired in for visual validation
-- Agent stub in `apps/agent` with `/health` endpoint (Hono)
+- Replay ingestion, session creation, SSE streaming, and reconnect are implemented.
+- The agent supports `POST /sessions`, `POST /sessions/:id/transcript-chunks`, `GET /sessions/:id/events`, and `GET /sessions/:id/state`.
+- Transcript, graph patches, decisions, actions, and issues flow end-to-end.
 
----
+### Frontend shell
 
-## Phase 4: Agent service — replay ingestion + SSE streaming
+- The three-panel judge-facing UI is implemented.
+- Replay mode drives the same backend session pipeline as live mode.
+- Browser storage persists session and last-event IDs for reconnect.
 
-Goal: the agent accepts scripted transcript chunks via REST, runs them through an extraction step (mocked first, then LLM), and streams `GraphPatchEvent`s to the frontend over SSE.
+### Extraction and persistence
 
-### 4.1 Move demo script data to `packages/shared`
+- Demo transcript chunks and mock extractions are shared in `packages/shared`.
+- Graph merge/dedupe is implemented in `packages/graph`.
+- Firestore-backed session persistence is implemented for deployed mode.
+- Gemini extraction is active when `GEMINI_API_KEY` is configured.
 
-- Move the launch-planning transcript chunks from `apps/web/lib/mock-data.ts` into `packages/shared/src/demo-script.ts`
-- Export as `demoTranscriptChunks` with paired `demoExtractions` (mocked `GraphPatchEvent` per chunk)
-- Both agent and web can import from `@copilot/shared`
+### Local live path
 
-### 4.2 Agent API routes
+- Browser mic capture exists.
+- Deepgram STT proxy exists locally.
+- Live chunks post to the same session pipeline as replay.
 
-Add to `apps/agent/src/index.ts`:
+## Deployed and validated
 
-- `POST /sessions` — create a new session (in-memory), returns `{ id }`
-- `POST /sessions/:id/transcript-chunks` — accepts a `TranscriptChunk`, triggers extraction, stores result
-- `GET /sessions/:id/events` — SSE endpoint, streams `GraphPatchEvent`s as they are produced
-- `GET /sessions/:id/state` — returns full current `SessionState` (for SSE reconnect / initial load)
+- Agent and web deploy through Cloud Run.
+- Cloud Build configs exist for both services.
+- Agent deploy uses Secret Manager secrets `gemini-api-key` and `deepgram-api-key`.
+- Web build resolves the active project’s agent URL dynamically.
+- Local Gemini extraction has been validated against the real agent pipeline.
 
-### 4.3 In-memory session store
+## Implemented but not productionized
 
-- `Map<string, SessionState>` in the agent process
-- Each ingested chunk appends to `transcript`, runs extraction, merges graph, emits SSE event
+### Deepgram live mode
 
-### 4.4 Mocked extraction first
+- The deployed frontend still depends on `ws://localhost:4002` for STT transport.
+- Result: local live mode can work, but deployed live mode is not production-ready.
 
-- For each `TranscriptChunk`, look up a paired `GraphPatchEvent` from `demoExtractions`
-- No LLM call yet — validates the full loop end-to-end
+### Web URL plumbing
 
-### 4.5 SSE streaming
+- `apps/web/lib/agent-client.ts` is the intended shared helper.
+- Some live-mode code still keeps duplicated fallback logic outside that helper.
 
-- Use Hono's streaming response for `GET /sessions/:id/events`
-- Each event is `data: JSON.stringify(GraphPatchEvent)\n\n`
-- Client connects on page load, applies patches incrementally
+### Replay limitations
 
-### 4.6 Wire frontend to SSE
+- Demo extraction still keys off canonical chunk IDs like `t1`, `t2`, etc.
+- Arbitrary test chunks can store transcript without generating demo graph updates.
 
-- Replace direct mock import in `apps/web/app/page.tsx` with:
-  - On mount: `POST /sessions` to get a session id
-  - Connect to `GET /sessions/:id/events` via `EventSource`
-  - Apply each `GraphPatchEvent` to local state using `applyPatch()` from `@copilot/graph`
-  - Feed state into the three panel components
-- Add a "Start Replay" button that `POST`s each demo chunk with a delay
+## Still open
 
----
+### 1. Productionize deployed live STT transport
 
-## Phase 5: Graph merge/dedupe and patch rendering
+- Remove the browser dependency on `ws://localhost:4002`.
+- Keep Deepgram as the STT provider.
+- Preserve the existing `TranscriptChunk` contract and downstream session API.
 
-Goal: real extraction produces clean, deduplicated graph updates.
+### 2. Add Gemini TTS / interruption
 
-### 5.1 Swap mocked extraction for LLM extraction
+- Trigger spoken interruption from high-confidence extracted blockers or ownership gaps.
+- Emit `interruptMessage` from the agent.
+- Add frontend playback and UI handling.
 
-- Add Gemini API call in the agent's extraction step
-- Prompt: given transcript chunk + current graph state, return structured `GraphPatchEvent` JSON
-- Validate output against Zod schema before merging
+### 3. Centralize web agent URL plumbing
 
-### 5.2 Harden `applyPatch` in `packages/graph`
+- Make replay/live/local/deployed all use one source of truth.
+- Remove the remaining duplicated `localhost:4000` fallbacks.
 
-- Fuzzy node deduplication (normalise labels, match by alias)
-- Edge deduplication (same source+target+type = update, not duplicate)
-- Conflict resolution: if two chunks disagree on an edge type, emit an `IssueItem`
+### 4. Demo runbook and browser smoke tests
 
-### 5.3 Extraction rules enforced in prompt + validation
+- Add the fallback checklist and demo recovery runbook.
+- Validate replay on deployed web.
+- Validate live-mode behavior and fallback expectations in a real browser.
 
-- Never invent owners or deadlines not mentioned in transcript
-- Prefer reusing existing node IDs
-- Only emit strong relationships
-- If uncertain, emit an issue instead of a fact
+### 5. Tracker cleanup
 
----
-
-## Phase 6: Live transcript mode
-
-Goal: browser microphone input feeds the same pipeline as replay mode.
-
-### 6.1 Browser audio capture
-
-- `navigator.mediaDevices.getUserMedia` in the frontend
-- Stream audio to a speech-to-text service (Gemini Live API or Web Speech API as fallback)
-
-### 6.2 Live transcript chunks
-
-- As STT produces text, buffer into `TranscriptChunk` objects (every ~5-10 seconds)
-- `POST` each chunk to `POST /sessions/:id/transcript-chunks` — same endpoint as replay
-
-### 6.3 Mode toggle in UI
-
-- Switch between "Replay Demo" and "Live" modes
-- Both use the same SSE consumer and patch pipeline
-- Live mode can be disabled instantly and replay launched for demo recovery
-
----
-
-## Phase 7: Session persistence
-
-Goal: transcript, graph, and event history survive page refresh.
-
-### 7.1 Firestore integration
-
-- Store `SessionState` in Firestore, keyed by session ID
-- Write after each extraction cycle (debounced)
-- On `GET /sessions/:id/state`, read from Firestore if not in memory
-
-### 7.2 SSE reconnect
-
-- Client sends `Last-Event-ID` header on reconnect
-- Agent replays missed events or sends full state snapshot
-
----
-
-## Phase 8: Voice interruption (optional polish)
-
-Goal: one AI-triggered spoken interruption when a blocker or ownership gap is detected.
-
-### 8.1 Trigger logic
-
-- After extraction, check if the `GraphPatchEvent` contains:
-  - an `IssueItem` with severity `blocker`
-  - an `ActionItem` with no owner
-  - a contradiction in node relationships
-- If triggered, add `interruptMessage` to the SSE event
-
-### 8.2 Frontend interrupt handling
-
-- When `interruptMessage` is present in a patch event:
-  - Highlight the related `highlightNodeIds` on the graph
-  - Show a toast/banner with the interrupt message
-  - Optionally play TTS via browser `SpeechSynthesis` API
-
-### 8.3 Constraints
-
-- Fire at most once per session in the scripted demo
-- Keep the message short (one sentence)
-- Only trigger on high-confidence events
-
----
-
-## Current status
-
-| Phase | Status |
-|-------|--------|
-| 1. Plan + demo script | Done |
-| 2. Monorepo + schemas | Done |
-| 3. Web shell + panels | Done |
-| **4. Agent + replay + SSE** | **Next** |
-| 5. LLM extraction + dedupe | Upcoming |
-| 6. Live transcript mode | Upcoming |
-| 7. Session persistence | Upcoming |
-| 8. Voice interruption | Upcoming (optional) |
+- Re-scope issue `#8` to Gemini TTS / interruption.
+- Keep issue `#10` as the demo runbook / fallback checklist.
+- Treat issue `#6` as superseded by the Deepgram STT decision.
+- Treat issue `#7` as the shared live transcript pipeline, not Gemini Live STT.

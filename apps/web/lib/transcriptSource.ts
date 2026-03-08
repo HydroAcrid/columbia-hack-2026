@@ -3,9 +3,14 @@ import type { TranscriptChunk } from "@copilot/shared";
 /**
  * TranscriptSource — the shared interface any STT backend must implement.
  *
- * Implementations:
- *   - WebSpeechAdapter      (Web Speech API, Chrome/Edge)
- *   - GeminiLiveAdapter     (Nelly's Gemini Live adapter — drop-in replacement)
+ * Current implementation direction:
+ *   - DeepgramSTTAdapter    (speaker-aware live STT path)
+ *
+ * Historical note:
+ *   - Gemini Live STT was explored, but it is no longer the target because
+ *     the product needs multi-speaker detection in conversation.
+ *   - Gemini is still used for agent-side extraction and planned TTS /
+ *     interruption work.
  *
  * Contract:
  *   - start() resolves once capture is active

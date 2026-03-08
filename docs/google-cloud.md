@@ -7,6 +7,14 @@ This repo is prepared for a split deployment:
 - Firestore stores session state and ordered SSE event history when `SESSION_STORE_BACKEND=firestore`
 - Active target project: `hackathon-test-key`
 
+## Runtime architecture
+
+- Deepgram is the live speech-to-text provider because speaker diarization is required.
+- Gemini is used for structured extraction on the agent.
+- Gemini TTS / interruption remains planned.
+- Gemini Live STT is no longer the target implementation.
+- Deployed live mode is still not fully production-ready because the frontend STT path still depends on `ws://localhost:4002`.
+
 ## Web deploy
 
 Build and deploy the web app with Cloud Build:
@@ -86,3 +94,11 @@ Get the current Cloud Run URLs in the new project with:
 ```bash
 gcloud run services list --project=hackathon-test-key --region=us-central1
 ```
+
+## Remaining work
+
+- Gemini extraction: done
+- Deepgram STT local path: done
+- Deepgram STT deployed path: not done
+- Gemini TTS interruption path: not done
+- Unified URL plumbing for web replay/live: not done

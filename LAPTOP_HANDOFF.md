@@ -48,6 +48,9 @@ Last updated: 2026-03-08
 - Agent extraction is now hybrid:
   - demo chunks (`t1`, `t2`, etc.) use shared mock extraction
   - non-demo/live chunks can go through Gemini extraction when `GEMINI_API_KEY` is set
+- Product decision: Deepgram stays as the live STT path because speaker separation is required.
+- Gemini is still in the stack for structured extraction and planned TTS / interruption behavior.
+- Gemini Live STT is no longer the target implementation.
 
 ### Google Cloud / deployment
 
@@ -114,10 +117,11 @@ This means `PHASES.md` is no longer a full description of the current state. It 
 
 ## Known issues / risks
 
-### 1. `PHASES.md` is stale
+### 1. Deepgram STT is the chosen live path, but deployed live STT is not finished
 
-- The file still says agent replay/SSE, live transcript mode, and persistence are upcoming.
-- Actual repo state has those partially or fully implemented.
+- Deepgram is the correct STT choice because the product needs multi-speaker detection.
+- The browser adapter still points to `ws://localhost:4002`.
+- Result: local live mode can work, but deployed live mode is still not production-ready.
 
 ### 2. Localhost fallback bug still exists in live-mode code
 
@@ -144,57 +148,44 @@ Recommended cleanup:
 - Mock replay extraction only triggers if chunk ids match the shared script ids like `t1`, `t2`, etc.
 - Arbitrary test chunk ids will store transcript but produce no graph updates in demo mode.
 
-### 4. Live mode is partially real, but still not fully productized
+### 4. Gemini extraction is real, but Gemini TTS / interruption is still open
 
-- Deepgram-based live transcription path exists.
 - Gemini extraction path exists on the agent for live chunks when configured.
-- Nelly's original Gemini Live adapter goal is not fully landed as a dedicated frontend `GeminiLiveAdapter`.
-- Browser/live behavior still needs real browser validation, not just build/runtime checks.
+- The remaining Gemini work is TTS / interruption, not Gemini Live STT.
+- No one-shot spoken interruption UX is finished yet.
 
-### 5. Optional interruption path is still unfinished
-
-- No fully finished one-shot voice interruption UX yet.
-- This remains polish, not core loop.
-
-### 6. Local dev and deployed web are not using one URL helper yet
+### 5. Local dev and deployed web are not using one URL helper yet
 
 - deployed builds are correct and point to the Cloud Run agent
 - local code still has duplicated fallback logic outside `agent-client.ts`
 - if replay starts calling `localhost:4000`, local dev is using stale or duplicated config, not the deployed bundle
 
+### 6. GitHub issue tracker does not match the current architecture
+
+- Open issues [#8](https://github.com/HydroAcrid/columbia-hack-2026/issues/8) and [#10](https://github.com/HydroAcrid/columbia-hack-2026/issues/10) still matter.
+- Closed issue [#6](https://github.com/HydroAcrid/columbia-hack-2026/issues/6) assumed Gemini Live STT and should be treated as superseded.
+- Closed issue [#7](https://github.com/HydroAcrid/columbia-hack-2026/issues/7) maps to the shared live transcript pipeline, but the actual live adapter in use is Deepgram.
+- Missing issues still need to be created for deployed Deepgram STT transport, unified URL plumbing, and browser smoke-test coverage.
+
 ## What still needs to be completed
 
-### Highest priority cleanup
+### Current status by area
 
-1. Update `PHASES.md` so it matches reality.
-2. Fix the duplicated local agent URL fallback in:
-   - `apps/web/app/page.tsx`
-   - `apps/web/lib/useLiveTranscript.ts`
-3. Do a real browser smoke test:
-   - replay mode on local dev
-   - replay mode on deployed web
-   - live mode with mic permission
-4. Confirm the current live stack decision:
-   - keep Deepgram STT for hackathon
-   - or replace with Gemini Live adapter behind the same `TranscriptSource` interface
+- Gemini extraction: done
+- Deepgram STT local path: done
+- Deepgram STT deployed path: not done
+- Gemini TTS interruption path: not done
+- Unified URL plumbing for web replay/live: not done
+- Demo runbook / rehearsal checklist: not done
+- Tracker accuracy: not done
 
-### Nelly lane
+### Highest priority next work
 
-1. Implement or finish a `GeminiLiveAdapter` that conforms to `TranscriptSource`.
-2. Keep emitted payloads compatible with `TranscriptChunk`.
-3. Swap the current live adapter without changing the downstream session API.
-4. If needed, add one-shot TTS/interruption behavior after live transcription is stable.
-
-### Kevin/platform lane
-
-1. Clean the web agent URL plumbing so replay/live/local/deployed use one source of truth.
-2. Refresh the handoff docs and phases doc.
-3. Add a proper demo runbook:
-   - replay fallback path
-   - live mode fallback path
-   - deployment URLs
-   - env vars required
-4. Decide whether to keep Firebase App Hosting artifacts in repo or remove them now that Cloud Run is the actual web deploy target.
+1. Fix deployed live STT transport so the browser no longer depends on `ws://localhost:4002`.
+2. Clean the web agent URL plumbing so replay/live/local/deployed use one source of truth.
+3. Add the demo runbook and fallback checklist in issue [#10](https://github.com/HydroAcrid/columbia-hack-2026/issues/10).
+4. Re-scope issue [#8](https://github.com/HydroAcrid/columbia-hack-2026/issues/8) to Gemini TTS / interruption.
+5. Add browser smoke tests for deployed replay and live fallback behavior.
 
 ## Key files to know
 
@@ -280,8 +271,8 @@ gcloud builds triggers list --region=us-central1
 ## Recommended first move after opening the laptop again
 
 1. Read this file.
-2. Open `apps/web/app/page.tsx` and `apps/web/lib/useLiveTranscript.ts`.
-3. Remove the stray `localhost:4000` fallback duplication.
-4. Update `PHASES.md`.
-5. Run an actual browser replay test before touching more product features.
-6. If deploy behavior looks off, inspect the Cloud Build triggers before debugging Cloud Run itself.
+2. Check the current Cloud Run service URLs in `hackathon-test-key`.
+3. Verify `/health` reports Gemini extraction in `hybrid` mode.
+4. Open `apps/web/app/page.tsx` and `apps/web/lib/useLiveTranscript.ts`.
+5. Remove the stray `localhost:4000` fallback duplication.
+6. Run an actual browser replay test before touching more product features.

@@ -7,6 +7,13 @@ Hackathon project for a launch-planning meeting copilot with:
 - decisions, actions, and issues extraction
 - Cloud Run deployment for both web and agent
 
+## Architecture
+
+- Deepgram handles live speech-to-text because speaker separation matters in real conversation.
+- Gemini handles structured extraction on the agent from replay and live transcript chunks.
+- Gemini-backed TTS / interruption is still planned, but Gemini Live is no longer the STT target.
+- Deployed live mode is not fully production-ready yet because the frontend STT path still depends on `ws://localhost:4002`.
+
 ## Repo layout
 
 - `apps/web` — Next.js frontend
@@ -28,6 +35,8 @@ The project is deployed on Google Cloud:
 - `apps/web` -> Cloud Run
 - `apps/agent` -> Cloud Run
 - Firestore -> session persistence and SSE event history
+- Agent deploy mounts Secret Manager secrets `gemini-api-key` and `deepgram-api-key`
+- Web build resolves the current agent Cloud Run URL dynamically at build time
 
 ### Continuous deploy
 
@@ -98,13 +107,28 @@ export NEXT_PUBLIC_AGENT_URL="$(gcloud run services describe launch-copilot-agen
 pnpm --filter @copilot/web dev
 ```
 
-## Known issues
+## Remaining work
 
-- `PHASES.md` is stale relative to the current repo state.
-- Local live-mode code still has duplicated `localhost:4000` fallbacks in:
-  - `apps/web/app/page.tsx`
-  - `apps/web/lib/useLiveTranscript.ts`
-- Replay mock extraction only produces graph updates for canonical demo chunk ids like `t1`, `t2`, etc.
+- Gemini extraction: done
+- Deepgram STT local path: done
+- Deepgram STT deployed path: not done
+- Gemini TTS interruption path: not done
+- Unified URL plumbing for web replay/live: not done
+- Demo runbook / rehearsal checklist: not done
+- Tracker accuracy: not done
+
+## GitHub tracker notes
+
+- Open issues that still matter:
+  - [#8](https://github.com/HydroAcrid/columbia-hack-2026/issues/8) should be treated as Gemini TTS / interruption work, not Gemini Live STT
+  - [#10](https://github.com/HydroAcrid/columbia-hack-2026/issues/10) should remain the demo runbook / fallback checklist
+- Closed issues that no longer match the product direction:
+  - [#6](https://github.com/HydroAcrid/columbia-hack-2026/issues/6) assumed Gemini Live STT and should be considered superseded by the Deepgram STT decision
+  - [#7](https://github.com/HydroAcrid/columbia-hack-2026/issues/7) is effectively implemented via the shared live pipeline, but the live adapter in use is Deepgram, not Gemini Live
+- Missing issues worth adding:
+  - productionize deployed live STT transport by removing the browser dependency on `ws://localhost:4002`
+  - centralize web agent URL plumbing for replay/live/local/deployed
+  - add a browser smoke-test matrix for deployed replay and live fallback behavior
 
 ## Useful docs
 
