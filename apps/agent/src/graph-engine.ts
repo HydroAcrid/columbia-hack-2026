@@ -197,10 +197,22 @@ export function buildCricketAnswerContext(
   const issues = state.issues
     .slice(-6)
     .map((issue) => `- [${issue.severity}] ${issue.text}`);
+  const summaryLines = [
+    `- decisions: ${state.decisions.length}`,
+    `- actions: ${state.actions.length}`,
+    `- issues: ${state.issues.length}`,
+    `- blockers: ${state.issues.filter((issue) => issue.severity === "blocker").length}`,
+    `- warnings: ${state.issues.filter((issue) => issue.severity === "warning").length}`,
+    `- graph nodes: ${state.nodes.length}`,
+    `- graph edges: ${state.edges.length}`,
+  ];
 
   return [
     "## Current user request to Cricket",
     triggeringRequest,
+    "",
+    "## Meeting state summary",
+    summaryLines.join("\n"),
     "",
     "## Recent meeting transcript",
     recentTranscript.length ? recentTranscript.join("\n") : "(no recent transcript yet)",

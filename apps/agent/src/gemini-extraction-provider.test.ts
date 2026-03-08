@@ -207,7 +207,46 @@ test("generates a dedicated Cricket interrupt message for direct requests", asyn
 
   assert.equal(extractionPrompts.length, 1);
   assert.equal(answerPrompts.length, 1);
+  assert.match(answerPrompts[0] ?? "", /Use the meeting state summary, current decisions, actions, issues, and graph relationships before using general transcript wording/);
   assert.equal(patch.interruptMessage, "Billing migration is the blocker right now, and Kevin owns the staging fix.");
+});
+
+test("adds unresolved-work guidance for 'what are we missing' Cricket prompts", async () => {
+  const answerPrompts: string[] = [];
+  const provider = createProvider(
+    async () => ({
+      response: {
+        text: () => JSON.stringify({
+          addDecisions: [{ id: "d-1", text: "Tighten the graph engine.", timestamp: 1 }],
+          addActions: [{ id: "a-1", text: "Finalize the demo runbook", owner: "Kevin", timestamp: 1 }],
+          addIssues: [{ id: "i-1", text: "Live transcription path is still a blocker.", severity: "blocker", timestamp: 1 }],
+        }),
+      },
+    }),
+    async (prompt) => {
+      answerPrompts.push(prompt);
+      return {
+        response: {
+          text: () => "We still need to finalize the demo runbook, and the live transcription path is still a blocker.",
+        },
+      };
+    },
+  );
+
+  const chunk = createChunk("live-1", "Cricket, what are we missing before demo time?", 1);
+  const state = createState([chunk]);
+  state.decisions = [{ id: "existing-decision", text: "Tighten the graph engine to reuse canonical entities.", timestamp: 0.5 }];
+  state.actions = [{ id: "existing-action", text: "Validate final end-to-end voice rehearsal", owner: "Nelly", timestamp: 0.75 }];
+  state.issues = [{ id: "existing-issue", text: "Deployed flow broken due to local host web socket path.", severity: "blocker", timestamp: 0.25 }];
+
+  const resultPromise = provider.extract(chunk, state);
+  await sleep(35);
+  const patch = await resultPromise;
+
+  assert.equal(patch.interruptMessage, "We still need to finalize the demo runbook, and the live transcription path is still a blocker.");
+  assert.equal(answerPrompts.length, 1);
+  assert.match(answerPrompts[0] ?? "", /Treat 'what are we missing' or 'what is left' as a request for unresolved actions, blockers, warnings, and missing ownership/);
+  assert.match(answerPrompts[0] ?? "", /There are open issues or action items in the current context, so do not answer that nothing remains/);
 });
 
 test("does not generate a Cricket answer for non-request mentions", async () => {

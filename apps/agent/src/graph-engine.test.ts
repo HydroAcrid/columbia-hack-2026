@@ -278,6 +278,10 @@ test("builds a dedicated Cricket answer context with insights and graph state", 
   const context = buildCricketAnswerContext(state, "Cricket, who owns staging?");
 
   assert.match(context, /Current user request to Cricket/);
+  assert.match(context, /Meeting state summary/);
+  assert.match(context, /- decisions: 1/);
+  assert.match(context, /- actions: 1/);
+  assert.match(context, /- blockers: 1/);
   assert.match(context, /Fix staging before final QA/);
   assert.match(context, /Fix staging reliability \(owner: Kevin\)/);
   assert.match(context, /\[blocker\] Staging is blocking launch readiness/);

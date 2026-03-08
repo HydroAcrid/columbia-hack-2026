@@ -48,6 +48,14 @@ Rules:
 - Sound direct and conversational, as if speaking briefly in the meeting.
 - Return plain text only. No markdown, bullets, or quotes.`;
 
+type CricketQuestionFocus =
+  | "blockers"
+  | "ownership"
+  | "decisions"
+  | "missing"
+  | "status"
+  | "general";
+
 const FILLER_WORDS = new Set([
   "a",
   "ah",
@@ -407,6 +415,9 @@ Extract any relevant graph information from the live transcript batch above.`;
     try {
       const prompt = `${buildCricketAnswerContext(mergedState, triggeringRequest)}
 
+## Answering instructions
+${buildCricketAnswerInstructions(triggeringRequest, mergedState)}
+
 Respond to the user's question as Cricket.`;
       const response = await this.answerModel.generateContent(prompt);
       const text = response.response.text().replace(/\s+/g, " ").trim().replace(/^"|"$/g, "");
@@ -425,4 +436,82 @@ function countMeaningfulWords(chunks: TranscriptChunk[]) {
 function tokenizeMeaningfulWords(text: string) {
   const tokens = text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
   return tokens.filter((token) => token.length > 1 && !FILLER_WORDS.has(token));
+}
+
+function buildCricketAnswerInstructions(
+  request: string,
+  state: SessionState,
+) {
+  const focus = inferCricketQuestionFocus(request);
+  const hasOpenIssues = state.issues.length > 0;
+  const hasOpenActions = state.actions.length > 0;
+  const hasDecisions = state.decisions.length > 0;
+
+  const common = [
+    "- Use the meeting state summary, current decisions, actions, issues, and graph relationships before using general transcript wording.",
+    "- Prefer concrete names, owners, blockers, dependencies, and milestones.",
+    "- If issues or actions exist, do not say there is nothing left unless you explicitly account for them.",
+  ];
+
+  const byFocus: Record<CricketQuestionFocus, string[]> = {
+    blockers: [
+      "- Answer with the active blockers and warnings first.",
+      "- Mention owners or affected milestones when the context provides them.",
+    ],
+    ownership: [
+      "- Answer with explicit owners from action items, graph ownership, and transcript evidence.",
+      "- If ownership is ambiguous, say that clearly instead of guessing.",
+    ],
+    decisions: [
+      "- Start by referencing explicit decisions already captured in the meeting state.",
+      "- If there are unresolved issues or actions, mention that they remain open even if a decision exists.",
+    ],
+    missing: [
+      "- Treat 'what are we missing' or 'what is left' as a request for unresolved actions, blockers, warnings, and missing ownership.",
+      "- If any open issues or actions exist, summarize the most important ones instead of saying nothing is missing.",
+      "- If explicit decisions already exist, mention whether they are already captured and then identify what still remains open.",
+    ],
+    status: [
+      "- Give a compact status summary anchored in milestones, blockers, and action owners.",
+    ],
+    general: [
+      "- Give the most useful concise summary based on the strongest meeting evidence.",
+    ],
+  };
+
+  const guards: string[] = [];
+  if (focus === "missing" && (hasOpenIssues || hasOpenActions)) {
+    guards.push("- There are open issues or action items in the current context, so do not answer that nothing remains.");
+  }
+  if (focus === "decisions" && hasDecisions) {
+    guards.push("- There is at least one explicit decision in the current context; acknowledge it directly.");
+  }
+
+  return [...common, ...byFocus[focus], ...guards].join("\n");
+}
+
+function inferCricketQuestionFocus(request: string): CricketQuestionFocus {
+  const normalized = request.toLowerCase();
+
+  if (/\b(blocker|blockers|risk|risks|warning|warnings|what's blocking|what is blocking)\b/.test(normalized)) {
+    return "blockers";
+  }
+
+  if (/\b(who owns|owner|owns|responsible|responsibility)\b/.test(normalized)) {
+    return "ownership";
+  }
+
+  if (/\b(decision|decisions|decided)\b/.test(normalized)) {
+    return "decisions";
+  }
+
+  if (/\b(missing|left|remaining|anything else|wrap things up|before we wrap|next step|next steps)\b/.test(normalized)) {
+    return "missing";
+  }
+
+  if (/\b(status|where are we|stand|progress)\b/.test(normalized)) {
+    return "status";
+  }
+
+  return "general";
 }
