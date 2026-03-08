@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -8,6 +8,7 @@ import {
   type Node,
   type Edge,
   type NodeTypes,
+  type ReactFlowInstance,
   Handle,
   Position,
   useNodesState,
@@ -141,10 +142,25 @@ export function GraphPanel({ nodes, edges }: GraphPanelProps) {
   const initialNodes = useMemo(() => toFlowNodes(nodes), [nodes]);
   const initialEdges = useMemo(() => toFlowEdges(edges), [edges]);
 
-  const [flowNodes, , onNodesChange] = useNodesState(initialNodes);
-  const [flowEdges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialNodes);
+  const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const flowRef = useRef<ReactFlowInstance<Node, Edge> | null>(null);
 
-  const onInit = useCallback(() => {}, []);
+  useEffect(() => {
+    setFlowNodes(initialNodes);
+    setFlowEdges(initialEdges);
+
+    if (flowRef.current) {
+      requestAnimationFrame(() => {
+        flowRef.current?.fitView({ padding: 0.3, duration: 250 });
+      });
+    }
+  }, [initialEdges, initialNodes, setFlowEdges, setFlowNodes]);
+
+  const onInit = useCallback((instance: ReactFlowInstance<Node, Edge>) => {
+    flowRef.current = instance;
+    instance.fitView({ padding: 0.3 });
+  }, []);
 
   return (
     <div className="flex h-full flex-col">

@@ -1,21 +1,239 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { TranscriptPanel } from "@/components/TranscriptPanel";
 import { GraphPanel } from "@/components/GraphPanel";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import {
-  mockTranscript,
-  mockNodes,
-  mockEdges,
-  mockDecisions,
-  mockActions,
-  mockIssues,
-} from "@/lib/mock-data";
+  createSession,
+  getSessionEventsUrl,
+  getSessionState,
+  postTranscriptChunk,
+} from "@/lib/agent-client";
+import { applyPatch } from "@copilot/graph";
+import {
+  demoTranscriptChunks,
+  type ActionItem,
+  type DecisionItem,
+  type GraphPatchEvent,
+  type IssueItem,
+  type SessionState,
+  type TranscriptChunk,
+} from "@copilot/shared";
+
+type ConnectionState = "connecting" | "connected" | "disconnected";
+
+function createEmptySessionState(id: string): SessionState {
+  return {
+    id,
+    transcript: [],
+    nodes: [],
+    edges: [],
+    decisions: [],
+    actions: [],
+    issues: [],
+  };
+}
+
+function appendUnique<T extends { id: string }>(items: T[], nextItems: T[] | undefined) {
+  if (!nextItems?.length) {
+    return items;
+  }
+
+  const merged = [...items];
+  for (const item of nextItems) {
+    if (!merged.some((existing) => existing.id === item.id)) {
+      merged.push(item);
+    }
+  }
+
+  return merged;
+}
+
+function mergeSessionState(state: SessionState, patch: GraphPatchEvent): SessionState {
+  const graph = applyPatch(
+    {
+      nodes: state.nodes,
+      edges: state.edges,
+    },
+    patch,
+  );
+
+  return {
+    ...state,
+    nodes: graph.nodes,
+    edges: graph.edges,
+    decisions: appendUnique<DecisionItem>(state.decisions, patch.addDecisions),
+    actions: appendUnique<ActionItem>(state.actions, patch.addActions),
+    issues: appendUnique<IssueItem>(state.issues, patch.addIssues),
+  };
+}
+
+function appendTranscriptChunk(state: SessionState, chunk: TranscriptChunk): SessionState {
+  if (state.transcript.some((entry) => entry.id === chunk.id)) {
+    return state;
+  }
+
+  return {
+    ...state,
+    transcript: [...state.transcript, chunk],
+  };
+}
+
+function getReplayDelay(currentIndex: number) {
+  if (currentIndex === 0) {
+    return 250;
+  }
+
+  const previous = demoTranscriptChunks[currentIndex - 1];
+  const current = demoTranscriptChunks[currentIndex];
+  const deltaSeconds = current.timestamp - previous.timestamp;
+
+  return Math.min(1400, Math.max(500, deltaSeconds * 120));
+}
+
+function sleep(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 export default function Home() {
+  const [sessionState, setSessionState] = useState<SessionState | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const replayRunRef = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      setIsBootstrapping(true);
+      setErrorMessage(null);
+
+      try {
+        eventSourceRef.current?.close();
+
+        const session = await createSession();
+        const state = await getSessionState(session.id);
+        if (cancelled) {
+          return;
+        }
+
+        setSessionId(session.id);
+        setSessionState(state);
+        setConnectionState("connecting");
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setErrorMessage(
+          error instanceof Error ? error.message : "Failed to bootstrap the replay session.",
+        );
+        setConnectionState("disconnected");
+      } finally {
+        if (!cancelled) {
+          setIsBootstrapping(false);
+        }
+      }
+    };
+
+    void bootstrap();
+
+    return () => {
+      cancelled = true;
+      replayRunRef.current += 1;
+      eventSourceRef.current?.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
+    const source = new EventSource(getSessionEventsUrl(sessionId));
+    eventSourceRef.current = source;
+
+    source.onopen = () => {
+      setConnectionState("connected");
+    };
+
+    source.onmessage = (event) => {
+      const patch = JSON.parse(event.data) as GraphPatchEvent;
+      setSessionState((current) => (current ? mergeSessionState(current, patch) : current));
+    };
+
+    source.onerror = () => {
+      setConnectionState("disconnected");
+    };
+
+    return () => {
+      source.close();
+      if (eventSourceRef.current === source) {
+        eventSourceRef.current = null;
+      }
+    };
+  }, [sessionId]);
+
+  async function handleStartReplay() {
+    if (isReplaying) {
+      return;
+    }
+
+    const runId = replayRunRef.current + 1;
+    replayRunRef.current = runId;
+
+    setIsReplaying(true);
+    setIsBootstrapping(true);
+    setErrorMessage(null);
+
+    try {
+      eventSourceRef.current?.close();
+
+      const session = await createSession();
+      const emptyState = createEmptySessionState(session.id);
+      setSessionId(session.id);
+      setSessionState(emptyState);
+      setConnectionState("connecting");
+
+      await sleep(250);
+
+      for (let index = 0; index < demoTranscriptChunks.length; index += 1) {
+        if (replayRunRef.current !== runId) {
+          return;
+        }
+
+        const chunk = demoTranscriptChunks[index];
+        await sleep(getReplayDelay(index));
+        setSessionState((current) => appendTranscriptChunk(current ?? emptyState, chunk));
+        await postTranscriptChunk(session.id, chunk);
+      }
+
+      const syncedState = await getSessionState(session.id);
+      if (replayRunRef.current === runId) {
+        setSessionState(syncedState);
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Replay failed to start.",
+      );
+      setConnectionState("disconnected");
+    } finally {
+      if (replayRunRef.current === runId) {
+        setIsReplaying(false);
+        setIsBootstrapping(false);
+      }
+    }
+  }
+
+  const state = sessionState ?? createEmptySessionState("pending");
+
   return (
     <div className="flex h-full flex-col bg-[var(--surface)]">
-      {/* Header */}
       <header className="flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface-panel)] px-8 py-4">
         <div className="flex items-baseline gap-3">
           <h1 className="text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
@@ -26,35 +244,64 @@ export default function Home() {
             Project Aurora — Launch Planning
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Live
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-700">
+              Replay Demo
+            </span>
+            <span className={connectionBadgeClassName(connectionState)}>
+              {connectionState === "connected" ? "Agent connected" : connectionState}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleStartReplay}
+            disabled={isBootstrapping || isReplaying}
+            className="rounded-full bg-[var(--text-primary)] px-4 py-2 text-[12px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isReplaying ? "Running replay..." : "Start Replay"}
+          </button>
         </div>
       </header>
 
-      {/* Three-panel layout */}
+      {errorMessage ? (
+        <div className="border-b border-rose-200 bg-rose-50 px-8 py-2.5 text-[12px] text-rose-700">
+          {errorMessage}
+        </div>
+      ) : null}
+
       <div className="grid flex-1 grid-cols-[300px_1fr_320px] overflow-hidden">
-        {/* Left: Transcript */}
         <div className="border-r border-[var(--border)] bg-[var(--surface-panel)] overflow-hidden">
-          <TranscriptPanel chunks={mockTranscript} />
+          <TranscriptPanel chunks={state.transcript} />
         </div>
 
-        {/* Center: Graph */}
         <div className="overflow-hidden bg-[var(--surface)]">
-          <GraphPanel nodes={mockNodes} edges={mockEdges} />
+          <GraphPanel nodes={state.nodes} edges={state.edges} />
         </div>
 
-        {/* Right: Insights */}
         <div className="border-l border-[var(--border)] bg-[var(--surface-panel)] overflow-hidden">
           <InsightsPanel
-            decisions={mockDecisions}
-            actions={mockActions}
-            issues={mockIssues}
+            decisions={state.decisions}
+            actions={state.actions}
+            issues={state.issues}
           />
         </div>
       </div>
     </div>
   );
+}
+
+function connectionBadgeClassName(connectionState: ConnectionState) {
+  const shared =
+    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium";
+
+  if (connectionState === "connected") {
+    return `${shared} border-emerald-200 bg-emerald-50 text-emerald-700`;
+  }
+
+  if (connectionState === "connecting") {
+    return `${shared} border-amber-200 bg-amber-50 text-amber-700`;
+  }
+
+  return `${shared} border-rose-200 bg-rose-50 text-rose-700`;
 }
