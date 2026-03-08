@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TranscriptPanel } from "@/components/TranscriptPanel";
 import { GraphPanel } from "@/components/GraphPanel";
 import { InsightsPanel } from "@/components/InsightsPanel";
+import { LiveModeBar } from "@/components/LiveModeBar";
 import {
   createSession,
   getSessionEventsUrl,
@@ -20,8 +21,13 @@ import {
   type SessionState,
   type TranscriptChunk,
 } from "@copilot/shared";
+import { GeminiLiveAdapter } from "@/lib/geminiLiveAdapter";
+import { useLiveTranscript } from "@/lib/useLiveTranscript";
+
+const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL ?? "http://localhost:4000";
 
 type ConnectionState = "connecting" | "connected" | "disconnected";
+type Mode = "replay" | "live";
 
 function createEmptySessionState(id: string): SessionState {
   return {
@@ -103,8 +109,31 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isReplaying, setIsReplaying] = useState(false);
+  
+  const [mode, setMode] = useState<Mode>("replay");
+  const [speaker, setSpeaker] = useState("Speaker 1");
+
   const eventSourceRef = useRef<EventSource | null>(null);
   const replayRunRef = useRef(0);
+
+  // Live adapter — only when connected to a live session
+  const adapterRef = useRef<GeminiLiveAdapter | null>(null);
+  const adapter = useMemo(() => {
+    if (!sessionId || mode !== "live") return null;
+    const a = new GeminiLiveAdapter(sessionId, speaker);
+    adapterRef.current = a;
+    return a;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, mode]);
+
+  useEffect(() => {
+    if (adapterRef.current) {
+      adapterRef.current.speaker = speaker;
+    }
+  }, [speaker]);
+
+  const { chunks: liveChunks, isRecording, error, start, stop } =
+    useLiveTranscript(sessionId, adapter);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,6 +213,9 @@ export default function Home() {
       return;
     }
 
+    if (mode === "live" && isRecording) await stop();
+    setMode("replay");
+
     const runId = replayRunRef.current + 1;
     replayRunRef.current = runId;
 
@@ -230,7 +262,32 @@ export default function Home() {
     }
   }
 
+  const handleModeChange = async (next: Mode) => {
+    if (next === "live" && mode === "replay") {
+      try {
+        eventSourceRef.current?.close();
+        const session = await createSession();
+        const emptyState = createEmptySessionState(session.id);
+        setSessionId(session.id);
+        setSessionState(emptyState);
+        setConnectionState("connecting");
+        setMode("live");
+      } catch (err) {
+        console.error("[page] failed to setup live session:", err);
+      }
+    } else if (next === "replay" && mode === "live") {
+      if (isRecording) await stop();
+      setMode("replay");
+    }
+  };
+
+  const handleMicToggle = async () => {
+    if (isRecording) await stop();
+    else await start();
+  };
+
   const state = sessionState ?? createEmptySessionState("pending");
+  const transcriptToDisplay = mode === "live" ? liveChunks : state.transcript;
 
   return (
     <div className="flex h-full flex-col bg-[var(--surface)]">
@@ -246,21 +303,25 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-700">
-              Replay Demo
-            </span>
+            {mode === "replay" && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-700">
+                Replay Demo
+              </span>
+            )}
             <span className={connectionBadgeClassName(connectionState)}>
               {connectionState === "connected" ? "Agent connected" : connectionState}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={handleStartReplay}
-            disabled={isBootstrapping || isReplaying}
-            className="rounded-full bg-[var(--text-primary)] px-4 py-2 text-[12px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isReplaying ? "Running replay..." : "Start Replay"}
-          </button>
+          {mode === "replay" && (
+            <button
+              type="button"
+              onClick={handleStartReplay}
+              disabled={isBootstrapping || isReplaying}
+              className="rounded-full bg-[var(--text-primary)] px-4 py-2 text-[12px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isReplaying ? "Running replay..." : "Start Replay"}
+            </button>
+          )}
         </div>
       </header>
 
@@ -271,8 +332,18 @@ export default function Home() {
       ) : null}
 
       <div className="grid flex-1 grid-cols-[300px_1fr_320px] overflow-hidden">
-        <div className="border-r border-[var(--border)] bg-[var(--surface-panel)] overflow-hidden">
-          <TranscriptPanel chunks={state.transcript} />
+        <div className="flex flex-col border-r border-[var(--border)] bg-[var(--surface-panel)] overflow-hidden">
+          <LiveModeBar
+            mode={mode}
+            isRecording={isRecording}
+            isSupported={true}
+            speaker={speaker}
+            error={error}
+            onModeChange={handleModeChange}
+            onSpeakerChange={setSpeaker}
+            onMicToggle={handleMicToggle}
+          />
+          <TranscriptPanel chunks={transcriptToDisplay} />
         </div>
 
         <div className="overflow-hidden bg-[var(--surface)]">
