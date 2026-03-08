@@ -1,60 +1,155 @@
-import type { GraphNode, GraphEdge, GraphPatchEvent } from "@copilot/shared";
+import type { GraphEdge, GraphNode, GraphPatchEvent } from "@copilot/shared";
 
 export interface GraphState {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
 
-/**
- * Apply a GraphPatchEvent to an existing graph state, returning a new state.
- * TODO: implement merge logic with deduplication.
- */
-export function applyPatch(
-  state: GraphState,
-  patch: GraphPatchEvent
-): GraphState {
+export function applyPatch(state: GraphState, patch: GraphPatchEvent): GraphState {
   const nodes = [...state.nodes];
   const edges = [...state.edges];
+  const nodeIdMap = new Map<string, string>();
+
+  for (const node of nodes) {
+    nodeIdMap.set(node.id, node.id);
+  }
 
   if (patch.addNodes) {
-    for (const node of patch.addNodes) {
-      if (!nodes.some((n) => n.id === node.id)) {
-        nodes.push(node);
-      }
+    for (const incomingNode of patch.addNodes) {
+      const canonicalId = mergeNode(nodes, incomingNode);
+      nodeIdMap.set(incomingNode.id, canonicalId);
     }
   }
 
   if (patch.updateNodes) {
     for (const update of patch.updateNodes) {
-      const idx = nodes.findIndex((n) => n.id === update.id);
-      if (idx !== -1) {
-        nodes[idx] = { ...nodes[idx], ...update } as GraphNode;
+      const canonicalId = resolveNodeId(nodeIdMap, update.id);
+      const index = nodes.findIndex((node) => node.id === canonicalId);
+
+      if (index !== -1) {
+        nodes[index] = { ...nodes[index], ...update, id: canonicalId } as GraphNode;
+        continue;
       }
+
+      const fallbackNode: GraphNode = {
+        id: canonicalId,
+        label: update.label ?? canonicalId,
+        type: update.type ?? "system",
+      };
+      const mergedId = mergeNode(nodes, fallbackNode);
+      nodeIdMap.set(update.id, mergedId);
     }
   }
 
   if (patch.addEdges) {
-    for (const edge of patch.addEdges) {
-      if (!edges.some((e) => e.id === edge.id)) {
-        edges.push(edge);
-      }
+    for (const incomingEdge of patch.addEdges) {
+      const edge = remapEdge(incomingEdge, nodeIdMap);
+      mergeEdge(edges, edge);
     }
   }
 
   return { nodes, edges };
 }
 
-/**
- * Deduplicate nodes by normalising labels to lowercase for comparison.
- * Keeps the first occurrence.
- */
 export function dedupeNodes(nodes: GraphNode[]): GraphNode[] {
-  const seen = new Map<string, GraphNode>();
+  const deduped: GraphNode[] = [];
   for (const node of nodes) {
-    const key = node.label.toLowerCase().trim();
-    if (!seen.has(key)) {
-      seen.set(key, node);
-    }
+    mergeNode(deduped, node);
   }
-  return Array.from(seen.values());
+  return deduped;
+}
+
+function mergeNode(nodes: GraphNode[], incomingNode: GraphNode) {
+  const sameIdIndex = nodes.findIndex((node) => node.id === incomingNode.id);
+  if (sameIdIndex !== -1) {
+    nodes[sameIdIndex] = mergeNodeRecord(nodes[sameIdIndex], incomingNode);
+    return nodes[sameIdIndex].id;
+  }
+
+  const normalizedKey = nodeKey(incomingNode);
+  const semanticIndex = nodes.findIndex((node) => nodeKey(node) === normalizedKey);
+  if (semanticIndex !== -1) {
+    nodes[semanticIndex] = mergeNodeRecord(nodes[semanticIndex], incomingNode);
+    return nodes[semanticIndex].id;
+  }
+
+  nodes.push(incomingNode);
+  return incomingNode.id;
+}
+
+function mergeEdge(edges: GraphEdge[], incomingEdge: GraphEdge) {
+  const sameIdIndex = edges.findIndex((edge) => edge.id === incomingEdge.id);
+  if (sameIdIndex !== -1) {
+    edges[sameIdIndex] = { ...edges[sameIdIndex], ...incomingEdge };
+    return;
+  }
+
+  const semanticIndex = edges.findIndex((edge) => edgeKey(edge) === edgeKey(incomingEdge));
+  if (semanticIndex !== -1) {
+    edges[semanticIndex] = {
+      ...edges[semanticIndex],
+      ...incomingEdge,
+      id: edges[semanticIndex].id,
+      source: edges[semanticIndex].source,
+      target: edges[semanticIndex].target,
+      type: edges[semanticIndex].type,
+    };
+    return;
+  }
+
+  edges.push(incomingEdge);
+}
+
+function mergeNodeRecord(existingNode: GraphNode, incomingNode: GraphNode): GraphNode {
+  return {
+    ...existingNode,
+    ...incomingNode,
+    id: existingNode.id,
+    label: pickPreferredLabel(existingNode.label, incomingNode.label),
+    type: existingNode.type,
+  };
+}
+
+function pickPreferredLabel(existingLabel: string, incomingLabel: string) {
+  const existingTrimmed = existingLabel.trim();
+  const incomingTrimmed = incomingLabel.trim();
+
+  if (!existingTrimmed) {
+    return incomingTrimmed;
+  }
+
+  if (!incomingTrimmed) {
+    return existingTrimmed;
+  }
+
+  return incomingTrimmed.length > existingTrimmed.length ? incomingTrimmed : existingTrimmed;
+}
+
+function remapEdge(edge: GraphEdge, nodeIdMap: Map<string, string>): GraphEdge {
+  return {
+    ...edge,
+    source: resolveNodeId(nodeIdMap, edge.source),
+    target: resolveNodeId(nodeIdMap, edge.target),
+  };
+}
+
+function resolveNodeId(nodeIdMap: Map<string, string>, id: string) {
+  return nodeIdMap.get(id) ?? id;
+}
+
+function nodeKey(node: Pick<GraphNode, "label" | "type">) {
+  return `${node.type}:${normalizeLabel(node.label)}`;
+}
+
+function edgeKey(edge: Pick<GraphEdge, "source" | "target" | "type">) {
+  return `${edge.source}:${edge.target}:${edge.type}`;
+}
+
+function normalizeLabel(label: string) {
+  return label
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
