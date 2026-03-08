@@ -102,6 +102,10 @@ function sleep(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+/* ──────────────────────────────────────────
+   Main page
+   ────────────────────────────────────────── */
+
 export default function Home() {
   const [sessionState, setSessionState] = useState<SessionState | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -288,51 +292,94 @@ export default function Home() {
 
   const state = sessionState ?? createEmptySessionState("pending");
   const transcriptToDisplay = mode === "live" ? liveChunks : state.transcript;
+  const totalSignals = state.decisions.length + state.actions.length + state.issues.length;
 
   return (
-    <div className="flex h-full flex-col bg-[var(--surface)]">
-      <header className="flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface-panel)] px-8 py-4">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
-            Launch Copilot
-          </h1>
-          <span className="text-[13px] text-[var(--text-tertiary)]">/</span>
-          <span className="text-[13px] font-medium text-[var(--text-secondary)]">
-            Project Aurora — Launch Planning
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="relative h-screen w-screen overflow-hidden bg-[var(--surface-ground)]">
+      {/* ── Full-screen graph canvas ── */}
+      <div className="absolute inset-0 z-0">
+        <GraphPanel nodes={state.nodes} edges={state.edges} />
+      </div>
+
+      {/* ── Floating command bar ── */}
+      <header
+        className="animate-overlay-appear absolute top-3 left-3 right-3 z-20"
+      >
+        <div className="overlay-panel flex h-12 items-center justify-between px-4">
+          {/* Left: brand + session */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--text-primary)]">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1L11 4V8L6 11L1 8V4L6 1Z" fill="white" />
+              </svg>
+            </div>
+            <span className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+              Launch Copilot
+            </span>
+            <span className="hidden text-[12px] text-[var(--text-tertiary)] sm:inline">
+              /
+            </span>
+            <span className="hidden text-[12px] text-[var(--text-tertiary)] sm:inline">
+              Launch Planning
+            </span>
+          </div>
+
+          {/* Right: status + controls */}
           <div className="flex items-center gap-2">
+            {errorMessage ? (
+              <span className="max-w-[200px] truncate rounded-md bg-[var(--accent-red-muted)] px-2 py-1 text-[11px] font-medium text-red-600">
+                {errorMessage}
+              </span>
+            ) : null}
+
             {mode === "replay" && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-medium text-sky-700">
                 Replay Demo
               </span>
             )}
-            <span className={connectionBadgeClassName(connectionState)}>
-              {connectionState === "connected" ? "Agent connected" : connectionState}
-            </span>
+
+            <StatusPill state={connectionState} />
+
+            {totalSignals > 0 ? (
+              <span className="rounded-md bg-[var(--accent-violet-muted)] px-2 py-1 text-[11px] font-semibold tabular-nums text-violet-600">
+                {totalSignals}
+              </span>
+            ) : null}
+
+            <span className="mx-0.5 h-4 w-px bg-[var(--border-primary)]" />
+
+            {mode === "replay" && (
+              <button
+                type="button"
+                onClick={handleStartReplay}
+                disabled={isBootstrapping || isReplaying}
+                className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-[var(--text-primary)] px-3 text-[12px] font-medium text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isReplaying ? (
+                  <>
+                    <span className="animate-pulse-subtle h-1.5 w-1.5 rounded-full bg-white" />
+                    Replaying
+                  </>
+                ) : (
+                  <>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 1.5L8.5 5L2 8.5V1.5Z" fill="currentColor" />
+                    </svg>
+                    Replay
+                  </>
+                )}
+              </button>
+            )}
           </div>
-          {mode === "replay" && (
-            <button
-              type="button"
-              onClick={handleStartReplay}
-              disabled={isBootstrapping || isReplaying}
-              className="rounded-full bg-[var(--text-primary)] px-4 py-2 text-[12px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isReplaying ? "Running replay..." : "Start Replay"}
-            </button>
-          )}
         </div>
       </header>
 
-      {errorMessage ? (
-        <div className="border-b border-rose-200 bg-rose-50 px-8 py-2.5 text-[12px] text-rose-700">
-          {errorMessage}
-        </div>
-      ) : null}
-
-      <div className="grid flex-1 grid-cols-[300px_1fr_320px] overflow-hidden">
-        <div className="flex flex-col border-r border-[var(--border)] bg-[var(--surface-panel)] overflow-hidden">
+      {/* ── Left overlay — Transcript ── */}
+      <aside
+        className="animate-overlay-appear absolute top-[68px] bottom-3 left-3 z-10 w-[340px]"
+        style={{ animationDelay: "60ms" }}
+      >
+        <div className="overlay-panel flex h-full flex-col overflow-hidden">
           <LiveModeBar
             mode={mode}
             isRecording={isRecording}
@@ -345,34 +392,42 @@ export default function Home() {
           />
           <TranscriptPanel chunks={transcriptToDisplay} />
         </div>
+      </aside>
 
-        <div className="overflow-hidden bg-[var(--surface)]">
-          <GraphPanel nodes={state.nodes} edges={state.edges} />
-        </div>
-
-        <div className="border-l border-[var(--border)] bg-[var(--surface-panel)] overflow-hidden">
+      {/* ── Right overlay — Insights ── */}
+      <aside
+        className="animate-overlay-appear absolute top-[68px] right-3 bottom-3 z-10 w-[360px]"
+        style={{ animationDelay: "120ms" }}
+      >
+        <div className="overlay-panel flex h-full flex-col overflow-hidden">
           <InsightsPanel
             decisions={state.decisions}
             actions={state.actions}
             issues={state.issues}
           />
         </div>
-      </div>
+      </aside>
     </div>
   );
 }
 
-function connectionBadgeClassName(connectionState: ConnectionState) {
-  const shared =
-    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium";
+/* ──────────────────────────────────────────
+   Status pill
+   ────────────────────────────────────────── */
 
-  if (connectionState === "connected") {
-    return `${shared} border-emerald-200 bg-emerald-50 text-emerald-700`;
-  }
+function StatusPill({ state }: { state: ConnectionState }) {
+  const map = {
+    connected: { dot: "bg-emerald-500", label: "Live" },
+    connecting: { dot: "bg-amber-400 animate-pulse-subtle", label: "Connecting" },
+    disconnected: { dot: "bg-[var(--text-muted)]", label: "Offline" },
+  } as const;
 
-  if (connectionState === "connecting") {
-    return `${shared} border-amber-200 bg-amber-50 text-amber-700`;
-  }
+  const { dot, label } = map[state];
 
-  return `${shared} border-rose-200 bg-rose-50 text-rose-700`;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--surface-inset)] px-2 py-1 text-[11px] font-medium text-[var(--text-secondary)]">
+      <span className={`h-[5px] w-[5px] rounded-full ${dot}`} />
+      {label}
+    </span>
+  );
 }
