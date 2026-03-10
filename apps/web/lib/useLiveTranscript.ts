@@ -10,6 +10,7 @@ import type {
 import {
   createSessionResponse,
   postTranscriptChunkResponse,
+  readAgentErrorMessage,
 } from "./agent-client";
 
 export interface LiveTranscriptState {
@@ -98,7 +99,9 @@ export function useLiveTranscript(
       console.log("[useLiveTranscript] Creating new session...");
       const res = await createSessionResponse();
       if (!res.ok) {
-        console.error("[useLiveTranscript] Failed to create session:", await res.text());
+        const message = await readAgentErrorMessage(res);
+        console.error("[useLiveTranscript] Failed to create session:", message);
+        setError(message);
         return null;
       }
       const { id: newId } = await res.json();
@@ -175,7 +178,21 @@ export function useLiveTranscript(
         // The current chunk was already added to chunksRef and re-uploaded
         // inside recoverSession, so we're good. Next chunk will use newId.
       } else if (!res.ok) {
-        console.error("[useLiveTranscript] chunk POST failed:", res.status, await res.text());
+        const message = await readAgentErrorMessage(res);
+        console.error("[useLiveTranscript] chunk POST failed:", res.status, message);
+
+        if (res.status === 429) {
+          if (activeSourceRef.current) {
+            await activeSourceRef.current.stop();
+            activeSourceRef.current = null;
+          }
+          bindSourceStatus(null);
+          setIsRecording(false);
+          isRecordingRef.current = false;
+          setError(message);
+          return;
+        }
+
         setError(`Transcript sync failed (${res.status}). Recovering if needed.`);
       } else {
         console.log(`[useLiveTranscript] ✅ Posted chunk to session ${sid}:`, chunk.text);

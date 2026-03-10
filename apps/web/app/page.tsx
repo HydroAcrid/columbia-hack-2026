@@ -162,6 +162,14 @@ function removeStorage(key: string) {
   }
 }
 
+function isDemoLimitMessage(message: string | null | undefined) {
+  if (!message) {
+    return false;
+  }
+
+  return /per-visitor|demo limit|try again later/i.test(message);
+}
+
 /* ──────────────────────────────────────────
    Main page
    ────────────────────────────────────────── */
@@ -270,6 +278,22 @@ export default function Home() {
     isRecording,
     mode,
   });
+
+  useEffect(() => {
+    if (isDemoLimitMessage(liveError)) {
+      setErrorMessage(liveError);
+      return;
+    }
+
+    if (isDemoLimitMessage(cricketTTS.lastError)) {
+      setErrorMessage(cricketTTS.lastError);
+      return;
+    }
+
+    setErrorMessage((current) => (
+      isDemoLimitMessage(current) ? null : current
+    ));
+  }, [cricketTTS.lastError, liveError]);
 
   useEffect(() => {
     if (readStorage(HELP_DISMISSED_STORAGE_KEY) === "1") {
@@ -629,6 +653,9 @@ export default function Home() {
         setMode("live");
       } catch (err) {
         console.error("[page] failed to setup live session:", err);
+        setErrorMessage(
+          err instanceof Error ? err.message : "Failed to start live mode.",
+        );
       }
     } else if (next === "replay" && mode === "live") {
       if (isRecording) await stop();
@@ -701,7 +728,7 @@ export default function Home() {
           {/* Right: status + controls */}
           <div className="flex items-center gap-2">
             {errorMessage ? (
-              <span className="max-w-[200px] truncate rounded-md bg-[var(--accent-red-muted)] px-2 py-1 text-[11px] font-medium text-red-600">
+              <span className="max-w-[320px] rounded-md bg-[var(--accent-red-muted)] px-2 py-1 text-[11px] font-medium leading-5 text-red-600">
                 {errorMessage}
               </span>
             ) : null}

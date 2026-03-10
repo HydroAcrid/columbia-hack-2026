@@ -47,7 +47,7 @@ export function CricketVoiceOverlay({ state }: CricketVoiceOverlayProps) {
   const statusLabel = ({
     heard: "Cricket heard you",
     thinking: "Cricket is thinking",
-    speaking: state.playbackMode === "browser" ? "Cricket is answering" : "Cricket is speaking",
+    speaking: "Cricket is speaking",
     error: "Cricket ran into a problem",
   } as const)[state.phase];
 
@@ -70,7 +70,7 @@ export function CricketVoiceOverlay({ state }: CricketVoiceOverlayProps) {
               </span>
               {state.playbackMode ? (
                 <span className="text-[11px] font-medium text-white/45">
-                  {state.playbackMode === "browser" ? "browser voice" : "gemini voice"}
+                  gemini voice
                 </span>
               ) : null}
             </div>

@@ -11,10 +11,11 @@ export interface SessionEvent {
 export interface StoredSession {
   state: SessionState;
   nextEventId: number;
+  ownerId: string | null;
 }
 
 export interface SessionStore {
-  createSession(id: string): Promise<StoredSession>;
+  createSession(id: string, ownerId?: string | null): Promise<StoredSession>;
   getSession(id: string): Promise<StoredSession | null>;
   saveSession(session: StoredSession): Promise<void>;
   appendEvent(sessionId: string, event: SessionEvent): Promise<void>;
@@ -42,7 +43,7 @@ export function createSessionStore(config: AgentConfig): SessionStore {
   return new InMemorySessionStore();
 }
 
-export function createEmptyStoredSession(id: string): StoredSession {
+export function createEmptyStoredSession(id: string, ownerId: string | null = null): StoredSession {
   return {
     state: {
       id,
@@ -55,6 +56,7 @@ export function createEmptyStoredSession(id: string): StoredSession {
       speakerProfiles: [],
     },
     nextEventId: 1,
+    ownerId,
   };
 }
 
@@ -62,8 +64,8 @@ class InMemorySessionStore implements SessionStore {
   private readonly sessions = new Map<string, StoredSession>();
   private readonly events = new Map<string, SessionEvent[]>();
 
-  async createSession(id: string) {
-    const session = createEmptyStoredSession(id);
+  async createSession(id: string, ownerId: string | null = null) {
+    const session = createEmptyStoredSession(id, ownerId);
     this.sessions.set(id, cloneStoredSession(session));
     this.events.set(id, []);
     return cloneStoredSession(session);
@@ -98,8 +100,8 @@ class InMemorySessionStore implements SessionStore {
 class FirestoreSessionStore implements SessionStore {
   constructor(private readonly db: Firestore) {}
 
-  async createSession(id: string) {
-    const session = createEmptyStoredSession(id);
+  async createSession(id: string, ownerId: string | null = null) {
+    const session = createEmptyStoredSession(id, ownerId);
     await this.sessionRef(id).set(serializeSession(session), { merge: false });
     return session;
   }
@@ -158,6 +160,7 @@ function serializeSession(session: StoredSession) {
   return {
     state: session.state,
     nextEventId: session.nextEventId,
+    ownerId: session.ownerId,
     updatedAt: Date.now(),
   };
 }
@@ -166,11 +169,13 @@ function deserializeSession(raw: unknown): StoredSession {
   const record = raw as {
     state?: unknown;
     nextEventId?: unknown;
+    ownerId?: unknown;
   };
 
   return {
     state: SessionState.parse(record.state),
     nextEventId: parseNextEventId(record.nextEventId),
+    ownerId: typeof record.ownerId === "string" ? record.ownerId : null,
   };
 }
 
@@ -199,6 +204,7 @@ function cloneStoredSession(session: StoredSession): StoredSession {
   return {
     state: structuredClone(session.state),
     nextEventId: session.nextEventId,
+    ownerId: session.ownerId,
   };
 }
 

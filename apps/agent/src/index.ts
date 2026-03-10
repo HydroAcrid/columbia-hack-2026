@@ -23,6 +23,11 @@ import {
   SSE_HEARTBEAT_MS,
 } from "./sse.js";
 import {
+  buildVisitorBudgetExceededResponse,
+  getVisitorBudgetKey,
+  VisitorBudgetLimiter,
+} from "./usage-limiter.js";
+import {
   createSessionStore,
   type SessionEvent,
   type StoredSession,
@@ -35,6 +40,7 @@ const encoder = new TextEncoder();
 const config = readAgentConfig();
 const { provider, metadata: extractionMetadata } = createExtractionProvider(config);
 const store = createSessionStore(config);
+const visitorBudgetLimiter = new VisitorBudgetLimiter(config.visitorBudget);
 const subscribers = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
 
 app.use("*", cors());
@@ -51,8 +57,18 @@ app.get("/health", (c) => {
 });
 
 app.post("/sessions", async (c) => {
+  const ownerId = getVisitorBudgetKey(c.req.raw.headers);
+  const sessionBudget = visitorBudgetLimiter.consume(ownerId, "sessions");
+  if (!sessionBudget.allowed) {
+    const limited = buildVisitorBudgetExceededResponse({
+      kind: "sessions",
+      decision: sessionBudget,
+    });
+    return c.json(limited.body, limited.status, limited.headers);
+  }
+
   const id = crypto.randomUUID();
-  await store.createSession(id);
+  await store.createSession(id, ownerId);
 
   return c.json({ id });
 });
@@ -65,6 +81,16 @@ app.post("/sessions/:id/transcript-chunks", async (c) => {
 
   const payload = await c.req.json();
   const chunk = TranscriptChunk.parse(payload);
+
+  const visitorKey = session.ownerId ?? getVisitorBudgetKey(c.req.raw.headers);
+  const transcriptBudget = visitorBudgetLimiter.consume(visitorKey, "transcriptChunks");
+  if (!transcriptBudget.allowed) {
+    const limited = buildVisitorBudgetExceededResponse({
+      kind: "transcriptChunks",
+      decision: transcriptBudget,
+    });
+    return c.json(limited.body, limited.status, limited.headers);
+  }
 
   if (session.state.transcript.some((entry: { id: string }) => entry.id === chunk.id)) {
     return c.json({ ok: true, duplicate: true });
@@ -120,6 +146,15 @@ app.post("/tts", async (c) => {
   const { text } = await c.req.json<{ text: string }>();
   if (!text) {
     return c.json({ error: "Missing text field" }, 400);
+  }
+
+  const ttsBudget = visitorBudgetLimiter.consume(getVisitorBudgetKey(c.req.raw.headers), "tts");
+  if (!ttsBudget.allowed) {
+    const limited = buildVisitorBudgetExceededResponse({
+      kind: "tts",
+      decision: ttsBudget,
+    });
+    return c.json(limited.body, limited.status, limited.headers);
   }
 
   console.log(`[TTS] Request: "${text.substring(0, 80)}..."`);

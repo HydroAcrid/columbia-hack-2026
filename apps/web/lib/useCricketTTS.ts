@@ -1,18 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getAgentBaseUrl } from "./agent-client";
+import { getAgentBaseUrl, getVisitorHeaders, readAgentErrorMessage } from "./agent-client";
 
-export type CricketTTSMode = "gemini" | "browser" | null;
+export type CricketTTSMode = "gemini" | null;
 export type CricketTTSPhase = "idle" | "requesting" | "speaking" | "error";
 
 const DEFAULT_SAMPLE_RATE = 24000;
-const GEMINI_UPGRADE_WINDOW_MS = 350;
-
-type BrowserSpeechPlayback = {
-  canUpgrade(now: number): boolean;
-  cancelForUpgrade(): void;
-};
 
 type PreparedGeminiAudio = {
   buffer: AudioBuffer;
@@ -22,9 +16,7 @@ type PreparedGeminiAudio = {
 /**
  * useCricketTTS
  *
- * Starts browser speech immediately in live mode for fast audible feedback,
- * while Gemini TTS runs in parallel. If Gemini audio arrives early enough,
- * playback upgrades before the browser voice is materially underway.
+ * Requests Gemini TTS audio and plays it directly through Web Audio.
  */
 export function useCricketTTS() {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -36,7 +28,6 @@ export function useCricketTTS() {
   const isSpeakingRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const browserPlaybackRef = useRef<BrowserSpeechPlayback | null>(null);
   const requestSequenceRef = useRef(0);
 
   const clearActiveSource = useCallback(() => {
@@ -56,7 +47,6 @@ export function useCricketTTS() {
 
   const clearPlaybackRefs = useCallback(() => {
     clearActiveSource();
-    browserPlaybackRef.current = null;
   }, [clearActiveSource]);
 
   const finishSpeaking = useCallback(() => {
@@ -128,9 +118,6 @@ export function useCricketTTS() {
 
   useEffect(() => () => {
     clearActiveSource();
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
   }, [clearActiveSource]);
 
   const prepareGeminiAudio = useCallback(async (
@@ -204,52 +191,15 @@ export function useCricketTTS() {
     setLastError(null);
     setPhase("requesting");
 
-    browserPlaybackRef.current = startBrowserSpeech(text, {
-      onStart: (startedAt) => {
-        if (requestId !== requestSequenceRef.current || !isSpeakingRef.current) {
-          return;
-        }
-
-        setPlaybackMode("browser");
-        setPhase("speaking");
-        console.log(
-          `[CricketTTS] Browser audible start after ${Math.round(startedAt - requestStartedAt)}ms`,
-        );
-      },
-      onEnd: () => {
-        if (requestId !== requestSequenceRef.current || !isSpeakingRef.current) {
-          return;
-        }
-
-        console.log("[CricketTTS] ✅ Finished (browser)");
-        finishSpeaking();
-      },
-      onError: (message) => {
-        if (requestId !== requestSequenceRef.current || !isSpeakingRef.current) {
-          return;
-        }
-
-        browserPlaybackRef.current = null;
-        if (activeSourceRef.current) {
-          return;
-        }
-
-        console.warn("[CricketTTS] Browser speech failed; waiting for Gemini audio", message);
-        setPlaybackMode(null);
-        setPhase("requesting");
-      },
-    });
-
-    if (browserPlaybackRef.current) {
-      setPlaybackMode("browser");
-    }
-
     try {
       const agentUrl = getAgentBaseUrl();
       const ttsStartedAt = performance.now();
       const res = await fetch(`${agentUrl}/tts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...Object.fromEntries(getVisitorHeaders().entries()),
+        },
         body: JSON.stringify({ text }),
       });
       console.log(
@@ -257,22 +207,14 @@ export function useCricketTTS() {
       );
 
       if (!res.ok) {
-        const message = `TTS endpoint returned ${res.status}`;
-        if (!browserPlaybackRef.current) {
-          failSpeaking(message);
-        } else {
-          console.warn(`[CricketTTS] ${message}; keeping browser voice`);
-        }
+        const message = await readAgentErrorMessage(res);
+        failSpeaking(message);
         return;
       }
 
       const { audio, sampleRate } = await res.json();
       if (!audio) {
-        if (!browserPlaybackRef.current) {
-          failSpeaking("No audio returned from Gemini TTS.");
-        } else {
-          console.warn("[CricketTTS] Gemini TTS returned no audio; keeping browser voice");
-        }
+        failSpeaking("No audio returned from Gemini TTS.");
         return;
       }
 
@@ -283,9 +225,7 @@ export function useCricketTTS() {
       );
 
       if (!preparedAudio) {
-        if (!browserPlaybackRef.current) {
-          failSpeaking("Web Audio playback is unavailable.");
-        }
+        failSpeaking("Web Audio playback is unavailable.");
         return;
       }
 
@@ -293,81 +233,12 @@ export function useCricketTTS() {
         return;
       }
 
-      const browserPlayback = browserPlaybackRef.current;
-      if (browserPlayback && !browserPlayback.canUpgrade(audioReadyAt)) {
-        console.log("[CricketTTS] Gemini audio arrived too late; keeping browser voice");
-        return;
-      }
-
-      if (browserPlayback) {
-        browserPlayback.cancelForUpgrade();
-        browserPlaybackRef.current = null;
-      }
-
       startGeminiPlayback(preparedAudio, requestId, requestStartedAt);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (browserPlaybackRef.current) {
-        console.warn("[CricketTTS] Gemini TTS failed; browser voice already active", error);
-        return;
-      }
-
       failSpeaking(message);
     }
   }, [failSpeaking, finishSpeaking, prepareGeminiAudio, startGeminiPlayback]);
 
   return { speak, isSpeaking, currentMessage, playbackMode, phase, lastError };
-}
-
-function startBrowserSpeech(
-  text: string,
-  handlers: {
-    onStart: (startedAt: number) => void;
-    onEnd: () => void;
-    onError: (message: string) => void;
-  },
-): BrowserSpeechPlayback | null {
-  if (typeof window === "undefined" || !window.speechSynthesis) {
-    return null;
-  }
-
-  console.log("[CricketTTS] Starting browser speech");
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1.0;
-  utterance.pitch = 1.0;
-
-  let cancelledForUpgrade = false;
-  let startedAt: number | null = null;
-
-  utterance.onstart = () => {
-    startedAt = performance.now();
-    handlers.onStart(startedAt);
-  };
-  utterance.onend = () => {
-    if (cancelledForUpgrade) {
-      return;
-    }
-
-    handlers.onEnd();
-  };
-  utterance.onerror = () => {
-    if (cancelledForUpgrade) {
-      return;
-    }
-
-    handlers.onError("Browser speech synthesis failed.");
-  };
-
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-
-  return {
-    canUpgrade(now: number) {
-      return startedAt === null || now - startedAt <= GEMINI_UPGRADE_WINDOW_MS;
-    },
-    cancelForUpgrade() {
-      cancelledForUpgrade = true;
-      window.speechSynthesis.cancel();
-    },
-  };
 }

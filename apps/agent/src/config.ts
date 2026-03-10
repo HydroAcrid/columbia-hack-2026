@@ -28,6 +28,14 @@ export interface AgentConfig {
   vertex: VertexConfig;
   liveExtraction: LiveExtractionConfig;
   sttDebugEnabled: boolean;
+  visitorBudget: {
+    enabled: boolean;
+    windowMs: number;
+    maxSessionsPerWindow: number;
+    maxTranscriptChunksPerWindow: number;
+    maxTtsRequestsPerWindow: number;
+    bypassIds: string[];
+  };
 }
 
 export function readAgentConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
@@ -66,6 +74,14 @@ export function readAgentConfig(env: NodeJS.ProcessEnv = process.env): AgentConf
       contextEdgeLimit: readPositiveInt(env.LIVE_CONTEXT_EDGE_LIMIT, 6),
     },
     sttDebugEnabled: readBoolean(env.LIVE_STT_DEBUG, false),
+    visitorBudget: {
+      enabled: readBoolean(env.VISITOR_BUDGET_ENABLED, true),
+      windowMs: readPositiveInt(env.VISITOR_BUDGET_WINDOW_MS, 30 * 60 * 1000),
+      maxSessionsPerWindow: readPositiveInt(env.VISITOR_BUDGET_MAX_SESSIONS, 4),
+      maxTranscriptChunksPerWindow: readPositiveInt(env.VISITOR_BUDGET_MAX_TRANSCRIPT_CHUNKS, 300),
+      maxTtsRequestsPerWindow: readPositiveInt(env.VISITOR_BUDGET_MAX_TTS_REQUESTS, 20),
+      bypassIds: readCsv(env.VISITOR_BUDGET_BYPASS_IDS),
+    },
   };
 }
 
@@ -99,4 +115,11 @@ function readBoolean(value: string | undefined, fallback: boolean) {
   }
 
   return fallback;
+}
+
+function readCsv(value: string | undefined) {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }

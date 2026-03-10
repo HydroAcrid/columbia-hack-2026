@@ -288,8 +288,8 @@ export function HelpModal({
 
           <footer className="relative z-10 border-t border-black/7 bg-white/62 px-5 py-5 backdrop-blur-xl sm:px-7 sm:py-6">
             <div className="flex flex-col items-center gap-4 text-center">
-              <p className="max-w-[460px] text-[12px] leading-6 text-[var(--text-tertiary)]">
-                Forgot later? Tap the <span className="font-semibold text-[var(--text-secondary)]">?</span> button in the corner to reopen this guide.
+              <p className="max-w-[520px] text-[12px] leading-6 text-[var(--text-tertiary)]">
+                Forgot later? Tap the <span className="font-semibold text-[var(--text-secondary)]">?</span> button in the corner to reopen this guide. Each visitor gets a limited live demo budget, and Nota will tell you if that session cap is reached.
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-4">

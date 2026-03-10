@@ -74,7 +74,7 @@ export function LiveModeBar({
           )}
 
           {error && (
-            <span className="w-full truncate text-xs text-red-500" title={error}>
+            <span className="w-full text-xs leading-5 text-red-500" title={error}>
               ⚠ {error}
             </span>
           )}
