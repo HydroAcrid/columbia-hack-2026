@@ -5,6 +5,12 @@ import {
   normalizeGraphLabel,
   slugifyGraphId,
 } from "@copilot/graph";
+import {
+  getSpeakerProfileSourceSpeakerIds,
+  mergeSpeakerProfiles as mergeSpeakerProfileRecords,
+  resolveSpeakerDisplayName,
+  resolveSpeakerProfile,
+} from "@copilot/shared";
 import type {
   ActionItem,
   DecisionItem,
@@ -61,7 +67,7 @@ export function buildGraphExtractionContext(state: SessionState, chunks: Transcr
   const priorTranscript = state.transcript
     .filter((chunk) => !chunkIds.has(chunk.id))
     .slice(-6)
-    .map((chunk) => `${chunk.speaker}: ${chunk.text}`);
+    .map((chunk) => formatTranscriptContextLine(chunk, state.speakerProfiles));
 
   const entityInventory = state.nodes
     .slice()
@@ -79,7 +85,7 @@ export function buildGraphExtractionContext(state: SessionState, chunks: Transcr
     .map((edge) => `- ${edge.source} -[${edge.type}]-> ${edge.target}`);
 
   const speakerInventory = state.speakerProfiles
-    .map((profile) => `- ${profile.speakerId} => ${profile.name} (${profile.confidence})`)
+    .map(formatCanonicalSpeakerInventoryLine)
     .sort();
 
   return [
@@ -118,7 +124,7 @@ export function buildLiveExtractionContext(
   const priorChunks = state.transcript
     .filter((chunk) => !chunkIds.has(chunk.id))
     .slice(-options.transcriptLines);
-  const priorTranscript = priorChunks.map((chunk) => `${chunk.speaker}: ${chunk.text}`);
+  const priorTranscript = priorChunks.map((chunk) => formatTranscriptContextLine(chunk, state.speakerProfiles));
   const batchText = normalizeGraphLabel(chunks.map((chunk) => chunk.text).join(" "));
   const priorText = normalizeGraphLabel(priorChunks.map((chunk) => chunk.text).join(" "));
   const selectedNodes = selectLiveContextNodes(
@@ -130,11 +136,10 @@ export function buildLiveExtractionContext(
   );
   const selectedNodeIds = new Set(selectedNodes.map((node) => node.id));
   const selectedEdges = selectLiveContextEdges(state.edges, selectedNodeIds, options.edgeLimit);
-  const speakerIds = new Set(chunks.map((chunk) => chunk.speaker));
-  const speakerInventory = state.speakerProfiles
-    .filter((profile) => speakerIds.has(profile.speakerId))
-    .map((profile) => `- ${profile.speakerId} => ${profile.name} (${profile.confidence})`)
-    .sort();
+  const speakerIds = [...new Set(chunks.map((chunk) => chunk.speaker))].sort();
+  const speakerInventory = speakerIds.map((rawSpeakerId) =>
+    formatBatchSpeakerInventoryLine(rawSpeakerId, state.speakerProfiles),
+  );
   const aliasInventory = getCanonicalAliasEntries()
     .filter((entry) => LIVE_ALIAS_CANONICALS.has(entry.canonical))
     .map((entry) => `- "${entry.spoken}" => "${entry.canonical}"`);
@@ -174,7 +179,7 @@ export function buildCricketAnswerContext(
   const normalizedRequest = normalizeGraphLabel(triggeringRequest);
   const recentTranscript = state.transcript
     .slice(-8)
-    .map((chunk) => `${chunk.speaker}: ${chunk.text}`);
+    .map((chunk) => formatTranscriptContextLine(chunk, state.speakerProfiles));
   const selectedNodes = selectLiveContextNodes(
     state.nodes,
     state.edges,
@@ -186,7 +191,7 @@ export function buildCricketAnswerContext(
   const selectedEdges = selectLiveContextEdges(state.edges, selectedNodeIds, 10);
   const labelById = new Map(state.nodes.map((node) => [node.id, node.label]));
   const speakerInventory = state.speakerProfiles
-    .map((profile) => `- ${profile.speakerId} => ${profile.name} (${profile.confidence})`)
+    .map(formatCanonicalSpeakerInventoryLine)
     .sort();
   const decisions = state.decisions
     .slice(-6)
@@ -583,17 +588,40 @@ function mergeSpeakerProfiles(
     return;
   }
 
-  const merged = new Map(
-    state.speakerProfiles.map((profile) => [profile.speakerId, profile]),
-  );
+  state.speakerProfiles = mergeSpeakerProfileRecords(state.speakerProfiles, profiles);
+}
 
-  for (const profile of profiles) {
-    merged.set(profile.speakerId, profile);
+function formatTranscriptContextLine(
+  chunk: TranscriptChunk,
+  profiles: SessionState["speakerProfiles"],
+) {
+  const speakerLabel = formatResolvedSpeakerLabel(chunk.speaker, profiles);
+  return `${speakerLabel}: ${chunk.text}`;
+}
+
+function formatResolvedSpeakerLabel(
+  rawSpeakerId: string,
+  profiles: SessionState["speakerProfiles"],
+) {
+  const resolvedName = resolveSpeakerDisplayName(profiles, rawSpeakerId);
+  return resolvedName === rawSpeakerId ? rawSpeakerId : `${resolvedName} [${rawSpeakerId}]`;
+}
+
+function formatCanonicalSpeakerInventoryLine(profile: SessionState["speakerProfiles"][number]) {
+  const rawSpeakerIds = getSpeakerProfileSourceSpeakerIds(profile).join(", ");
+  return `- ${profile.name} [${profile.speakerId}] <= ${rawSpeakerIds} (${profile.confidence})`;
+}
+
+function formatBatchSpeakerInventoryLine(
+  rawSpeakerId: string,
+  profiles: SessionState["speakerProfiles"],
+) {
+  const profile = resolveSpeakerProfile(profiles, rawSpeakerId);
+  if (!profile) {
+    return `- ${rawSpeakerId} => unresolved`;
   }
 
-  state.speakerProfiles = [...merged.values()].sort((left, right) =>
-    left.speakerId.localeCompare(right.speakerId),
-  );
+  return `- ${rawSpeakerId} => ${profile.name} [${profile.speakerId}] (${profile.confidence})`;
 }
 
 function dedupeItems<T>(items: T[], keyFor: (item: T) => string) {

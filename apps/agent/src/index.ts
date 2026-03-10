@@ -71,7 +71,9 @@ app.post("/sessions/:id/transcript-chunks", async (c) => {
   let patch: GraphPatchEvent = {};
 
   try {
-    const speakerProfileUpdates = inferSpeakerProfileUpdates(session.state);
+    const speakerProfileUpdates = inferSpeakerProfileUpdates(session.state, {
+      debug: config.sttDebugEnabled,
+    });
     const extractionPatch = await provider.extract(chunk, session.state);
     patch = speakerProfileUpdates.length
       ? {
@@ -202,7 +204,7 @@ app.get("/sessions/:id/state", (c) => {
 const port = config.port;
 
 const server = createAdaptorServer({ fetch: app.fetch });
-attachSttServer(server);
+attachSttServer(server, { debug: config.sttDebugEnabled });
 
 server.listen(port, () => {
   console.log(`Agent service listening on http://localhost:${port}`);

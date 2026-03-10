@@ -11,6 +11,12 @@ export {
   SessionState,
 } from "./schemas.js";
 export {
+  getSpeakerProfileSourceSpeakerIds,
+  mergeSpeakerProfiles,
+  resolveSpeakerDisplayName,
+  resolveSpeakerProfile,
+} from "./speakers.js";
+export {
   demoTranscriptChunks,
   demoExtractions,
   demoExtractionByChunkId,
@@ -26,5 +32,6 @@ export type {
   NodeType as NodeTypeValue,
   EdgeType as EdgeTypeValue,
   SpeakerProfile,
+  TranscriptWord,
 } from "./schemas.js";
 export type { DemoExtraction } from "./demo-script.js";

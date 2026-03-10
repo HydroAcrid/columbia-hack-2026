@@ -1,4 +1,6 @@
+import { slugifyGraphId } from "@copilot/graph";
 import type { SessionState, SpeakerProfile, TranscriptChunk } from "@copilot/shared";
+import { getSpeakerProfileSourceSpeakerIds } from "@copilot/shared";
 
 const DIRECT_NAME_PATTERNS = [
   /\b(?:this is|it(?:'s| is))\s+me\s*,\s*([A-Za-z]+(?:\s+[A-Za-z]+)?)/i,
@@ -108,13 +110,30 @@ const NON_NAME_TOKENS = new Set([
 const DIRECT_IDENTITY_WEIGHT = 3;
 const RESPONSE_TO_ADDRESS_WEIGHT = 1;
 const RESPONSE_WINDOW_SECONDS = 12;
-const HEURISTIC_SWITCH_MARGIN = 2;
 
-export function inferSpeakerProfileUpdates(state: SessionState): SpeakerProfile[] {
+type LoggerApi = Pick<Console, "log">;
+
+interface InferSpeakerProfileOptions {
+  debug?: boolean;
+  logger?: LoggerApi;
+}
+
+interface WorkingSpeakerProfile extends SpeakerProfile {
+  sourceSpeakerIds: string[];
+}
+
+const DEFAULT_LOGGER: LoggerApi = {
+  log: (...args) => console.log(...args),
+};
+
+export function inferSpeakerProfileUpdates(
+  state: SessionState,
+  options: InferSpeakerProfileOptions = {},
+): SpeakerProfile[] {
   const currentProfiles = new Map(
     state.speakerProfiles.map((profile) => [profile.speakerId, profile]),
   );
-  const recomputedProfiles = computeSpeakerProfiles(state.transcript, currentProfiles);
+  const recomputedProfiles = computeSpeakerProfiles(state.transcript, currentProfiles, options);
 
   return recomputedProfiles.filter((profile) => {
     const current = currentProfiles.get(profile.speakerId);
@@ -122,7 +141,8 @@ export function inferSpeakerProfileUpdates(state: SessionState): SpeakerProfile[
       !current ||
       current.name !== profile.name ||
       current.confidence !== profile.confidence ||
-      current.evidenceCount !== profile.evidenceCount
+      current.evidenceCount !== profile.evidenceCount ||
+      !sameSourceSpeakerIds(current.sourceSpeakerIds, profile.sourceSpeakerIds)
     );
   });
 }
@@ -130,22 +150,82 @@ export function inferSpeakerProfileUpdates(state: SessionState): SpeakerProfile[
 function computeSpeakerProfiles(
   transcript: TranscriptChunk[],
   currentProfiles: Map<string, SpeakerProfile>,
+  options: InferSpeakerProfileOptions,
 ): SpeakerProfile[] {
-  const evidenceBySpeaker = new Map<string, Map<string, number>>();
-  const lockedNames = new Map<string, string>();
+  const logger = options.logger ?? DEFAULT_LOGGER;
+  const profiles = new Map<string, WorkingSpeakerProfile>();
+  const canonicalIdByName = new Map<string, string>();
+  const rawSpeakerToCanonicalId = new Map<string, string>();
+  const directEvidence = new Map<string, number>();
+  const heuristicEvidence = new Map<string, number>();
+
+  for (const profile of currentProfiles.values()) {
+    const cloned = cloneProfile(profile);
+    profiles.set(cloned.speakerId, cloned);
+
+    const normalizedName = normalizeName(cloned.name);
+    if (normalizedName && !canonicalIdByName.has(normalizedName)) {
+      canonicalIdByName.set(normalizedName, cloned.speakerId);
+    }
+
+    for (const rawSpeakerId of cloned.sourceSpeakerIds) {
+      rawSpeakerToCanonicalId.set(rawSpeakerId, cloned.speakerId);
+    }
+  }
 
   for (let index = 0; index < transcript.length; index += 1) {
     const chunk = transcript[index];
+    const directNames = extractSelfIdentifiedNames(chunk.text);
 
-    for (const name of extractSelfIdentifiedNames(chunk.text)) {
-      if (!lockedNames.has(chunk.speaker)) {
-        lockedNames.set(chunk.speaker, name);
+    for (const name of directNames) {
+      const normalizedName = normalizeName(name);
+      if (!normalizedName) {
+        continue;
       }
 
-      const lockedName = lockedNames.get(chunk.speaker);
-      if (lockedName === name) {
-        addEvidence(evidenceBySpeaker, chunk.speaker, name, DIRECT_IDENTITY_WEIGHT);
+      const currentlyMappedCanonicalId = rawSpeakerToCanonicalId.get(chunk.speaker);
+      const currentlyMappedProfile = currentlyMappedCanonicalId
+        ? profiles.get(currentlyMappedCanonicalId) ?? null
+        : null;
+      const currentlyMappedName = currentlyMappedProfile
+        ? normalizeName(currentlyMappedProfile.name)
+        : null;
+
+      if (
+        currentlyMappedProfile &&
+        currentlyMappedProfile.confidence === "high" &&
+        currentlyMappedName &&
+        currentlyMappedName !== normalizedName
+      ) {
+        debugLog(options, logger, "ignore-direct-conflict", {
+          rawSpeakerId: chunk.speaker,
+          currentCanonicalId: currentlyMappedProfile.speakerId,
+          currentName: currentlyMappedProfile.name,
+          ignoredName: name,
+        });
+        continue;
       }
+
+      const canonicalId = ensureCanonicalProfile(name, profiles, canonicalIdByName);
+      if (!canonicalId) {
+        continue;
+      }
+
+      const profile = profiles.get(canonicalId);
+      if (!profile) {
+        continue;
+      }
+
+      const attached = attachSourceSpeakerId(profile, chunk.speaker);
+      rawSpeakerToCanonicalId.set(chunk.speaker, canonicalId);
+      addEvidence(directEvidence, canonicalId, DIRECT_IDENTITY_WEIGHT);
+
+      debugLog(options, logger, "direct-self-id", {
+        rawSpeakerId: chunk.speaker,
+        canonicalId,
+        name: profile.name,
+        attachedNewRawSpeakerId: attached,
+      });
     }
 
     const previous = transcript[index - 1];
@@ -158,116 +238,159 @@ function computeSpeakerProfiles(
     }
 
     const addressedNames = extractAddressedNames(previous.text);
-    if (addressedNames.length === 1) {
-      const lockedName = lockedNames.get(chunk.speaker);
-      if (lockedName && lockedName !== addressedNames[0]) {
-        continue;
-      }
-
-      addEvidence(
-        evidenceBySpeaker,
-        chunk.speaker,
-        addressedNames[0],
-        RESPONSE_TO_ADDRESS_WEIGHT,
-      );
+    if (addressedNames.length !== 1) {
+      continue;
     }
+
+    const canonicalId = rawSpeakerToCanonicalId.get(chunk.speaker);
+    if (!canonicalId) {
+      continue;
+    }
+
+    const profile = profiles.get(canonicalId);
+    const normalizedAddressedName = normalizeName(addressedNames[0]);
+    if (!profile || !normalizedAddressedName) {
+      continue;
+    }
+
+    if (normalizeName(profile.name) !== normalizedAddressedName) {
+      continue;
+    }
+
+    addEvidence(heuristicEvidence, canonicalId, RESPONSE_TO_ADDRESS_WEIGHT);
+    debugLog(options, logger, "heuristic-strengthen", {
+      rawSpeakerId: chunk.speaker,
+      canonicalId,
+      name: profile.name,
+      fromAddress: addressedNames[0],
+    });
   }
 
-  const profiles: SpeakerProfile[] = [];
-  const speakerIds = new Set([
-    ...evidenceBySpeaker.keys(),
-    ...lockedNames.keys(),
-    ...currentProfiles.keys(),
-  ]);
+  const nextProfiles: SpeakerProfile[] = [];
+  const sortedProfiles = [...profiles.values()].sort((left, right) =>
+    left.speakerId.localeCompare(right.speakerId),
+  );
 
-  for (const speakerId of speakerIds) {
-    const evidence = evidenceBySpeaker.get(speakerId) ?? new Map<string, number>();
-    const lockedName = lockedNames.get(speakerId);
-    if (lockedName) {
-      const score = Math.max(evidence.get(lockedName) ?? 0, DIRECT_IDENTITY_WEIGHT);
-      profiles.push({
-        speakerId,
-        name: lockedName,
-        confidence: "high",
-        evidenceCount: score,
-      });
-      continue;
-    }
+  for (const profile of sortedProfiles) {
+    const current = currentProfiles.get(profile.speakerId);
+    const score = Math.max(
+      current?.evidenceCount ?? 0,
+      (directEvidence.get(profile.speakerId) ?? 0) + (heuristicEvidence.get(profile.speakerId) ?? 0),
+    );
 
-    const ranked = [...evidence.entries()].sort((left, right) => {
-      if (right[1] !== left[1]) {
-        return right[1] - left[1];
-      }
-
-      return left[0].localeCompare(right[0]);
-    });
-
-    const topCandidate = ranked[0];
-    if (!topCandidate) {
-      continue;
-    }
-
-    const current = currentProfiles.get(speakerId);
-    const [topName, topScore] = topCandidate;
-    const currentScore = current ? evidence.get(current.name) ?? current.evidenceCount : 0;
-    if (current && current.name === topName) {
-      const score = Math.max(current.evidenceCount, topScore);
-      profiles.push({
-        speakerId,
-        name: current.name,
-        confidence: resolveConfidence(score, ranked[1]?.[1] ?? 0),
-        evidenceCount: score,
-      });
-      continue;
-    }
-
-    const shouldKeepCurrent =
-      current &&
-      current.name !== topName &&
-      topScore < Math.max(currentScore + HEURISTIC_SWITCH_MARGIN, 2);
-
-    const name = shouldKeepCurrent ? current.name : topName;
-    const score = shouldKeepCurrent ? Math.max(currentScore, current.evidenceCount) : topScore;
-    const runnerUpScore = shouldKeepCurrent
-      ? Math.max(topScore, ranked.find(([candidateName]) => candidateName !== name)?.[1] ?? 0)
-      : ranked[1]?.[1] ?? currentScore;
-
-    profiles.push({
-      speakerId,
-      name,
-      confidence: resolveConfidence(score, runnerUpScore),
+    const confidence = resolveConfidence(current, directEvidence.get(profile.speakerId) ?? 0, score);
+    nextProfiles.push({
+      speakerId: profile.speakerId,
+      name: profile.name,
+      confidence,
       evidenceCount: score,
+      sourceSpeakerIds: [...new Set(profile.sourceSpeakerIds)].sort(),
     });
   }
 
-  return profiles.sort((left, right) => left.speakerId.localeCompare(right.speakerId));
+  return nextProfiles;
 }
 
-function resolveConfidence(score: number, runnerUpScore: number): SpeakerProfile["confidence"] {
-  if (score >= 4 && score >= runnerUpScore + 2) {
+function cloneProfile(profile: SpeakerProfile): WorkingSpeakerProfile {
+  return {
+    ...profile,
+    sourceSpeakerIds: [...new Set(getSpeakerProfileSourceSpeakerIds(profile))].sort(),
+  };
+}
+
+function ensureCanonicalProfile(
+  rawName: string,
+  profiles: Map<string, WorkingSpeakerProfile>,
+  canonicalIdByName: Map<string, string>,
+) {
+  const normalizedName = normalizeName(rawName);
+  if (!normalizedName) {
+    return null;
+  }
+
+  const existingCanonicalId = canonicalIdByName.get(normalizedName);
+  if (existingCanonicalId) {
+    return existingCanonicalId;
+  }
+
+  const canonicalId = slugifyGraphId(normalizedName);
+  const dedupedCanonicalId = dedupeCanonicalId(canonicalId, profiles);
+  const name = toDisplayName(normalizedName);
+
+  profiles.set(dedupedCanonicalId, {
+    speakerId: dedupedCanonicalId,
+    name,
+    confidence: "high",
+    evidenceCount: DIRECT_IDENTITY_WEIGHT,
+    sourceSpeakerIds: [],
+  });
+  canonicalIdByName.set(normalizedName, dedupedCanonicalId);
+  return dedupedCanonicalId;
+}
+
+function dedupeCanonicalId(baseId: string, profiles: Map<string, WorkingSpeakerProfile>) {
+  if (!profiles.has(baseId)) {
+    return baseId;
+  }
+
+  let suffix = 2;
+  while (profiles.has(`${baseId}-${suffix}`)) {
+    suffix += 1;
+  }
+
+  return `${baseId}-${suffix}`;
+}
+
+function attachSourceSpeakerId(profile: WorkingSpeakerProfile, rawSpeakerId: string) {
+  if (profile.sourceSpeakerIds.includes(rawSpeakerId)) {
+    return false;
+  }
+
+  profile.sourceSpeakerIds.push(rawSpeakerId);
+  profile.sourceSpeakerIds.sort();
+  return true;
+}
+
+function resolveConfidence(
+  current: SpeakerProfile | undefined,
+  directScore: number,
+  totalScore: number,
+): SpeakerProfile["confidence"] {
+  if (directScore >= DIRECT_IDENTITY_WEIGHT) {
     return "high";
   }
 
-  if (score >= 2 && score > runnerUpScore) {
+  if (current?.confidence === "high") {
+    return "high";
+  }
+
+  if (current?.confidence === "medium" && totalScore >= current.evidenceCount) {
     return "medium";
   }
 
-  return "low";
-}
-
-function addEvidence(
-  evidenceBySpeaker: Map<string, Map<string, number>>,
-  speakerId: string,
-  name: string,
-  weight: number,
-) {
-  if (!name) {
-    return;
+  if (totalScore >= 2) {
+    return "medium";
   }
 
-  const speakerEvidence = evidenceBySpeaker.get(speakerId) ?? new Map<string, number>();
-  speakerEvidence.set(name, (speakerEvidence.get(name) ?? 0) + weight);
-  evidenceBySpeaker.set(speakerId, speakerEvidence);
+  return current?.confidence ?? "low";
+}
+
+function addEvidence(target: Map<string, number>, canonicalId: string, weight: number) {
+  target.set(canonicalId, (target.get(canonicalId) ?? 0) + weight);
+}
+
+function sameSourceSpeakerIds(left: string[], right: string[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function extractSelfIdentifiedNames(text: string): string[] {
@@ -330,4 +453,24 @@ function normalizeName(raw: string) {
   }
 
   return normalized;
+}
+
+function toDisplayName(normalizedName: string) {
+  return normalizedName
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function debugLog(
+  options: InferSpeakerProfileOptions,
+  logger: LoggerApi,
+  event: string,
+  fields: Record<string, unknown>,
+) {
+  if (!options.debug) {
+    return;
+  }
+
+  logger.log(`[SpeakerIdentity] ${event} ${JSON.stringify(fields)}`);
 }

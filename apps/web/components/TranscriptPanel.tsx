@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { resolveSpeakerProfile } from "@copilot/shared";
 import type { SpeakerProfile, TranscriptChunk } from "@copilot/shared";
 
 interface TranscriptPanelProps {
@@ -56,7 +57,7 @@ function formatTime(seconds: number): string {
 
 export function TranscriptPanel({ chunks, speakerProfiles }: TranscriptPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const profileMap = new Map((speakerProfiles ?? []).map((profile) => [profile.speakerId, profile]));
+  const profiles = speakerProfiles ?? [];
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -101,7 +102,7 @@ export function TranscriptPanel({ chunks, speakerProfiles }: TranscriptPanelProp
         ) : (
           <div className="space-y-0.5">
             {chunks.map((chunk, index) => {
-              const profile = profileMap.get(chunk.speaker);
+              const profile = resolveSpeakerProfile(profiles, chunk.speaker);
               const palette = hashSpeaker(chunk.speaker);
               const rawName = getName(chunk.speaker);
               const inferredName = profile ? `${profile.name}${profile.confidence === "low" ? "?" : ""}` : null;

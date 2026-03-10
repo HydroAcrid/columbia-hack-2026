@@ -211,8 +211,20 @@ test("builds a slim live extraction context with limited transcript, nodes, edge
       },
     ],
     speakerProfiles: [
-      { speakerId: "Speaker 0", name: "Kevin", confidence: "high", evidenceCount: 3 },
-      { speakerId: "Speaker 9", name: "Marcus", confidence: "medium", evidenceCount: 2 },
+      {
+        speakerId: "kevin",
+        name: "Kevin",
+        confidence: "high",
+        evidenceCount: 3,
+        sourceSpeakerIds: ["Speaker 0"],
+      },
+      {
+        speakerId: "marcus",
+        name: "Marcus",
+        confidence: "medium",
+        evidenceCount: 2,
+        sourceSpeakerIds: ["Speaker 9"],
+      },
     ],
   });
 
@@ -233,16 +245,16 @@ test("builds a slim live extraction context with limited transcript, nodes, edge
     },
   );
 
-  assert.match(context, /- Speaker 0 => Kevin \(high\)/);
-  assert.doesNotMatch(context, /Speaker 9 => Marcus/);
+  assert.match(context, /- Speaker 0 => Kevin \[kevin\] \(high\)/);
+  assert.doesNotMatch(context, /Speaker 9 => Marcus \[marcus\]/);
   assert.match(context, /- kevin \| Kevin \| person/);
   assert.match(context, /- launch \| Launch \| milestone/);
   assert.match(context, /- cloud-run \| Cloud Run \| system/);
   assert.doesNotMatch(context, /Legacy Service/);
   assert.match(context, /- cloud-run -\[blocks\]-> launch/);
   assert.doesNotMatch(context, /e-legacy-supabase/);
-  assert.match(context, /Kevin owns launch prep/);
-  assert.match(context, /Cloud Run is blocking launch/);
+  assert.match(context, /Kevin \[Speaker 0\]: Kevin owns launch prep/);
+  assert.match(context, /Speaker 1: Cloud Run is blocking launch/);
   assert.doesNotMatch(context, /Legacy Service was mentioned earlier/);
   assert.match(context, /"superbase" => "Supabase"/);
 });
@@ -271,7 +283,13 @@ test("builds a dedicated Cricket answer context with insights and graph state", 
       { id: "i-1", text: "Staging is blocking launch readiness.", severity: "blocker", timestamp: 2 },
     ],
     speakerProfiles: [
-      { speakerId: "Speaker 1", name: "Kevin", confidence: "high", evidenceCount: 3 },
+      {
+        speakerId: "kevin",
+        name: "Kevin",
+        confidence: "high",
+        evidenceCount: 3,
+        sourceSpeakerIds: ["Speaker 1"],
+      },
     ],
   });
 
@@ -286,6 +304,7 @@ test("builds a dedicated Cricket answer context with insights and graph state", 
   assert.match(context, /Fix staging reliability \(owner: Kevin\)/);
   assert.match(context, /\[blocker\] Staging is blocking launch readiness/);
   assert.match(context, /Kevin \(person\)/);
+  assert.match(context, /Kevin \[kevin\] <= Speaker 1 \(high\)/);
 });
 
 test("merges a normalized patch into session state for Cricket answer context", () => {

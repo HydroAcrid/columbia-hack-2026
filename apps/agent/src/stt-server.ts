@@ -1,12 +1,17 @@
 import type { IncomingMessage } from "node:http";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import { WebSocket, WebSocketServer } from "ws";
+import { LiveTranscriptSegmenter } from "./stt-segmentation.js";
 
 type UpgradeCapableServer = {
   on(event: "upgrade", listener: (request: IncomingMessage, socket: any, head: Buffer) => void): unknown;
 };
 
-export function attachSttServer(server: UpgradeCapableServer) {
+interface SttServerOptions {
+  debug?: boolean;
+}
+
+export function attachSttServer(server: UpgradeCapableServer, options: SttServerOptions = {}) {
   const wss = new WebSocketServer({ noServer: true });
 
   console.log("STT WebSocket proxy attached at /stt");
@@ -41,7 +46,7 @@ export function attachSttServer(server: UpgradeCapableServer) {
     }
 
     let dgConnection: any = null;
-    let pendingUtterance: { speaker: string; text: string } | null = null;
+    const segmenter = new LiveTranscriptSegmenter({ debug: options.debug });
 
     try {
       dgConnection = deepgram.listen.live({
@@ -50,6 +55,10 @@ export function attachSttServer(server: UpgradeCapableServer) {
         smart_format: true,
         diarize: true,
         punctuate: true,
+        interim_results: true,
+        vad_events: true,
+        endpointing: 500,
+        utterance_end_ms: 1000,
       });
 
       dgConnection.on(LiveTranscriptionEvents.Open, () => {
@@ -68,51 +77,39 @@ export function attachSttServer(server: UpgradeCapableServer) {
       });
 
       dgConnection.on(LiveTranscriptionEvents.Transcript, (data: any) => {
-        const alternative = data.channel?.alternatives?.[0];
-        if (!alternative) {
-          return;
+        const chunks = segmenter.handleTranscriptEvent(data);
+        for (const chunk of chunks) {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(chunk));
+          }
         }
+      });
 
-        const transcript = normalizeTranscriptText(alternative.transcript);
-        const words = alternative.words;
-        if (!transcript || !Array.isArray(words) || words.length === 0) {
-          return;
-        }
-
-        const speakers = new Set(words.map((w: any) => w.speaker).filter((s: any) => s !== undefined));
-        const speaker = `Speaker ${speakers.size > 1 ? `${words[0]?.speaker}+` : words[0]?.speaker}`;
-        const isFinal = Boolean(data.is_final);
-        const speechFinal = Boolean(data.speech_final);
-
-        if (!isFinal) {
-          return;
-        }
-
-        if (!pendingUtterance) {
-          pendingUtterance = { speaker, text: transcript };
-        } else if (pendingUtterance.speaker === speaker) {
-          pendingUtterance.text = mergeTranscriptText(pendingUtterance.text, transcript);
-        } else {
-          ws.send(JSON.stringify(pendingUtterance));
-          pendingUtterance = { speaker, text: transcript };
-        }
-
-        if (speechFinal && pendingUtterance) {
-          ws.send(JSON.stringify(pendingUtterance));
-          pendingUtterance = null;
+      dgConnection.on("UtteranceEnd", () => {
+        const chunks = segmenter.handleUtteranceEnd();
+        for (const chunk of chunks) {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(chunk));
+          }
         }
       });
 
       dgConnection.on(LiveTranscriptionEvents.Close, () => {
         console.log("[STT] Connection closed.");
-        if (pendingUtterance) {
-          ws.send(JSON.stringify(pendingUtterance));
-          pendingUtterance = null;
+        for (const chunk of segmenter.flushPending("close")) {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(chunk));
+          }
         }
         ws.close();
       });
 
       dgConnection.on(LiveTranscriptionEvents.Error, (err: any) => {
+        for (const chunk of segmenter.flushPending("error")) {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(chunk));
+          }
+        }
         console.error("[STT] Deepgram error:", err);
       });
 
@@ -121,40 +118,4 @@ export function attachSttServer(server: UpgradeCapableServer) {
       ws.close();
     }
   });
-}
-
-function normalizeTranscriptText(text: string) {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-function mergeTranscriptText(existing: string, incoming: string) {
-  if (!existing) {
-    return incoming;
-  }
-
-  if (!incoming || existing === incoming) {
-    return existing;
-  }
-
-  if (incoming.startsWith(existing)) {
-    return incoming;
-  }
-
-  if (existing.endsWith(incoming)) {
-    return existing;
-  }
-
-  const existingWords = existing.split(/\s+/);
-  const incomingWords = incoming.split(/\s+/);
-  const maxOverlap = Math.min(existingWords.length, incomingWords.length);
-
-  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
-    const existingSuffix = existingWords.slice(-overlap).join(" ").toLowerCase();
-    const incomingPrefix = incomingWords.slice(0, overlap).join(" ").toLowerCase();
-    if (existingSuffix === incomingPrefix) {
-      return [...existingWords, ...incomingWords.slice(overlap)].join(" ");
-    }
-  }
-
-  return `${existing} ${incoming}`.replace(/\s+/g, " ").trim();
 }

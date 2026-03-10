@@ -27,6 +27,7 @@ export interface AgentConfig {
   firestoreDatabaseId: string | null;
   vertex: VertexConfig;
   liveExtraction: LiveExtractionConfig;
+  sttDebugEnabled: boolean;
 }
 
 export function readAgentConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
@@ -60,10 +61,11 @@ export function readAgentConfig(env: NodeJS.ProcessEnv = process.env): AgentConf
       batchIdleMs,
       batchMaxMs,
       minMeaningfulWords: readPositiveInt(env.LIVE_MIN_MEANINGFUL_WORDS, 4),
-      contextTranscriptLines: readPositiveInt(env.LIVE_CONTEXT_TRANSCRIPT_LINES, 2),
+      contextTranscriptLines: readPositiveInt(env.LIVE_CONTEXT_TRANSCRIPT_LINES, 4),
       contextNodeLimit: readPositiveInt(env.LIVE_CONTEXT_NODE_LIMIT, 8),
       contextEdgeLimit: readPositiveInt(env.LIVE_CONTEXT_EDGE_LIMIT, 6),
     },
+    sttDebugEnabled: readBoolean(env.LIVE_STT_DEBUG, false),
   };
 }
 
@@ -80,4 +82,21 @@ function readPort(value: string | undefined) {
 function readPositiveInt(value: string | undefined, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function readBoolean(value: string | undefined, fallback: boolean) {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  return fallback;
 }

@@ -15,6 +15,9 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import {
+  getSpeakerProfileSourceSpeakerIds,
+} from "@copilot/shared";
 import type {
   GraphEdge,
   GraphNode,
@@ -333,7 +336,9 @@ function deriveSpeakerAnnotations(
 
     const node = personNodes[0];
     const profile = matchingProfiles[0];
-    matchedSpeakerIds.add(profile.speakerId);
+    for (const rawSpeakerId of getSpeakerProfileSourceSpeakerIds(profile)) {
+      matchedSpeakerIds.add(rawSpeakerId);
+    }
     annotations.set(node.id, {
       label: "Matched",
       state: "matched",
@@ -346,7 +351,10 @@ function deriveSpeakerAnnotations(
   }
 
   for (const [normalizedName, profiles] of profilesByName) {
-    if (profiles.length !== 1 || profiles[0].speakerId !== activeSpeakerId) {
+    if (
+      profiles.length !== 1 ||
+      !getSpeakerProfileSourceSpeakerIds(profiles[0]).includes(activeSpeakerId)
+    ) {
       continue;
     }
 

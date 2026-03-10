@@ -19,59 +19,40 @@ function createState(
   };
 }
 
-test("locks an explicit self-identification immediately at high confidence", () => {
+test("creates a canonical profile from direct self-identification", () => {
   const state = createState([
     { id: "1", speaker: "Speaker 1", text: "My name is Kevin", timestamp: 1 },
   ]);
 
   assert.deepEqual(inferSpeakerProfileUpdates(state), [
     {
-      speakerId: "Speaker 1",
+      speakerId: "kevin",
       name: "Kevin",
       confidence: "high",
       evidenceCount: 3,
+      sourceSpeakerIds: ["Speaker 1"],
     },
   ]);
 });
 
-test("prefers the actual name in appositive self-identification phrases", () => {
-  const state = createState([
-    {
-      id: "1",
-      speaker: "Speaker 1",
-      text: "This is me, Kevin, and I'll be talking through the diagram.",
-      timestamp: 1,
-    },
-  ]);
-
-  assert.deepEqual(inferSpeakerProfileUpdates(state), [
-    {
-      speakerId: "Speaker 1",
-      name: "Kevin",
-      confidence: "high",
-      evidenceCount: 3,
-    },
-  ]);
-});
-
-test("weak address evidence cannot override a locked explicit name", () => {
+test("attaches a new raw Deepgram speaker id to the existing canonical person on direct self-id", () => {
   const transcript: TranscriptChunk[] = [
     { id: "1", speaker: "Speaker 1", text: "My name is Kevin", timestamp: 1 },
-    { id: "2", speaker: "Speaker 0", text: "Marcus, can you take the auth bug?", timestamp: 4 },
-    { id: "3", speaker: "Speaker 1", text: "Yes, I can take that.", timestamp: 6 },
+    { id: "2", speaker: "Speaker 3", text: "This is Kevin.", timestamp: 8 },
   ];
 
   assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript)), [
     {
-      speakerId: "Speaker 1",
+      speakerId: "kevin",
       name: "Kevin",
       confidence: "high",
-      evidenceCount: 3,
+      evidenceCount: 6,
+      sourceSpeakerIds: ["Speaker 1", "Speaker 3"],
     },
   ]);
 });
 
-test("heuristic vocative-response fallback still works for unlabeled speakers", () => {
+test("weak vocative-response evidence does not create a new canonical profile", () => {
   const transcript: TranscriptChunk[] = [
     { id: "1", speaker: "Speaker 0", text: "Kevin, can you take the auth bug?", timestamp: 1 },
     { id: "2", speaker: "Speaker 1", text: "Yes, I can take that.", timestamp: 3 },
@@ -79,14 +60,42 @@ test("heuristic vocative-response fallback still works for unlabeled speakers", 
     { id: "4", speaker: "Speaker 1", text: "I will have it done by Friday.", timestamp: 8 },
   ];
 
+  assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript)), []);
+});
+
+test("heuristic evidence can strengthen an existing canonical mapping without changing identity", () => {
+  const transcript: TranscriptChunk[] = [
+    { id: "1", speaker: "Speaker 1", text: "My name is Kevin", timestamp: 1 },
+    { id: "2", speaker: "Speaker 0", text: "Kevin, can you take the auth bug?", timestamp: 4 },
+    { id: "3", speaker: "Speaker 1", text: "Yes, I can take that.", timestamp: 6 },
+  ];
+
   assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript)), [
     {
-      speakerId: "Speaker 1",
+      speakerId: "kevin",
       name: "Kevin",
-      confidence: "medium",
-      evidenceCount: 2,
+      confidence: "high",
+      evidenceCount: 4,
+      sourceSpeakerIds: ["Speaker 1"],
     },
   ]);
+});
+
+test("high-confidence profiles ignore contradictory direct claims on the same raw speaker id", () => {
+  const currentProfiles = [
+    {
+      speakerId: "kevin",
+      name: "Kevin",
+      confidence: "high" as const,
+      evidenceCount: 3,
+      sourceSpeakerIds: ["Speaker 1"],
+    },
+  ];
+  const transcript: TranscriptChunk[] = [
+    { id: "1", speaker: "Speaker 1", text: "My name is Marcus", timestamp: 5 },
+  ];
+
+  assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript, currentProfiles)), []);
 });
 
 test("rejects obvious non-name phrases", () => {
@@ -97,23 +106,4 @@ test("rejects obvious non-name phrases", () => {
   ];
 
   assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript)), []);
-});
-
-test("mixed weak evidence keeps the current heuristic name stable unless clearly beaten", () => {
-  const currentProfiles = [
-    {
-      speakerId: "Speaker 1",
-      name: "Kevin",
-      confidence: "medium" as const,
-      evidenceCount: 2,
-    },
-  ];
-  const transcript: TranscriptChunk[] = [
-    { id: "1", speaker: "Speaker 0", text: "Kevin, can you own auth?", timestamp: 1 },
-    { id: "2", speaker: "Speaker 1", text: "Yes, I can.", timestamp: 3 },
-    { id: "3", speaker: "Speaker 0", text: "Marcus, can you also look at billing?", timestamp: 6 },
-    { id: "4", speaker: "Speaker 1", text: "Sure, I can look at that too.", timestamp: 8 },
-  ];
-
-  assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript, currentProfiles)), []);
 });

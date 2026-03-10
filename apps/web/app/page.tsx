@@ -23,6 +23,7 @@ import {
   type TranscriptChunk,
   containsCricketWakeWord,
   extractCricketRequestText,
+  mergeSpeakerProfiles as mergeSpeakerProfileRecords,
 } from "@copilot/shared";
 import { DeepgramSTTAdapter } from "@/lib/deepgramSTTAdapter";
 import { useLiveTranscript } from "@/lib/useLiveTranscript";
@@ -87,16 +88,7 @@ function mergeSpeakerProfiles(
   profiles: SessionState["speakerProfiles"],
   nextProfiles: GraphPatchEvent["upsertSpeakerProfiles"],
 ) {
-  if (!nextProfiles?.length) {
-    return profiles;
-  }
-
-  const merged = new Map(profiles.map((profile) => [profile.speakerId, profile]));
-  for (const profile of nextProfiles) {
-    merged.set(profile.speakerId, profile);
-  }
-
-  return [...merged.values()].sort((left, right) => left.speakerId.localeCompare(right.speakerId));
+  return mergeSpeakerProfileRecords(profiles, nextProfiles);
 }
 
 function appendTranscriptChunk(state: SessionState, chunk: TranscriptChunk): SessionState {

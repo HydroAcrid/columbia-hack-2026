@@ -10,20 +10,38 @@ export type EdgeType = z.infer<typeof EdgeType>;
 
 // ---------- Transcript ----------
 
+export const TranscriptWord = z.object({
+  text: z.string(),
+  start: z.number(),
+  end: z.number(),
+  speakerId: z.string().optional(),
+  confidence: z.number().optional(),
+});
+export type TranscriptWord = z.infer<typeof TranscriptWord>;
+
 export const TranscriptChunk = z.object({
   id: z.string(),
   speaker: z.string(),
   text: z.string(),
   timestamp: z.number(),
+  start: z.number().optional(),
+  end: z.number().optional(),
+  words: z.array(TranscriptWord).optional(),
 });
 export type TranscriptChunk = z.infer<typeof TranscriptChunk>;
 
-export const SpeakerProfile = z.object({
-  speakerId: z.string(),
-  name: z.string(),
-  confidence: z.enum(["low", "medium", "high"]).default("low"),
-  evidenceCount: z.number().int().nonnegative().default(0),
-});
+export const SpeakerProfile = z
+  .object({
+    speakerId: z.string(),
+    name: z.string(),
+    confidence: z.enum(["low", "medium", "high"]).default("low"),
+    evidenceCount: z.number().int().nonnegative().default(0),
+    sourceSpeakerIds: z.array(z.string()).optional(),
+  })
+  .transform((profile) => ({
+    ...profile,
+    sourceSpeakerIds: profile.sourceSpeakerIds?.length ? profile.sourceSpeakerIds : [profile.speakerId],
+  }));
 export type SpeakerProfile = z.infer<typeof SpeakerProfile>;
 
 // ---------- Graph primitives ----------
