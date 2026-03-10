@@ -2,7 +2,11 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { TranscriptChunk } from "@copilot/shared";
-import type { TranscriptSource } from "./transcriptSource";
+import type {
+  TranscriptSource,
+  TranscriptSourceConnectionState,
+  TranscriptSourceStatus,
+} from "./transcriptSource";
 import {
   createSessionResponse,
   postTranscriptChunkResponse,
@@ -12,9 +16,12 @@ export interface LiveTranscriptState {
   chunks: TranscriptChunk[];
   isRecording: boolean;
   error: string | null;
+  sourceState: TranscriptSourceConnectionState;
+  lastChunkAt: number | null;
   start: (options?: { clear?: boolean }) => Promise<void>;
   stop: () => Promise<void>;
   reset: () => void;
+  recoverSession: () => Promise<string | null>;
 }
 
 /**
@@ -42,11 +49,15 @@ export function useLiveTranscript(
   const [chunks, setChunks] = useState<TranscriptChunk[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sourceState, setSourceState] = useState<TranscriptSourceConnectionState>("idle");
+  const [lastChunkAt, setLastChunkAt] = useState<number | null>(null);
 
   // ── Refs for stable async access (no stale closures) ──
   const isRecordingRef = useRef(false);
   const sessionIdRef = useRef(sessionId);
   sessionIdRef.current = sessionId;
+  const activeSourceRef = useRef<TranscriptSource | null>(null);
+  const unsubscribeSourceStatusRef = useRef<(() => void) | null>(null);
 
   // Ref that always has the latest chunk list — avoids stale closure on `chunks`
   const chunksRef = useRef<TranscriptChunk[]>([]);
@@ -58,8 +69,31 @@ export function useLiveTranscript(
   const onSessionSwappedRef = useRef(onSessionSwapped);
   onSessionSwappedRef.current = onSessionSwapped;
 
+  const handleSourceStatus = useCallback((status: TranscriptSourceStatus) => {
+    setSourceState(status.state);
+  }, []);
+
+  const bindSourceStatus = useCallback((nextSource: TranscriptSource | null) => {
+    unsubscribeSourceStatusRef.current?.();
+    unsubscribeSourceStatusRef.current = null;
+
+    if (nextSource?.subscribeStatus) {
+      unsubscribeSourceStatusRef.current = nextSource.subscribeStatus(handleSourceStatus);
+    } else {
+      setSourceState(nextSource ? "connected" : "idle");
+    }
+  }, [handleSourceStatus]);
+
   // ── Inline helper: create a new session and re-upload all chunks ──
   const recoverSession = useCallback(async (): Promise<string | null> => {
+    if (isRecoveringRef.current) {
+      return sessionIdRef.current;
+    }
+
+    isRecoveringRef.current = true;
+    setSourceState("recovering");
+    setError(null);
+
     try {
       console.log("[useLiveTranscript] Creating new session...");
       const res = await createSessionResponse();
@@ -72,6 +106,7 @@ export function useLiveTranscript(
 
       // Update our ref immediately so the next chunk uses the new ID
       sessionIdRef.current = newId;
+      activeSourceRef.current?.setSessionId?.(newId);
 
       // Wait briefly for the backend to fully initialise the session's graph
       await new Promise((r) => setTimeout(r, 500));
@@ -97,6 +132,8 @@ export function useLiveTranscript(
     } catch (err) {
       console.error("[useLiveTranscript] Recovery failed:", err);
       return null;
+    } finally {
+      isRecoveringRef.current = false;
     }
   }, []);
 
@@ -108,6 +145,7 @@ export function useLiveTranscript(
       chunksRef.current = next;       // keep ref in sync
       return next;
     });
+    setLastChunkAt(Date.now());
 
     // 2. Only POST if we are actively recording
     if (!isRecordingRef.current) return;
@@ -122,16 +160,12 @@ export function useLiveTranscript(
 
       if (res.status === 404) {
         // ── Backend restarted — recover inline ──
-        if (isRecoveringRef.current) return;      // another chunk already triggered this
-        isRecoveringRef.current = true;
-
         console.warn("[useLiveTranscript] Session 404 — recovering inline...");
         const newId = await recoverSession();
-        isRecoveringRef.current = false;
 
         if (!newId) {
           console.error("[useLiveTranscript] Could not recover. Stopping.");
-          if (source) await source.stop();
+          if (activeSourceRef.current) await activeSourceRef.current.stop();
           setIsRecording(false);
           isRecordingRef.current = false;
           setError("Session lost. Please refresh the page.");
@@ -142,44 +176,61 @@ export function useLiveTranscript(
         // inside recoverSession, so we're good. Next chunk will use newId.
       } else if (!res.ok) {
         console.error("[useLiveTranscript] chunk POST failed:", res.status, await res.text());
+        setError(`Transcript sync failed (${res.status}). Recovering if needed.`);
       } else {
         console.log(`[useLiveTranscript] ✅ Posted chunk to session ${sid}:`, chunk.text);
+        setError(null);
       }
     } catch (err) {
       console.error("[useLiveTranscript] network error:", err);
+      setError(err instanceof Error ? err.message : "Live transcript network error.");
     }
-  }, [source, recoverSession]);
+  }, [recoverSession]);
 
   // ── Public API ──
 
   const start = useCallback(async (options?: { clear?: boolean }) => {
     if (!source) return;
+    if (isRecordingRef.current) return;
     setError(null);
     if (options?.clear !== false) {
       setChunks([]);
       chunksRef.current = [];
     }
     try {
+      activeSourceRef.current = source;
+      bindSourceStatus(source);
+      source.setSessionId?.(sessionIdRef.current ?? "live");
       await source.start(onChunk);
       setIsRecording(true);
       isRecordingRef.current = true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg);
+      bindSourceStatus(null);
+      activeSourceRef.current = null;
     }
-  }, [source, onChunk]);
+  }, [bindSourceStatus, onChunk, source]);
 
   const stop = useCallback(async () => {
-    if (!source) return;
-    await source.stop();
+    const activeSource = activeSourceRef.current;
+    if (!activeSource) {
+      return;
+    }
+
+    await activeSource.stop();
+    activeSourceRef.current = null;
+    bindSourceStatus(null);
     setIsRecording(false);
     isRecordingRef.current = false;
-  }, [source]);
+    setError(null);
+  }, [bindSourceStatus]);
 
   const reset = useCallback(() => {
     setChunks([]);
     chunksRef.current = [];
+    setLastChunkAt(null);
   }, []);
 
-  return { chunks, isRecording, error, start, stop, reset };
+  return { chunks, isRecording, error, sourceState, lastChunkAt, start, stop, reset, recoverSession };
 }

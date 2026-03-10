@@ -18,6 +18,11 @@ import {
 } from "./graph-engine.js";
 import { inferSpeakerProfileUpdates } from "./speaker-identity.js";
 import {
+  serializeHeartbeatEvent,
+  serializeSseRetry,
+  SSE_HEARTBEAT_MS,
+} from "./sse.js";
+import {
   createSessionStore,
   type SessionEvent,
   type StoredSession,
@@ -146,9 +151,34 @@ app.get("/sessions/:id/events", async (c) => {
     : await store.listEventsAfter(sessionId, lastEventId, replayUpperBound);
 
   let activeController: ReadableStreamDefaultController<Uint8Array> | null = null;
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  let cleanedUp = false;
+
+  const cleanup = (controller?: ReadableStreamDefaultController<Uint8Array>) => {
+    if (cleanedUp) {
+      return;
+    }
+
+    cleanedUp = true;
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+
+    const targetController = controller ?? activeController;
+    if (targetController) {
+      const currentSubscribers = subscribers.get(sessionId);
+      currentSubscribers?.delete(targetController);
+      if (currentSubscribers?.size === 0) {
+        subscribers.delete(sessionId);
+      }
+    }
+  };
+
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       activeController = controller;
+      controller.enqueue(serializeSseRetry());
       controller.enqueue(encoder.encode(": connected\n\n"));
       for (const event of replayEvents) {
         controller.enqueue(serializeEvent(event));
@@ -157,12 +187,21 @@ app.get("/sessions/:id/events", async (c) => {
       sessionSubscribers.add(controller);
       subscribers.set(sessionId, sessionSubscribers);
 
-      c.req.raw.signal.addEventListener("abort", () => {
-        const currentSubscribers = subscribers.get(sessionId);
-        currentSubscribers?.delete(controller);
-        if (currentSubscribers?.size === 0) {
-          subscribers.delete(sessionId);
+      heartbeatTimer = setInterval(() => {
+        try {
+          controller.enqueue(serializeHeartbeatEvent());
+        } catch {
+          cleanup(controller);
+          try {
+            controller.close();
+          } catch {
+            // Ignore close races when the stream is already closed.
+          }
         }
+      }, SSE_HEARTBEAT_MS);
+
+      c.req.raw.signal.addEventListener("abort", () => {
+        cleanup(controller);
         try {
           controller.close();
         } catch {
@@ -171,13 +210,7 @@ app.get("/sessions/:id/events", async (c) => {
       }, { once: true });
     },
     cancel() {
-      if (activeController) {
-        const sessionSubscribers = subscribers.get(sessionId);
-        sessionSubscribers?.delete(activeController);
-        if (sessionSubscribers?.size === 0) {
-          subscribers.delete(sessionId);
-        }
-      }
+      cleanup();
     },
   });
 
@@ -186,6 +219,7 @@ app.get("/sessions/:id/events", async (c) => {
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
       "Content-Type": "text/event-stream",
+      "X-Accel-Buffering": "no",
     },
   });
 });

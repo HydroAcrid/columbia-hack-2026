@@ -1,5 +1,19 @@
 import type { TranscriptChunk } from "@copilot/shared";
 
+export type TranscriptSourceConnectionState =
+  | "idle"
+  | "connecting"
+  | "connected"
+  | "recovering"
+  | "error";
+
+export interface TranscriptSourceStatus {
+  state: TranscriptSourceConnectionState;
+  changedAt: number;
+  reconnectAttempt: number;
+  detail: string | null;
+}
+
 /**
  * TranscriptSource — the shared interface any STT backend must implement.
  *
@@ -22,4 +36,6 @@ import type { TranscriptChunk } from "@copilot/shared";
 export interface TranscriptSource {
   start(onChunk: (chunk: TranscriptChunk) => void): Promise<void>;
   stop(): Promise<void>;
+  subscribeStatus?(listener: (status: TranscriptSourceStatus) => void): () => void;
+  setSessionId?(sessionId: string): void;
 }

@@ -12,6 +12,7 @@ import {
   getSessionState,
   postTranscriptChunk,
 } from "@/lib/agent-client";
+import type { TranscriptSourceConnectionState } from "@/lib/transcriptSource";
 import { applyPatch } from "@copilot/graph";
 import {
   demoTranscriptChunks,
@@ -30,11 +31,16 @@ import { useLiveTranscript } from "@/lib/useLiveTranscript";
 import { useCricketTTS } from "@/lib/useCricketTTS";
 import { useCricketVoiceMode } from "@/lib/useCricketVoiceMode";
 
-type ConnectionState = "connecting" | "connected" | "disconnected";
+type ConnectionState = "connecting" | "connected" | "recovering" | "disconnected";
 type Mode = "replay" | "live";
 
 const SESSION_STORAGE_KEY = "launch-copilot:session-id";
 const LAST_EVENT_STORAGE_KEY = "launch-copilot:last-event-id";
+const SSE_BASE_RECONNECT_MS = 1000;
+const SSE_MAX_RECONNECT_MS = 8000;
+const MAX_LIVE_SSE_RECONNECT_ATTEMPTS = 4;
+const SSE_WATCHDOG_INTERVAL_MS = 5000;
+const SSE_STALE_AFTER_MS = 45000;
 
 function createEmptySessionState(id: string): SessionState {
   return {
@@ -165,33 +171,72 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isReplaying, setIsReplaying] = useState(false);
-  
+
   const [mode, setMode] = useState<Mode>("replay");
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const replayRunRef = useRef(0);
   const lastEventIdRef = useRef<string | null>(null);
+  const lastSessionEventAtRef = useRef<number | null>(null);
 
   // Live adapter — only when connected to a live session
   const adapterRef = useRef<DeepgramSTTAdapter | null>(null);
   const adapter = useMemo(() => {
-    if (!sessionId || mode !== "live") return null;
-    const a = new DeepgramSTTAdapter(sessionId);
-    adapterRef.current = a;
-    return a;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, mode]);
+    if (mode !== "live") {
+      return null;
+    }
+
+    if (!adapterRef.current) {
+      adapterRef.current = new DeepgramSTTAdapter(sessionId ?? "live");
+    }
+
+    return adapterRef.current;
+  }, [mode, sessionId]);
+
+  useEffect(() => {
+    if (mode !== "live") {
+      adapterRef.current = null;
+      return;
+    }
+
+    if (sessionId && adapterRef.current) {
+      adapterRef.current.setSessionId(sessionId);
+    }
+  }, [mode, sessionId]);
 
   // When the hook silently creates a new backend session (after a 404),
   // it tells us the new ID so we can update React state + localStorage.
   const handleSessionSwapped = useCallback((newId: string) => {
     console.log("[page] Session swapped to:", newId);
+    lastEventIdRef.current = null;
+    lastSessionEventAtRef.current = null;
+    removeStorage(LAST_EVENT_STORAGE_KEY);
+    setConnectionState("recovering");
+    setErrorMessage(null);
     setSessionId(newId);
     writeStorage(SESSION_STORAGE_KEY, newId);
+    void getSessionState(newId)
+      .then((nextState) => {
+        setSessionState(nextState);
+      })
+      .catch((error) => {
+        console.error("[page] Failed to sync recovered session:", error);
+        setSessionState(createEmptySessionState(newId));
+      });
   }, []);
 
-  const { chunks: liveChunks, isRecording, error: liveError, start, stop } =
+  const {
+    chunks: liveChunks,
+    isRecording,
+    error: liveError,
+    sourceState: liveSourceState,
+    start,
+    stop,
+    recoverSession,
+  } =
     useLiveTranscript(sessionId, adapter, handleSessionSwapped);
+  const liveRecoverSessionRef = useRef(recoverSession);
+  liveRecoverSessionRef.current = recoverSession;
 
   // Cricket TTS — plays interruptMessage audio from SSE events
   const cricketTTS = useCricketTTS();
@@ -215,6 +260,13 @@ export default function Home() {
   const cricketVoicePhaseRef = useRef(cricketVoiceState.phase);
   cricketVoicePhaseRef.current = cricketVoiceState.phase;
   const lastSpokenInterruptRef = useRef<{ text: string; at: number } | null>(null);
+  const resolvedConnectionState = deriveConnectionState({
+    sessionStreamState: connectionState,
+    liveSourceState,
+    isBootstrapping,
+    isRecording,
+    mode,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -235,12 +287,14 @@ export default function Home() {
             setSessionId(restoredSessionId);
             setSessionState(restoredState);
             lastEventIdRef.current = readStorage(LAST_EVENT_STORAGE_KEY);
+            lastSessionEventAtRef.current = Date.now();
             setConnectionState("connecting");
             return;
           } catch {
             removeStorage(SESSION_STORAGE_KEY);
             removeStorage(LAST_EVENT_STORAGE_KEY);
             lastEventIdRef.current = null;
+            lastSessionEventAtRef.current = null;
           }
         }
 
@@ -253,6 +307,7 @@ export default function Home() {
         writeStorage(SESSION_STORAGE_KEY, session.id);
         removeStorage(LAST_EVENT_STORAGE_KEY);
         lastEventIdRef.current = null;
+        lastSessionEventAtRef.current = null;
         setSessionId(session.id);
         setSessionState(state);
         setConnectionState("connecting");
@@ -286,61 +341,186 @@ export default function Home() {
       return;
     }
 
-    const source = new EventSource(getSessionEventsUrl(sessionId, lastEventIdRef.current));
-    eventSourceRef.current = source;
+    let cancelled = false;
+    let source: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let watchdogTimer: ReturnType<typeof setInterval> | null = null;
+    let reconnectAttempt = 0;
+    let sessionRecoveryInFlight = false;
+    let heartbeatListener: ((event: Event) => void) | null = null;
 
-    source.onopen = () => {
-      setConnectionState("connected");
+    const markSessionStreamHealthy = () => {
+      lastSessionEventAtRef.current = Date.now();
     };
 
-    source.onmessage = (event) => {
-      if (event.lastEventId) {
-        lastEventIdRef.current = event.lastEventId;
-        writeStorage(LAST_EVENT_STORAGE_KEY, event.lastEventId);
-      }
-
-      const patch = JSON.parse(event.data) as GraphPatchEvent;
-      setSessionState((current) => (current ? mergeSessionState(current, patch) : current));
-
-      // Cricket voice mode: speak when a direct Cricket response arrives,
-      // but suppress near-duplicate replayed replies.
-      if (
-        patch.interruptMessage &&
-        modeRef.current === "live" &&
-        cricketTTSPhaseRef.current !== "requesting" &&
-        cricketTTSPhaseRef.current !== "speaking" &&
-        (cricketVoicePhaseRef.current === "heard" || cricketVoicePhaseRef.current === "thinking")
-      ) {
-        const now = Date.now();
-        const lastSpoken = lastSpokenInterruptRef.current;
-        if (
-          lastSpoken &&
-          lastSpoken.text === patch.interruptMessage &&
-          now - lastSpoken.at < 5000
-        ) {
-          return;
-        }
-
-        lastSpokenInterruptRef.current = {
-          text: patch.interruptMessage,
-          at: now,
-        };
-        beginResponse(patch.interruptMessage);
-        cricketSpeakRef.current(patch.interruptMessage);
+    const clearReconnectTimer = () => {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
       }
     };
 
-    source.onerror = () => {
-      setConnectionState("disconnected");
+    const clearWatchdogTimer = () => {
+      if (watchdogTimer) {
+        clearInterval(watchdogTimer);
+        watchdogTimer = null;
+      }
     };
 
-    return () => {
+    const teardownSource = () => {
+      clearWatchdogTimer();
+
+      if (!source) {
+        return;
+      }
+
+      if (heartbeatListener) {
+        source.removeEventListener("heartbeat", heartbeatListener);
+      }
+      source.onopen = null;
+      source.onmessage = null;
+      source.onerror = null;
       source.close();
+
       if (eventSourceRef.current === source) {
         eventSourceRef.current = null;
       }
+
+      source = null;
+      heartbeatListener = null;
     };
-  }, [beginResponse, mode, sessionId]);
+
+    const attemptSessionRecovery = async () => {
+      if (cancelled || sessionRecoveryInFlight || modeRef.current !== "live") {
+        return;
+      }
+
+      sessionRecoveryInFlight = true;
+      setConnectionState("recovering");
+      setErrorMessage(null);
+
+      const newId = await liveRecoverSessionRef.current();
+      if (cancelled) {
+        return;
+      }
+
+      if (!newId) {
+        setConnectionState("disconnected");
+        setErrorMessage("Live session connection was lost. Please refresh the page.");
+      }
+    };
+
+    const scheduleReconnect = (reason: string) => {
+      teardownSource();
+      clearReconnectTimer();
+
+      if (cancelled) {
+        return;
+      }
+
+      reconnectAttempt += 1;
+
+      if (modeRef.current === "live" && reconnectAttempt > MAX_LIVE_SSE_RECONNECT_ATTEMPTS) {
+        void attemptSessionRecovery();
+        return;
+      }
+
+      const delay = computeReconnectDelay(reconnectAttempt);
+      console.warn(`[page] Event stream recovering (${reason}), retrying in ${delay}ms`);
+      setConnectionState("recovering");
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        openSource();
+      }, delay);
+    };
+
+    const openSource = () => {
+      if (cancelled) {
+        return;
+      }
+
+      teardownSource();
+      clearWatchdogTimer();
+      setConnectionState(reconnectAttempt > 0 ? "recovering" : "connecting");
+
+      const nextSource = new EventSource(getSessionEventsUrl(sessionId, lastEventIdRef.current));
+      source = nextSource;
+      eventSourceRef.current = nextSource;
+      markSessionStreamHealthy();
+
+      heartbeatListener = () => {
+        markSessionStreamHealthy();
+        setConnectionState("connected");
+      };
+      nextSource.addEventListener("heartbeat", heartbeatListener);
+
+      nextSource.onopen = () => {
+        reconnectAttempt = 0;
+        sessionRecoveryInFlight = false;
+        markSessionStreamHealthy();
+        setConnectionState("connected");
+      };
+
+      nextSource.onmessage = (event) => {
+        markSessionStreamHealthy();
+        if (event.lastEventId) {
+          lastEventIdRef.current = event.lastEventId;
+          writeStorage(LAST_EVENT_STORAGE_KEY, event.lastEventId);
+        }
+
+        const patch = JSON.parse(event.data) as GraphPatchEvent;
+        setSessionState((current) => (current ? mergeSessionState(current, patch) : current));
+
+        if (
+          patch.interruptMessage &&
+          modeRef.current === "live" &&
+          cricketTTSPhaseRef.current !== "requesting" &&
+          cricketTTSPhaseRef.current !== "speaking" &&
+          (cricketVoicePhaseRef.current === "heard" || cricketVoicePhaseRef.current === "thinking")
+        ) {
+          const now = Date.now();
+          const lastSpoken = lastSpokenInterruptRef.current;
+          if (
+            lastSpoken &&
+            lastSpoken.text === patch.interruptMessage &&
+            now - lastSpoken.at < 5000
+          ) {
+            return;
+          }
+
+          lastSpokenInterruptRef.current = {
+            text: patch.interruptMessage,
+            at: now,
+          };
+          beginResponse(patch.interruptMessage);
+          cricketSpeakRef.current(patch.interruptMessage);
+        }
+      };
+
+      nextSource.onerror = () => {
+        scheduleReconnect("event-source-error");
+      };
+
+      watchdogTimer = setInterval(() => {
+        const lastActivity = lastSessionEventAtRef.current;
+        if (
+          source &&
+          lastActivity &&
+          Date.now() - lastActivity > SSE_STALE_AFTER_MS
+        ) {
+          scheduleReconnect("event-source-stale");
+        }
+      }, SSE_WATCHDOG_INTERVAL_MS);
+    };
+
+    openSource();
+
+    return () => {
+      cancelled = true;
+      clearReconnectTimer();
+      teardownSource();
+    };
+  }, [beginResponse, sessionId]);
 
   useEffect(() => {
     if (mode !== "live" || liveChunks.length === 0) {
@@ -387,6 +567,7 @@ export default function Home() {
       writeStorage(SESSION_STORAGE_KEY, session.id);
       removeStorage(LAST_EVENT_STORAGE_KEY);
       lastEventIdRef.current = null;
+      lastSessionEventAtRef.current = null;
       setSessionId(session.id);
       setSessionState(emptyState);
       setConnectionState("connecting");
@@ -427,6 +608,10 @@ export default function Home() {
         eventSourceRef.current?.close();
         const session = await createSession();
         const emptyState = createEmptySessionState(session.id);
+        writeStorage(SESSION_STORAGE_KEY, session.id);
+        removeStorage(LAST_EVENT_STORAGE_KEY);
+        lastEventIdRef.current = null;
+        lastSessionEventAtRef.current = null;
         setSessionId(session.id);
         setSessionState(emptyState);
         setConnectionState("connecting");
@@ -499,7 +684,7 @@ export default function Home() {
               </span>
             )}
 
-            <StatusPill state={connectionState} />
+            <StatusPill state={resolvedConnectionState} />
 
             {totalSignals > 0 ? (
               <span className="rounded-md bg-[var(--accent-violet-muted)] px-2 py-1 text-[11px] font-semibold tabular-nums text-violet-600">
@@ -581,6 +766,7 @@ function StatusPill({ state }: { state: ConnectionState }) {
   const map = {
     connected: { dot: "bg-emerald-500", label: "Live" },
     connecting: { dot: "bg-amber-400 animate-pulse-subtle", label: "Connecting" },
+    recovering: { dot: "bg-sky-500 animate-pulse-subtle", label: "Recovering" },
     disconnected: { dot: "bg-[var(--text-muted)]", label: "Offline" },
   } as const;
 
@@ -592,6 +778,55 @@ function StatusPill({ state }: { state: ConnectionState }) {
       {label}
     </span>
   );
+}
+
+function deriveConnectionState(options: {
+  sessionStreamState: ConnectionState;
+  liveSourceState: TranscriptSourceConnectionState;
+  isBootstrapping: boolean;
+  isRecording: boolean;
+  mode: Mode;
+}): ConnectionState {
+  const {
+    sessionStreamState,
+    liveSourceState,
+    isBootstrapping,
+    isRecording,
+    mode,
+  } = options;
+
+  if (isBootstrapping) {
+    return "connecting";
+  }
+
+  if (sessionStreamState === "disconnected") {
+    return "disconnected";
+  }
+
+  if (mode === "live" && isRecording) {
+    if (liveSourceState === "recovering" || liveSourceState === "error") {
+      return "recovering";
+    }
+
+    if (liveSourceState === "connecting") {
+      return "connecting";
+    }
+  }
+
+  if (sessionStreamState === "recovering") {
+    return "recovering";
+  }
+
+  if (sessionStreamState === "connecting") {
+    return "connecting";
+  }
+
+  return "connected";
+}
+
+function computeReconnectDelay(attempt: number) {
+  const normalizedAttempt = Math.max(0, attempt - 1);
+  return Math.min(SSE_MAX_RECONNECT_MS, SSE_BASE_RECONNECT_MS * (2 ** normalizedAttempt));
 }
 
 function resolveRecentCricketRequest(chunks: TranscriptChunk[]) {
