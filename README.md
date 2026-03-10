@@ -48,7 +48,7 @@ Team members and contributors:
 
 ## Demo URLs
 
-- Web: `https://launch-copilot-web-fh43iudbha-uc.a.run.app`
+- Web: `https://launch-copilot-web-353476176382.us-central1.run.app`
 - Agent: `https://launch-copilot-agent-fh43iudbha-uc.a.run.app`
 - Agent health: `https://launch-copilot-agent-fh43iudbha-uc.a.run.app/health`
 

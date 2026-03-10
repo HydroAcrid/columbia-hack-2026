@@ -10,6 +10,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Nota",
   description: "Nota — live meeting graph, transcript, and insights in real time",
+  icons: {
+    icon: [
+      { url: "/nota-favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: ["/nota-favicon.svg"],
+  },
 };
 
 export default function RootLayout({

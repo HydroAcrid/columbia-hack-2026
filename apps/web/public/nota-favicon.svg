@@ -1,0 +1,17 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="18" fill="#0F172A"/>
+  <path
+    d="M32 10L49 19.5V38.5L32 48L15 38.5V19.5L32 10Z"
+    fill="url(#nota-gradient)"
+  />
+  <path
+    d="M32 15.75L44 22.45V35.55L32 42.25L20 35.55V22.45L32 15.75Z"
+    fill="rgba(255,255,255,0.12)"
+  />
+  <defs>
+    <linearGradient id="nota-gradient" x1="18" y1="14" x2="46" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+</svg>
