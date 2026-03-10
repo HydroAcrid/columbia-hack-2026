@@ -6,6 +6,7 @@ import { GraphPanel } from "@/components/GraphPanel";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import { LiveModeBar } from "@/components/LiveModeBar";
 import { CricketVoiceOverlay } from "@/components/CricketVoiceOverlay";
+import { HelpModal } from "@/components/HelpModal";
 import {
   createSession,
   getSessionEventsUrl,
@@ -36,6 +37,7 @@ type Mode = "replay" | "live";
 
 const SESSION_STORAGE_KEY = "launch-copilot:session-id";
 const LAST_EVENT_STORAGE_KEY = "launch-copilot:last-event-id";
+const HELP_DISMISSED_STORAGE_KEY = "launch-copilot:help-dismissed";
 const SSE_BASE_RECONNECT_MS = 1000;
 const SSE_MAX_RECONNECT_MS = 8000;
 const MAX_LIVE_SSE_RECONNECT_ATTEMPTS = 4;
@@ -171,6 +173,7 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isReplaying, setIsReplaying] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const [mode, setMode] = useState<Mode>("replay");
 
@@ -267,6 +270,14 @@ export default function Home() {
     isRecording,
     mode,
   });
+
+  useEffect(() => {
+    if (readStorage(HELP_DISMISSED_STORAGE_KEY) === "1") {
+      return;
+    }
+
+    setIsHelpOpen(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -626,6 +637,23 @@ export default function Home() {
     }
   };
 
+  const closeHelp = useCallback(() => {
+    writeStorage(HELP_DISMISSED_STORAGE_KEY, "1");
+    setIsHelpOpen(false);
+  }, []);
+
+  const openHelp = useCallback(() => {
+    setIsHelpOpen(true);
+  }, []);
+
+  const switchToLiveFromHelp = useCallback(async () => {
+    if (mode !== "live") {
+      await handleModeChange("live");
+    }
+
+    closeHelp();
+  }, [closeHelp, handleModeChange, mode]);
+
   const handleMicToggle = async () => {
     if (isRecording) await stop();
     else await start();
@@ -754,6 +782,24 @@ export default function Home() {
 
       {/* ── Nota voice mode overlay ── */}
       {mode === "live" ? <CricketVoiceOverlay state={cricketVoiceState} /> : null}
+
+      <button
+        type="button"
+        onClick={openHelp}
+        className="animate-overlay-appear absolute right-5 bottom-5 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-white/92 text-[var(--text-primary)] shadow-[0_12px_30px_rgba(15,23,42,0.14)] transition hover:scale-[1.03] hover:bg-white"
+        aria-label="Open help"
+      >
+        <span className="text-[18px] font-semibold leading-none">?</span>
+      </button>
+
+      <HelpModal
+        isOpen={isHelpOpen}
+        isLiveMode={mode === "live"}
+        isRecording={isRecording}
+        onClose={closeHelp}
+        onSwitchToLive={switchToLiveFromHelp}
+        onStartRecording={handleMicToggle}
+      />
     </div>
   );
 }
