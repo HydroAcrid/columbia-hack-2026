@@ -6,11 +6,12 @@ import { inferSpeakerProfileUpdates } from "./speaker-identity.js";
 function createState(
   transcript: TranscriptChunk[],
   speakerProfiles: SessionState["speakerProfiles"] = [],
+  nodes: SessionState["nodes"] = [],
 ): SessionState {
   return {
     id: "session-1",
     transcript,
-    nodes: [],
+    nodes,
     edges: [],
     decisions: [],
     actions: [],
@@ -98,11 +99,33 @@ test("high-confidence profiles ignore contradictory direct claims on the same ra
   assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript, currentProfiles)), []);
 });
 
+test("binds a canonical speaker profile to an existing person node", () => {
+  const transcript: TranscriptChunk[] = [
+    { id: "1", speaker: "Speaker 1", text: "My name is Kevin Dottel", timestamp: 1 },
+  ];
+  const nodes = [
+    { id: "kevin-dottel-node", label: "Kevin Dottel", type: "person" as const },
+  ];
+
+  assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript, [], nodes)), [
+    {
+      speakerId: "kevin-dottel",
+      name: "Kevin Dottel",
+      confidence: "high",
+      evidenceCount: 3,
+      personNodeId: "kevin-dottel-node",
+      sourceSpeakerIds: ["Speaker 1"],
+    },
+  ]);
+});
+
 test("rejects obvious non-name phrases", () => {
   const transcript: TranscriptChunk[] = [
     { id: "1", speaker: "Speaker 1", text: "My name is thinking of", timestamp: 1 },
     { id: "2", speaker: "Speaker 2", text: "This is heard of", timestamp: 2 },
     { id: "3", speaker: "Speaker 3", text: "I am kind of", timestamp: 3 },
+    { id: "4", speaker: "Speaker 4", text: "So what I'm gonna do is own the Postgres backend", timestamp: 4 },
+    { id: "5", speaker: "Speaker 5", text: "I'm responsible for the launch checklist", timestamp: 5 },
   ];
 
   assert.deepEqual(inferSpeakerProfileUpdates(createState(transcript)), []);

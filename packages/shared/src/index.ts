@@ -14,6 +14,7 @@ export {
   getSpeakerProfileSourceSpeakerIds,
   mergeSpeakerProfiles,
   resolveSpeakerDisplayName,
+  resolveSpeakerPersonNodeId,
   resolveSpeakerProfile,
 } from "./speakers.js";
 export {

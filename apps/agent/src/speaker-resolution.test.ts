@@ -30,6 +30,7 @@ test("mergeSpeakerProfiles preserves and unions source speaker ids for canonical
       name: "Kevin",
       confidence: "high",
       evidenceCount: 3,
+      personNodeId: "kevin-node",
       sourceSpeakerIds: ["Speaker 1"],
     },
   ];
@@ -50,6 +51,7 @@ test("mergeSpeakerProfiles preserves and unions source speaker ids for canonical
       name: "Kevin",
       confidence: "high",
       evidenceCount: 6,
+      personNodeId: "kevin-node",
       sourceSpeakerIds: ["Speaker 1", "Speaker 3"],
     },
   ]);

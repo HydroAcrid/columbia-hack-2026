@@ -2,6 +2,8 @@
 
 ## 2. Graph intelligence + identity stability
 
+Status: Implemented on March 10, 2026.
+
 ### Problem statement
 - The graph still depends too much on explicit phrasing and misses obvious implied ownership, responsibility, and person-to-node relationships.
 - Person identity can drift across the transcript and graph, especially when the same speaker is referenced indirectly over time.
@@ -25,6 +27,8 @@
 - Capture before/after transcripts from real live sessions, not only replay fixtures.
 
 ## 3. Cricket speed
+
+Status: Implemented on March 10, 2026.
 
 ### Problem statement
 - Cricket takes too long to become audible after an `interruptMessage` arrives.

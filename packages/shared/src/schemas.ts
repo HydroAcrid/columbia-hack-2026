@@ -37,6 +37,7 @@ export const SpeakerProfile = z
     confidence: z.enum(["low", "medium", "high"]).default("low"),
     evidenceCount: z.number().int().nonnegative().default(0),
     sourceSpeakerIds: z.array(z.string()).optional(),
+    personNodeId: z.string().optional(),
   })
   .transform((profile) => ({
     ...profile,

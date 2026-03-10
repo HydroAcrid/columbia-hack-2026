@@ -18,6 +18,13 @@ export function resolveSpeakerDisplayName(
   return resolveSpeakerProfile(profiles, rawSpeakerId)?.name ?? rawSpeakerId;
 }
 
+export function resolveSpeakerPersonNodeId(
+  profiles: SpeakerProfile[],
+  rawSpeakerId: string,
+) {
+  return resolveSpeakerProfile(profiles, rawSpeakerId)?.personNodeId ?? null;
+}
+
 export function mergeSpeakerProfiles(
   currentProfiles: SpeakerProfile[],
   nextProfiles: SpeakerProfile[] | undefined,
@@ -39,6 +46,7 @@ export function mergeSpeakerProfiles(
       ...existing,
       ...incoming,
       evidenceCount: Math.max(existing.evidenceCount, incoming.evidenceCount),
+      personNodeId: incoming.personNodeId ?? existing.personNodeId,
       sourceSpeakerIds: [...new Set([
         ...getSpeakerProfileSourceSpeakerIds(existing),
         ...getSpeakerProfileSourceSpeakerIds(incoming),

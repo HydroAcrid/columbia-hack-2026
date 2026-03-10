@@ -323,23 +323,28 @@ function deriveSpeakerAnnotations(
 
   const matchedSpeakerIds = new Set<string>();
   const annotations = new Map<string, { label: string; state: SpeakerMatchState }>();
+  const nodeIds = new Set(nodes.map((node) => node.id));
 
-  for (const [normalizedName, personNodes] of personNodesByName) {
-    if (personNodes.length !== 1) {
-      continue;
-    }
-
-    const matchingProfiles = profilesByName.get(normalizedName) ?? [];
+  for (const profile of eligibleProfiles) {
+    const normalizedName = normalizeName(profile.name);
+    const matchingProfiles = normalizedName ? profilesByName.get(normalizedName) ?? [] : [];
     if (matchingProfiles.length !== 1) {
       continue;
     }
 
-    const node = personNodes[0];
-    const profile = matchingProfiles[0];
+    const node = profile.personNodeId && nodeIds.has(profile.personNodeId)
+      ? nodes.find((candidate) => candidate.id === profile.personNodeId) ?? null
+      : null;
+    const fallbackPersonNodes = normalizedName ? personNodesByName.get(normalizedName) ?? [] : [];
+    const matchedNode = node ?? (fallbackPersonNodes.length === 1 ? fallbackPersonNodes[0] : null);
+    if (!matchedNode) {
+      continue;
+    }
+
     for (const rawSpeakerId of getSpeakerProfileSourceSpeakerIds(profile)) {
       matchedSpeakerIds.add(rawSpeakerId);
     }
-    annotations.set(node.id, {
+    annotations.set(matchedNode.id, {
       label: "Matched",
       state: "matched",
     });
@@ -350,20 +355,22 @@ function deriveSpeakerAnnotations(
     return annotations;
   }
 
-  for (const [normalizedName, profiles] of profilesByName) {
-    if (
-      profiles.length !== 1 ||
-      !getSpeakerProfileSourceSpeakerIds(profiles[0]).includes(activeSpeakerId)
-    ) {
+  for (const profile of eligibleProfiles) {
+    if (!getSpeakerProfileSourceSpeakerIds(profile).includes(activeSpeakerId)) {
       continue;
     }
 
-    const personNodes = personNodesByName.get(normalizedName) ?? [];
-    if (personNodes.length !== 1) {
+    const normalizedName = normalizeName(profile.name);
+    const node = profile.personNodeId && nodeIds.has(profile.personNodeId)
+      ? nodes.find((candidate) => candidate.id === profile.personNodeId) ?? null
+      : null;
+    const fallbackPersonNodes = normalizedName ? personNodesByName.get(normalizedName) ?? [] : [];
+    const matchedNode = node ?? (fallbackPersonNodes.length === 1 ? fallbackPersonNodes[0] : null);
+    if (!matchedNode) {
       continue;
     }
 
-    annotations.set(personNodes[0].id, {
+    annotations.set(matchedNode.id, {
       label: "Live speaker",
       state: "active",
     });

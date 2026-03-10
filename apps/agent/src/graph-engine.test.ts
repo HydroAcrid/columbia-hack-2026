@@ -68,6 +68,53 @@ test("normalizes spoken alias variants to existing canonical graph nodes", () =>
   ]);
 });
 
+test("reuses a canonical speaker-bound person node when the model emits a shorter name", () => {
+  const state = createState({
+    nodes: [
+      { id: "kevin-dottel-node", label: "Kevin Dottel", type: "person" },
+      { id: "launch", label: "Launch", type: "milestone" },
+    ],
+    speakerProfiles: [
+      {
+        speakerId: "kevin-dottel",
+        name: "Kevin Dottel",
+        confidence: "high",
+        evidenceCount: 3,
+        personNodeId: "kevin-dottel-node",
+        sourceSpeakerIds: ["Speaker 0"],
+      },
+    ],
+  });
+
+  const patch: GraphPatchEvent = {
+    addNodes: [
+      { id: "kevin", label: "Kevin", type: "person" },
+    ],
+    addEdges: [
+      {
+        id: "e-kevin-launch",
+        source: "kevin",
+        target: "launch",
+        type: "owns",
+        label: "owner",
+      },
+    ],
+  };
+
+  const normalized = normalizeGraphPatch(patch, state);
+
+  assert.equal(normalized.addNodes, undefined);
+  assert.deepEqual(normalized.addEdges, [
+    {
+      id: "e-kevin-dottel-node-launch",
+      source: "kevin-dottel-node",
+      target: "launch",
+      type: "owns",
+      label: "owner",
+    },
+  ]);
+});
+
 test("suppresses generic orphan nodes and weak relates_to edges", () => {
   const state = createState();
   const patch: GraphPatchEvent = {
@@ -216,6 +263,7 @@ test("builds a slim live extraction context with limited transcript, nodes, edge
         name: "Kevin",
         confidence: "high",
         evidenceCount: 3,
+        personNodeId: "kevin",
         sourceSpeakerIds: ["Speaker 0"],
       },
       {
@@ -245,7 +293,7 @@ test("builds a slim live extraction context with limited transcript, nodes, edge
     },
   );
 
-  assert.match(context, /- Speaker 0 => Kevin \[kevin\] \(high\)/);
+  assert.match(context, /- Speaker 0 => Kevin \[kevin\] -> person Kevin \[kevin\] \(high\)/);
   assert.doesNotMatch(context, /Speaker 9 => Marcus \[marcus\]/);
   assert.match(context, /- kevin \| Kevin \| person/);
   assert.match(context, /- launch \| Launch \| milestone/);
@@ -288,6 +336,7 @@ test("builds a dedicated Cricket answer context with insights and graph state", 
         name: "Kevin",
         confidence: "high",
         evidenceCount: 3,
+        personNodeId: "kevin",
         sourceSpeakerIds: ["Speaker 1"],
       },
     ],
@@ -304,7 +353,7 @@ test("builds a dedicated Cricket answer context with insights and graph state", 
   assert.match(context, /Fix staging reliability \(owner: Kevin\)/);
   assert.match(context, /\[blocker\] Staging is blocking launch readiness/);
   assert.match(context, /Kevin \(person\)/);
-  assert.match(context, /Kevin \[kevin\] <= Speaker 1 \(high\)/);
+  assert.match(context, /Kevin \[kevin\] <= Speaker 1 -> person Kevin \[kevin\] \(high\)/);
 });
 
 test("merges a normalized patch into session state for Cricket answer context", () => {

@@ -85,7 +85,7 @@ export function buildGraphExtractionContext(state: SessionState, chunks: Transcr
     .map((edge) => `- ${edge.source} -[${edge.type}]-> ${edge.target}`);
 
   const speakerInventory = state.speakerProfiles
-    .map(formatCanonicalSpeakerInventoryLine)
+    .map((profile) => formatCanonicalSpeakerInventoryLine(profile, state.nodes))
     .sort();
 
   return [
@@ -138,7 +138,7 @@ export function buildLiveExtractionContext(
   const selectedEdges = selectLiveContextEdges(state.edges, selectedNodeIds, options.edgeLimit);
   const speakerIds = [...new Set(chunks.map((chunk) => chunk.speaker))].sort();
   const speakerInventory = speakerIds.map((rawSpeakerId) =>
-    formatBatchSpeakerInventoryLine(rawSpeakerId, state.speakerProfiles),
+    formatBatchSpeakerInventoryLine(rawSpeakerId, state.speakerProfiles, state.nodes),
   );
   const aliasInventory = getCanonicalAliasEntries()
     .filter((entry) => LIVE_ALIAS_CANONICALS.has(entry.canonical))
@@ -191,7 +191,7 @@ export function buildCricketAnswerContext(
   const selectedEdges = selectLiveContextEdges(state.edges, selectedNodeIds, 10);
   const labelById = new Map(state.nodes.map((node) => [node.id, node.label]));
   const speakerInventory = state.speakerProfiles
-    .map(formatCanonicalSpeakerInventoryLine)
+    .map((profile) => formatCanonicalSpeakerInventoryLine(profile, state.nodes))
     .sort();
   const decisions = state.decisions
     .slice(-6)
@@ -295,7 +295,13 @@ export function normalizeGraphPatch(
   const graphIsDense = state.nodes.length >= GRAPH_BUDGET.maxNodes || state.edges.length >= GRAPH_BUDGET.maxEdges;
 
   for (const incomingNode of patch.addNodes ?? []) {
-    const canonicalNode = canonicalizeIncomingNode(incomingNode, existingNodes, newNodes, existingIds);
+    const canonicalNode = canonicalizeIncomingNode(
+      incomingNode,
+      existingNodes,
+      newNodes,
+      existingIds,
+      state.speakerProfiles,
+    );
     idRemap.set(incomingNode.id, canonicalNode.id);
 
     if (canonicalNode.existing || isGenericNodeLabel(canonicalNode.node)) {
@@ -402,10 +408,23 @@ function canonicalizeIncomingNode(
   existingNodes: GraphNode[],
   pendingNodes: GraphNode[],
   usedIds: Set<string>,
+  speakerProfiles: SessionState["speakerProfiles"],
 ) {
+  const availableNodes = [...existingNodes, ...pendingNodes];
+  if (node.type === "person") {
+    const boundPersonNode = resolveSpeakerBoundPersonNode(node.label, availableNodes, speakerProfiles);
+    if (boundPersonNode) {
+      return {
+        existing: true,
+        id: boundPersonNode.id,
+        node: boundPersonNode,
+      };
+    }
+  }
+
   const canonicalLabel = canonicalizeGraphLabel(node.label);
   const normalizedKey = `${node.type}:${normalizeGraphLabel(canonicalLabel)}`;
-  const existingNode = [...existingNodes, ...pendingNodes].find((candidate) => nodeKey(candidate) === normalizedKey);
+  const existingNode = availableNodes.find((candidate) => nodeKey(candidate) === normalizedKey);
 
   if (existingNode) {
     return {
@@ -607,21 +626,25 @@ function formatResolvedSpeakerLabel(
   return resolvedName === rawSpeakerId ? rawSpeakerId : `${resolvedName} [${rawSpeakerId}]`;
 }
 
-function formatCanonicalSpeakerInventoryLine(profile: SessionState["speakerProfiles"][number]) {
+function formatCanonicalSpeakerInventoryLine(
+  profile: SessionState["speakerProfiles"][number],
+  nodes: SessionState["nodes"],
+) {
   const rawSpeakerIds = getSpeakerProfileSourceSpeakerIds(profile).join(", ");
-  return `- ${profile.name} [${profile.speakerId}] <= ${rawSpeakerIds} (${profile.confidence})`;
+  return `- ${profile.name} [${profile.speakerId}] <= ${rawSpeakerIds}${formatSpeakerPersonBinding(profile, nodes)} (${profile.confidence})`;
 }
 
 function formatBatchSpeakerInventoryLine(
   rawSpeakerId: string,
   profiles: SessionState["speakerProfiles"],
+  nodes: SessionState["nodes"],
 ) {
   const profile = resolveSpeakerProfile(profiles, rawSpeakerId);
   if (!profile) {
-    return `- ${rawSpeakerId} => unresolved`;
+    return `- ${rawSpeakerId} => unresolved -> person unresolved`;
   }
 
-  return `- ${rawSpeakerId} => ${profile.name} [${profile.speakerId}] (${profile.confidence})`;
+  return `- ${rawSpeakerId} => ${profile.name} [${profile.speakerId}]${formatSpeakerPersonBinding(profile, nodes)} (${profile.confidence})`;
 }
 
 function dedupeItems<T>(items: T[], keyFor: (item: T) => string) {
@@ -652,12 +675,139 @@ function normalizeOwner(owner: string | undefined, state: SessionState, newNodes
     return matchingNode.label;
   }
 
-  const matchingProfile = state.speakerProfiles.find((profile) => normalizeGraphLabel(profile.name) === normalizedOwner);
+  const matchingProfile = findCompatibleSpeakerProfile(owner, state.speakerProfiles);
   if (matchingProfile) {
+    const boundPersonNode = matchingProfile.personNodeId
+      ? candidates.find((node) => node.id === matchingProfile.personNodeId)
+      : null;
+    if (boundPersonNode) {
+      return boundPersonNode.label;
+    }
+
     return matchingProfile.name;
   }
 
   return owner.trim();
+}
+
+function resolveSpeakerBoundPersonNode(
+  label: string,
+  nodes: GraphNode[],
+  speakerProfiles: SessionState["speakerProfiles"],
+) {
+  const personNodes = nodes.filter((node) => node.type === "person");
+  const candidates = speakerProfiles
+    .map((profile) => {
+      if (!profile.personNodeId) {
+        return null;
+      }
+
+      const node = personNodes.find((candidate) => candidate.id === profile.personNodeId);
+      if (!node) {
+        return null;
+      }
+
+      return {
+        node,
+        score: scorePersonNameMatch(label, profile.name),
+      };
+    })
+    .filter((candidate): candidate is { node: GraphNode; score: number } => Boolean(candidate))
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => right.score - left.score || left.node.id.localeCompare(right.node.id));
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  if (candidates[1] && candidates[0].score === candidates[1].score) {
+    return null;
+  }
+
+  return candidates[0].node;
+}
+
+function findCompatibleSpeakerProfile(
+  value: string,
+  profiles: SessionState["speakerProfiles"],
+) {
+  const candidates = profiles
+    .map((profile) => ({
+      profile,
+      score: scorePersonNameMatch(value, profile.name),
+    }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => right.score - left.score || left.profile.speakerId.localeCompare(right.profile.speakerId));
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  if (candidates[1] && candidates[0].score === candidates[1].score) {
+    return null;
+  }
+
+  return candidates[0].profile;
+}
+
+function formatSpeakerPersonBinding(
+  profile: SessionState["speakerProfiles"][number],
+  nodes: SessionState["nodes"],
+) {
+  if (!profile.personNodeId) {
+    return " -> person unresolved";
+  }
+
+  const personNode = nodes.find((node) => node.id === profile.personNodeId && node.type === "person");
+  if (!personNode) {
+    return ` -> person [${profile.personNodeId}]`;
+  }
+
+  return ` -> person ${personNode.label} [${personNode.id}]`;
+}
+
+function scorePersonNameMatch(left: string, right: string) {
+  const leftTokens = tokenizeComparablePersonName(left);
+  const rightTokens = tokenizeComparablePersonName(right);
+
+  if (!leftTokens.length || !rightTokens.length) {
+    return 0;
+  }
+
+  const leftJoined = leftTokens.join(" ");
+  const rightJoined = rightTokens.join(" ");
+  if (leftJoined === rightJoined) {
+    return 6;
+  }
+
+  const sharedTokens = leftTokens.filter((token) => rightTokens.includes(token));
+  if (!sharedTokens.length) {
+    return 0;
+  }
+
+  if (
+    leftTokens[0] === rightTokens[0] &&
+    sharedTokens.length === Math.min(leftTokens.length, rightTokens.length)
+  ) {
+    return 5;
+  }
+
+  if (leftTokens[0] === rightTokens[0]) {
+    return 3;
+  }
+
+  return sharedTokens.length >= 2 ? 2 : 0;
+}
+
+function tokenizeComparablePersonName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s*\(.*?\)\s*/g, " ")
+    .replace(/[^a-z\s'-]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 3);
 }
 
 function selectLiveContextNodes(

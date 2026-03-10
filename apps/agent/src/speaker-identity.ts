@@ -68,12 +68,20 @@ const NAME_STOPWORDS = new Set([
 
 const NON_NAME_FIRST_TOKENS = new Set([
   "about",
+  "assigned",
   "against",
   "around",
+  "building",
   "because",
   "considering",
+  "doing",
+  "driving",
+  "focused",
   "for",
   "from",
+  "going",
+  "gonna",
+  "handling",
   "heard",
   "hearing",
   "if",
@@ -84,28 +92,47 @@ const NON_NAME_FIRST_TOKENS = new Set([
   "of",
   "on",
   "one",
+  "owning",
   "over",
+  "planning",
+  "ready",
+  "responsible",
   "said",
   "saying",
   "since",
   "sort",
+  "supposed",
+  "sure",
+  "taking",
+  "testing",
   "than",
   "thinking",
   "through",
+  "trying",
   "toward",
   "under",
   "until",
+  "using",
   "with",
+  "working",
 ]);
 
 const NON_NAME_TOKENS = new Set([
   ...NAME_STOPWORDS,
   ...NON_NAME_FIRST_TOKENS,
+  "be",
+  "do",
+  "for",
   "heard",
   "idea",
   "name",
   "thinking",
+  "to",
 ]);
+
+const NON_NAME_PHRASE_PATTERNS = [
+  /^(?:going to|gonna(?:\s+(?:be|do))?|responsible for|working on|trying to|planning to|here to|supposed to)\b/i,
+];
 
 const DIRECT_IDENTITY_WEIGHT = 3;
 const RESPONSE_TO_ADDRESS_WEIGHT = 1;
@@ -133,7 +160,12 @@ export function inferSpeakerProfileUpdates(
   const currentProfiles = new Map(
     state.speakerProfiles.map((profile) => [profile.speakerId, profile]),
   );
-  const recomputedProfiles = computeSpeakerProfiles(state.transcript, currentProfiles, options);
+  const recomputedProfiles = computeSpeakerProfiles(
+    state.transcript,
+    state.nodes,
+    currentProfiles,
+    options,
+  );
 
   return recomputedProfiles.filter((profile) => {
     const current = currentProfiles.get(profile.speakerId);
@@ -142,6 +174,7 @@ export function inferSpeakerProfileUpdates(
       current.name !== profile.name ||
       current.confidence !== profile.confidence ||
       current.evidenceCount !== profile.evidenceCount ||
+      current.personNodeId !== profile.personNodeId ||
       !sameSourceSpeakerIds(current.sourceSpeakerIds, profile.sourceSpeakerIds)
     );
   });
@@ -149,6 +182,7 @@ export function inferSpeakerProfileUpdates(
 
 function computeSpeakerProfiles(
   transcript: TranscriptChunk[],
+  nodes: SessionState["nodes"],
   currentProfiles: Map<string, SpeakerProfile>,
   options: InferSpeakerProfileOptions,
 ): SpeakerProfile[] {
@@ -277,6 +311,14 @@ function computeSpeakerProfiles(
       current?.evidenceCount ?? 0,
       (directEvidence.get(profile.speakerId) ?? 0) + (heuristicEvidence.get(profile.speakerId) ?? 0),
     );
+    const personNodeId = resolveBoundPersonNodeId(profile, nodes);
+    if (personNodeId && personNodeId !== profile.personNodeId) {
+      debugLog(options, logger, "bound-person-node", {
+        canonicalId: profile.speakerId,
+        name: profile.name,
+        personNodeId,
+      });
+    }
 
     const confidence = resolveConfidence(current, directEvidence.get(profile.speakerId) ?? 0, score);
     nextProfiles.push({
@@ -285,6 +327,7 @@ function computeSpeakerProfiles(
       confidence,
       evidenceCount: score,
       sourceSpeakerIds: [...new Set(profile.sourceSpeakerIds)].sort(),
+      ...(personNodeId ? { personNodeId } : {}),
     });
   }
 
@@ -322,6 +365,7 @@ function ensureCanonicalProfile(
     name,
     confidence: "high",
     evidenceCount: DIRECT_IDENTITY_WEIGHT,
+    personNodeId: undefined,
     sourceSpeakerIds: [],
   });
   canonicalIdByName.set(normalizedName, dedupedCanonicalId);
@@ -434,6 +478,11 @@ function normalizeName(raw: string) {
     return null;
   }
 
+  const rawPhrase = sanitized.join(" ").toLowerCase();
+  if (NON_NAME_PHRASE_PATTERNS.some((pattern) => pattern.test(rawPhrase))) {
+    return null;
+  }
+
   const normalized = sanitized
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(" ");
@@ -453,6 +502,81 @@ function normalizeName(raw: string) {
   }
 
   return normalized;
+}
+
+function resolveBoundPersonNodeId(
+  profile: WorkingSpeakerProfile,
+  nodes: SessionState["nodes"],
+) {
+  if (
+    profile.personNodeId &&
+    nodes.some((node) => node.id === profile.personNodeId && node.type === "person")
+  ) {
+    return profile.personNodeId;
+  }
+
+  const candidates = nodes
+    .filter((node) => node.type === "person")
+    .map((node) => ({
+      nodeId: node.id,
+      score: scorePersonNameMatch(profile.name, node.label),
+    }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => right.score - left.score || left.nodeId.localeCompare(right.nodeId));
+
+  if (!candidates.length) {
+    return profile.personNodeId;
+  }
+
+  if (candidates[1] && candidates[0].score === candidates[1].score) {
+    return profile.personNodeId;
+  }
+
+  return candidates[0].nodeId;
+}
+
+function scorePersonNameMatch(left: string, right: string) {
+  const leftTokens = tokenizeComparableName(left);
+  const rightTokens = tokenizeComparableName(right);
+
+  if (!leftTokens.length || !rightTokens.length) {
+    return 0;
+  }
+
+  const leftJoined = leftTokens.join(" ");
+  const rightJoined = rightTokens.join(" ");
+  if (leftJoined === rightJoined) {
+    return 6;
+  }
+
+  const sharedTokens = leftTokens.filter((token) => rightTokens.includes(token));
+  if (!sharedTokens.length) {
+    return 0;
+  }
+
+  if (
+    leftTokens[0] === rightTokens[0] &&
+    sharedTokens.length === Math.min(leftTokens.length, rightTokens.length)
+  ) {
+    return 5;
+  }
+
+  if (leftTokens[0] === rightTokens[0]) {
+    return 3;
+  }
+
+  return sharedTokens.length >= 2 ? 2 : 0;
+}
+
+function tokenizeComparableName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s*\(.*?\)\s*/g, " ")
+    .replace(/[^a-z\s'-]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 3);
 }
 
 function toDisplayName(normalizedName: string) {

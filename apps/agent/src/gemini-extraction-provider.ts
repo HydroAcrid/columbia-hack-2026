@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   extractCricketRequestText,
+  resolveSpeakerProfile,
   type GraphPatchEvent,
   type SessionState,
   type TranscriptChunk,
@@ -85,6 +86,8 @@ const FILLER_WORDS = new Set([
   "yeah",
   "yep",
 ]);
+
+const FIRST_PERSON_OWNERSHIP_PATTERN = /\b(?:i(?:'ll| will)\s+(?:own|handle|take|cover|drive|lead|do)|i(?:'m| am)\s+(?:responsible for|owning|handling|taking|covering|driving|leading|working on)|i(?:'m| am)\s+gonna\s+(?:own|handle|take|cover|drive|lead|be responsible for)|what i(?:'m| am)\s+gonna do is|my work is|i can take)\b/i;
 
 interface GenerateContentResult {
   response: {
@@ -345,7 +348,8 @@ Extract any relevant graph information from the live transcript batch above.`;
       }
 
       const normalizeStartedAt = this.timers.now();
-      const patch = normalizeGraphPatch(parsedPatch, state);
+      const ownershipHeuristicPatch = applyKnownSpeakerOwnershipHeuristics(parsedPatch, state, chunks);
+      const patch = normalizeGraphPatch(ownershipHeuristicPatch, state);
       let finalPatch = patch;
       const normalizeMs = this.timers.now() - normalizeStartedAt;
       let answerMs = 0;
@@ -514,4 +518,120 @@ function inferCricketQuestionFocus(request: string): CricketQuestionFocus {
   }
 
   return "general";
+}
+
+function applyKnownSpeakerOwnershipHeuristics(
+  patch: GraphPatchEvent,
+  state: SessionState,
+  chunks: TranscriptChunk[],
+): GraphPatchEvent {
+  const missingOwnerActions = patch.addActions?.filter((action) => !action.owner) ?? [];
+  if (!missingOwnerActions.length) {
+    return patch;
+  }
+
+  const ownershipProfiles = [
+    ...new Map(
+      chunks
+        .filter((chunk) => FIRST_PERSON_OWNERSHIP_PATTERN.test(chunk.text))
+        .map((chunk) => {
+          const profile = resolveSpeakerProfile(state.speakerProfiles, chunk.speaker);
+          return profile ? [profile.speakerId, profile] : null;
+        })
+        .filter((entry): entry is [string, SessionState["speakerProfiles"][number]] => Boolean(entry)),
+    ).values(),
+  ];
+
+  if (ownershipProfiles.length !== 1) {
+    return patch;
+  }
+
+  const [profile] = ownershipProfiles;
+  const addActions = patch.addActions?.map((action) => (
+    action.owner
+      ? action
+      : {
+        ...action,
+        owner: profile.name,
+      }
+  ));
+  const availablePersonNodes = [
+    ...state.nodes.filter((node) => node.type === "person"),
+    ...(patch.addNodes ?? []).filter((node) => node.type === "person"),
+  ];
+  const addPersonNode = !findCompatiblePersonNode(profile.name, availablePersonNodes)
+    ? {
+      id: profile.personNodeId ?? profile.speakerId,
+      label: profile.name,
+      type: "person" as const,
+    }
+    : null;
+
+  return {
+    ...patch,
+    addActions,
+    addNodes: addPersonNode ? [...(patch.addNodes ?? []), addPersonNode] : patch.addNodes,
+  };
+}
+
+function findCompatiblePersonNode(name: string, nodes: SessionState["nodes"]) {
+  const candidates = nodes
+    .map((node) => ({
+      node,
+      score: scorePersonNameMatch(name, node.label),
+    }))
+    .filter((candidate) => candidate.node.type === "person" && candidate.score > 0)
+    .sort((left, right) => right.score - left.score || left.node.id.localeCompare(right.node.id));
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  if (candidates[1] && candidates[0].score === candidates[1].score) {
+    return null;
+  }
+
+  return candidates[0].node;
+}
+
+function scorePersonNameMatch(left: string, right: string) {
+  const leftTokens = tokenizeComparablePersonName(left);
+  const rightTokens = tokenizeComparablePersonName(right);
+
+  if (!leftTokens.length || !rightTokens.length) {
+    return 0;
+  }
+
+  if (leftTokens.join(" ") === rightTokens.join(" ")) {
+    return 6;
+  }
+
+  const sharedTokens = leftTokens.filter((token) => rightTokens.includes(token));
+  if (!sharedTokens.length) {
+    return 0;
+  }
+
+  if (
+    leftTokens[0] === rightTokens[0] &&
+    sharedTokens.length === Math.min(leftTokens.length, rightTokens.length)
+  ) {
+    return 5;
+  }
+
+  if (leftTokens[0] === rightTokens[0]) {
+    return 3;
+  }
+
+  return sharedTokens.length >= 2 ? 2 : 0;
+}
+
+function tokenizeComparablePersonName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s*\(.*?\)\s*/g, " ")
+    .replace(/[^a-z\s'-]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 3);
 }

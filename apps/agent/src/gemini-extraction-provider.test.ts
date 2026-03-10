@@ -278,3 +278,36 @@ test("does not generate a Cricket answer for non-request mentions", async () => 
   assert.equal(answerCalls, 0);
   assert.equal(patch.interruptMessage, undefined);
 });
+
+test("fills missing action owners from a known speaker's first-person ownership statement", async () => {
+  const provider = createProvider(async () => ({
+    response: {
+      text: () => JSON.stringify({
+        addActions: [{ id: "a-1", text: "Own the Postgres backend", timestamp: 1 }],
+      }),
+    },
+  }));
+
+  const chunk = createChunk("live-1", "What I'm gonna do is own the Postgres backend.", 1);
+  const state = createState([chunk]);
+  state.speakerProfiles = [
+    {
+      speakerId: "kevin-dottel",
+      name: "Kevin Dottel",
+      confidence: "high",
+      evidenceCount: 3,
+      sourceSpeakerIds: ["Speaker 0"],
+    },
+  ];
+
+  const resultPromise = provider.extract(chunk, state);
+  await sleep(35);
+  const patch = await resultPromise;
+
+  assert.deepEqual(patch.addActions, [
+    { id: "a-1", text: "Own the Postgres backend", owner: "Kevin Dottel", timestamp: 1 },
+  ]);
+  assert.deepEqual(patch.addNodes, [
+    { id: "kevin-dottel", label: "Kevin Dottel", type: "person" },
+  ]);
+});

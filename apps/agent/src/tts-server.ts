@@ -6,6 +6,19 @@ const TTS_MODELS = [
 ] as const;
 
 const DEFAULT_VOICE = "Kore";
+const DEFAULT_TTS_CONFIG = {
+  responseModalities: [Modality.AUDIO] as string[],
+  speechConfig: {
+    voiceConfig: {
+      prebuiltVoiceConfig: {
+        voiceName: DEFAULT_VOICE,
+      },
+    },
+  },
+};
+
+let cachedAi: GoogleGenAI | null = null;
+let cachedApiKey: string | null = null;
 
 type TtsResult = {
   audioBase64: string;
@@ -20,7 +33,7 @@ export async function textToSpeechGemini(text: string): Promise<TtsResult | null
     return null;
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getGeminiClient(apiKey);
   const prompt = buildTtsPrompt(text);
 
   for (const model of TTS_MODELS) {
@@ -29,16 +42,7 @@ export async function textToSpeechGemini(text: string): Promise<TtsResult | null
       const response = await ai.models.generateContent({
         model,
         contents: prompt,
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: DEFAULT_VOICE,
-              },
-            },
-          },
-        },
+        config: DEFAULT_TTS_CONFIG,
       });
 
       const audio = extractAudioFromTtsResponse(response);
@@ -57,6 +61,16 @@ export async function textToSpeechGemini(text: string): Promise<TtsResult | null
 
   console.error("[TTS] All TTS models failed");
   return null;
+}
+
+function getGeminiClient(apiKey: string) {
+  if (cachedAi && cachedApiKey === apiKey) {
+    return cachedAi;
+  }
+
+  cachedAi = new GoogleGenAI({ apiKey });
+  cachedApiKey = apiKey;
+  return cachedAi;
 }
 
 export function extractAudioFromTtsResponse(response: unknown): TtsResult | null {

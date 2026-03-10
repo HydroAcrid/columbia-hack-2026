@@ -76,10 +76,13 @@ app.post("/sessions/:id/transcript-chunks", async (c) => {
   let patch: GraphPatchEvent = {};
 
   try {
-    const speakerProfileUpdates = inferSpeakerProfileUpdates(session.state, {
-      debug: config.sttDebugEnabled,
-    });
     const extractionPatch = await provider.extract(chunk, session.state);
+    const speakerProfileUpdates = inferSpeakerProfileUpdates(
+      mergePatchIntoSessionState(session.state, extractionPatch),
+      {
+        debug: config.sttDebugEnabled,
+      },
+    );
     patch = speakerProfileUpdates.length
       ? {
         ...extractionPatch,
